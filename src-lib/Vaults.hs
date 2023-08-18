@@ -9,7 +9,7 @@ data Vault = Vault {
     localname :: String,
     remotes :: [String],
     remoteStore :: String
-} deriving Show
+} deriving (Eq, Show)
 
 readVault :: Substrate -> IO Vault
 readVault s = do
