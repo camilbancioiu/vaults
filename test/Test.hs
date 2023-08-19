@@ -1,9 +1,9 @@
 module Main (main) where
 
+import qualified TestVaults (allTests)
+
 import System.Exit
 import Test.HUnit
-
-import qualified Vaults
 
 main :: IO ()
 main = do
@@ -13,21 +13,4 @@ main = do
        else return ()
 
 allTests :: Test
-allTests = TestList $ concat [ [ testSubstrate ] ]
-
-testSubstrate :: Test
-testSubstrate = TestCase $ do
-    v <- Vaults.readVault mockSubstrate
-    assertEqual "substrate reading" "i'm just pretending" (Vaults.name v)
-    putStrLn $ show v
-
-realSubstrate = Vaults.Substrate {
-    Vaults.subReadFile = Prelude.readFile
-}
-
-mockSubstrate = Vaults.Substrate {
-    Vaults.subReadFile = mockReadFile
-}
-
-mockReadFile :: FilePath -> IO String
-mockReadFile _ = return "i'm just pretending"
+allTests = TestList [ TestVaults.allTests ]

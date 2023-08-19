@@ -1,15 +1,11 @@
 module Vaults where
 
-import System.Directory
-import System.Environment
+import Data.Maybe
 
-ActvieVaultEnv :: String
-ActvieVaultEnv = "ACTIVE_VAULT"
+import Substrate
 
-data Substrate = Substrate {
-    subReadFile :: (FilePath -> IO String),
-    subDirExists :: (FilePath -> IO Bool)
-}
+activeVaultEnvName :: String
+activeVaultEnvName = "ACTIVE_VAULT"
 
 data Vault = Vault {
     name :: String,
@@ -19,19 +15,19 @@ data Vault = Vault {
 } deriving (Eq, Show)
 
 data VaultRuntimeInfo = VaultRuntimeInfo {
-  srcDir :: FilePath,
-  loopDev :: FilePath,
-  mapperDev :: FilePath,
-  mountedRepo :: FilePath,
-  isLocalPartition :: Bool
+    srcDir :: FilePath,
+    loopDev :: FilePath,
+    mapperDev :: FilePath,
+    mountedRepo :: FilePath,
+    isLocalPartition :: Bool
 } deriving (Eq, Show, Read)
 
-readVault :: Substrate -> IO Vault
-readVault s = do
-    vname <- (subReadFile s) ".vault/name"
-    vlocalname <- (subReadFile s) ".vault/local"
-    vremotes <- (subReadFile s) ".vault/remotes"
-    vremoteStore <- (subReadFile s) ".vault/remoteStore"
+loadVault :: Substrate -> IO Vault
+loadVault s = do
+    vname <- (readFileSub s) ".vault/name"
+    vlocalname <- (readFileSub s) ".vault/local"
+    vremotes <- (readFileSub s) ".vault/remotes"
+    vremoteStore <- (readFileSub s) ".vault/remoteStore"
 
     return Vault {
         name = vname,
@@ -41,9 +37,16 @@ readVault s = do
     }
 
 isVaultDir :: Substrate -> IO Bool
-isVaultDir s = (subDirExists s) ".vault"
+isVaultDir s = (dirExistsSub s) ".vault"
 
-getActiveVault 
+getActiveVault :: Substrate -> IO (Maybe VaultRuntimeInfo)
+getActiveVault s = do
+    descriptor <- (lookupEnvSub s) activeVaultEnvName
+    if isNothing descriptor
+       then return Nothing
+       else return (descriptor >>= read)
 
 isAnyVaultActive :: Substrate -> IO Bool
-isAnyVaultActive s = 
+isAnyVaultActive s = do
+    maybeEnv <- (lookupEnvSub s) activeVaultEnvName
+    return (isJust maybeEnv)

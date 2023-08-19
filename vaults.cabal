@@ -16,19 +16,19 @@ category:            Data
 extra-source-files:  CHANGELOG.md
 
 library
-  exposed-modules:     Vaults
+  exposed-modules:     Vaults, Substrate
   -- other-modules:
   -- other-extensions:
-  build-depends:       base
   hs-source-dirs:      src-lib
   default-language:    Haskell2010
+  build-depends:       base, directory
 
 executable vaults
   main-is:             Main.hs
-  -- other-modules:
   -- other-extensions:
   build-depends:       base, vaults
   hs-source-dirs:      src-exe
+  -- other-modules:       Substrate
   default-language:    Haskell2010
 
 test-suite vaults-test
@@ -36,4 +36,6 @@ test-suite vaults-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Test.hs
-  build-depends: base, HUnit, vaults
+  other-modules:       TestVaults
+  build-depends:       base, vaults,
+                       HUnit
