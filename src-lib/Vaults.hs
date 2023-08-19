@@ -22,31 +22,31 @@ data VaultRuntimeInfo = VaultRuntimeInfo {
     isLocalPartition :: Bool
 } deriving (Eq, Show, Read)
 
-loadVault :: Substrate -> IO Vault
-loadVault s = do
-    vname <- (readFileSub s) ".vault/name"
-    vlocalname <- (readFileSub s) ".vault/local"
-    vremotes <- (readFileSub s) ".vault/remotes"
-    vremoteStore <- (readFileSub s) ".vault/remoteStore"
+-- loadVault :: Substrate -> IO Vault
+-- loadVault s = do
+--     vname <- (readFileSub s) ".vault/name"
+--     vlocalname <- (readFileSub s) ".vault/local"
+--     vremotes <- (readFileSub s) ".vault/remotes"
+--     vremoteStore <- (readFileSub s) ".vault/remoteStore"
 
-    return Vault {
-        name = vname,
-        localname = vlocalname,
-        remotes = lines vremotes,
-        remoteStore = vremoteStore
-    }
+--     return Vault {
+--         name = vname,
+--         localname = vlocalname,
+--         remotes = lines vremotes,
+--         remoteStore = vremoteStore
+--     }
 
-isVaultDir :: Substrate -> IO Bool
-isVaultDir s = (dirExistsSub s) ".vault"
+isVaultDir :: Substrate m => m Bool
+isVaultDir = dirExistsSub ".vault"
 
-getActiveVault :: Substrate -> IO (Maybe VaultRuntimeInfo)
-getActiveVault s = do
-    descriptor <- (lookupEnvSub s) activeVaultEnvName
-    if isNothing descriptor
-       then return Nothing
-       else return (descriptor >>= read)
+-- getActiveVault :: Substrate -> IO (Maybe VaultRuntimeInfo)
+-- getActiveVault s = do
+--     descriptor <- (lookupEnvSub s) activeVaultEnvName
+--     if isNothing descriptor
+--        then return Nothing
+--        else return (descriptor >>= read)
 
-isAnyVaultActive :: Substrate -> IO Bool
-isAnyVaultActive s = do
-    maybeEnv <- (lookupEnvSub s) activeVaultEnvName
-    return (isJust maybeEnv)
+-- isAnyVaultActive :: Substrate -> IO Bool
+-- isAnyVaultActive s = do
+--     maybeEnv <- (lookupEnvSub s) activeVaultEnvName
+--     return (isJust maybeEnv)
