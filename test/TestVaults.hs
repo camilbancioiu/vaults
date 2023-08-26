@@ -6,14 +6,17 @@ import qualified Vaults
 import Substrate
 import MockSubstrate
 
-import Control.Monad.Identity
+import Control.Monad.State
 
 allTests :: Test
 allTests = TestList [ test_isVaultDir ]
 
 test_isVaultDir :: Test
 test_isVaultDir = TestCase $ do
-    let mock = return mockedVault :: Identity MockSubstrate
+    let mock = MockSubstrate { hasVaultDir = False }
+    let isV = evalState Vaults.isVaultDir mock
+    assertEqual "isVaultDir" False isV
 
-    let v = runIdentity (mock >> Vaults.isVaultDir)
-    v @?= True
+    let mock = MockSubstrate { hasVaultDir = True }
+    let isV = evalState Vaults.isVaultDir mock
+    assertEqual "isVaultDir" True isV
