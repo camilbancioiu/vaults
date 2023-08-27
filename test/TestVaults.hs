@@ -13,10 +13,10 @@ allTests = TestList [ test_isVaultDir ]
 
 test_isVaultDir :: Test
 test_isVaultDir = TestCase $ do
-    let mock = MockSubstrate { hasVaultDir = False }
+    let mock = Mock { hasVaultDir = False }
     let isV = evalState Vaults.isVaultDir mock
     assertEqual "isVaultDir" False isV
 
-    let mock = MockSubstrate { hasVaultDir = True }
+    let mock = Mock { hasVaultDir = True }
     let isV = evalState Vaults.isVaultDir mock
     assertEqual "isVaultDir" True isV
