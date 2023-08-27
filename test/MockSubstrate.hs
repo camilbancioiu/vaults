@@ -25,4 +25,4 @@ mock_readFileSub :: FilePath -> State Mock String
 mock_readFileSub ".vault/name" = return "dummy"
 mock_readFileSub ".vault/local" = return "local"
 mock_readFileSub ".vault/remotes" = return "remoteA\nremoteB"
-mock_readFileSub ".vault/remoteStore" = return "remoteStore"
+mock_readFileSub ".vault/remoteStore" = return "ssh://remoteStore"
