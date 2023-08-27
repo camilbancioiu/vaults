@@ -22,19 +22,19 @@ data VaultRuntimeInfo = VaultRuntimeInfo {
     isLocalPartition :: Bool
 } deriving (Eq, Show, Read)
 
--- loadVault :: Substrate -> IO Vault
--- loadVault s = do
---     vname <- (readFileSub s) ".vault/name"
---     vlocalname <- (readFileSub s) ".vault/local"
---     vremotes <- (readFileSub s) ".vault/remotes"
---     vremoteStore <- (readFileSub s) ".vault/remoteStore"
+loadVault :: Substrate m => m Vault
+loadVault = do
+    vname <- readFileSub ".vault/name"
+    vlocalname <- readFileSub ".vault/local"
+    vremotes <- readFileSub ".vault/remotes"
+    vremoteStore <- readFileSub ".vault/remoteStore"
 
---     return Vault {
---         name = vname,
---         localname = vlocalname,
---         remotes = lines vremotes,
---         remoteStore = vremoteStore
---     }
+    return Vault {
+        name = vname,
+        localname = vlocalname,
+        remotes = lines vremotes,
+        remoteStore = vremoteStore
+    }
 
 isVaultDir :: Substrate m => m Bool
 isVaultDir = dirExistsSub ".vault"
