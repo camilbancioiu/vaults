@@ -3,17 +3,30 @@
 module MockSubstrate where
 
 import Control.Monad.State
-
 import Substrate
+import qualified Vaults as V
 
 data Mock = Mock {
-    hasVaultDir :: Bool
+    hasVaultDir :: Bool,
+    envVars :: [(String, String)]
 }
 
+addMockEnvVar :: String -> String -> Mock -> Mock
+addMockEnvVar key val mock =
+    mock {
+        envVars = newEnvVars
+    }
+    where newEnvVars = (key, val):(envVars mock)
+
 instance Substrate (State Mock) where
-    lookupEnvSub = undefined
+    lookupEnvSub = mock_lookupEnvSub
     dirExistsSub = mock_dirExistsSub
     readFileSub  = mock_readFileSub
+
+mock_lookupEnvSub :: String -> State Mock (Maybe String)
+mock_lookupEnvSub key = do
+    mock <- get
+    return (lookup key $ envVars mock)
 
 mock_dirExistsSub :: FilePath -> State Mock Bool
 mock_dirExistsSub ".vault" = do
@@ -22,7 +35,22 @@ mock_dirExistsSub ".vault" = do
 mock_dirExistsSub _ = return False
 
 mock_readFileSub :: FilePath -> State Mock String
-mock_readFileSub ".vault/name" = return "dummy"
-mock_readFileSub ".vault/local" = return "local"
-mock_readFileSub ".vault/remotes" = return "remoteA\nremoteB"
-mock_readFileSub ".vault/remoteStore" = return "ssh://remoteStore"
+mock_readFileSub ".vault/name" = return (V.name mockVault)
+mock_readFileSub ".vault/local" = return (V.localname mockVault)
+mock_readFileSub ".vault/remotes" = return (unlines $ V.remotes mockVault)
+mock_readFileSub ".vault/remoteStore" = return (V.remoteStore mockVault)
+
+mockVault = V.Vault {
+    V.name = "mockVault",
+    V.localname = "local",
+    V.remotes = ["remoteA", "remoteB"],
+    V.remoteStore = "ssh://remoteStore"
+}
+mockVaultRuntimeInfo = VaultRuntimeInfo {
+    srcDir = "/home/user/vaults",
+    loopDev = "/dev/loop9",
+    mapperDev = "/dev/dm-2",
+    mountedRepo = "/run/media/user/localhostname/mockVault",
+    isLocalPartition = True
+}
+

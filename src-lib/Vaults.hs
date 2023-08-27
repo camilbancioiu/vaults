@@ -14,6 +14,13 @@ data Vault = Vault {
     remoteStore :: String
 } deriving (Eq, Show)
 
+
+-- CURRENT_VAULT_SRCDIR=/home/user/vaults/sync/main
+-- CURRENT_VAULT_LOOP=/dev/loop0
+-- CURRENT_VAULT_DM=/dev/dm-2
+-- CURRENT_VAULT_DIR=/run/media/user/lithium/main
+-- CURRENT_VAULT_FILE=lithium.vault
+-- CURRENT_VAULT_LOCATION=local
 data VaultRuntimeInfo = VaultRuntimeInfo {
     srcDir :: FilePath,
     loopDev :: FilePath,
@@ -39,14 +46,14 @@ loadVault = do
 isVaultDir :: Substrate m => m Bool
 isVaultDir = dirExistsSub ".vault"
 
--- getActiveVault :: Substrate -> IO (Maybe VaultRuntimeInfo)
--- getActiveVault s = do
---     descriptor <- (lookupEnvSub s) activeVaultEnvName
---     if isNothing descriptor
---        then return Nothing
---        else return (descriptor >>= read)
+getActiveVault :: Substrate m => m (Maybe VaultRuntimeInfo)
+getActiveVault s = do
+    descriptor <- (lookupEnvSub s) activeVaultEnvName
+    if isNothing descriptor
+       then return Nothing
+       else return (descriptor >>= read)
 
--- isAnyVaultActive :: Substrate -> IO Bool
--- isAnyVaultActive s = do
---     maybeEnv <- (lookupEnvSub s) activeVaultEnvName
---     return (isJust maybeEnv)
+isAnyVaultActive :: Substrate m  => m Bool
+isAnyVaultActive = do
+    maybeEnv <- lookupEnvSub activeVaultEnvName
+    return (isJust maybeEnv)
