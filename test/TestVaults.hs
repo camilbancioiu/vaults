@@ -2,32 +2,34 @@ module TestVaults where
 
 import Test.HUnit
 
+import Data.Maybe
+import Control.Monad.State
+
 import qualified Vaults as V
 import Substrate
 import MockSubstrate
-
-import Control.Monad.State
 
 allTests :: Test
 allTests = TestList [
     test_isVaultDir,
     test_loadVault,
-    test_isAnyVaultActive
+    test_isAnyVaultActive,
+    test_getActiveVault
     ]
 
 test_isVaultDir :: Test
 test_isVaultDir = TestCase $ do
-    let mock = mockWithVaultDir False
+    let mock = emptyMock
     let isV = evalState V.isVaultDir mock
     assertEqual "isVaultDir" False isV
 
-    let mock = mockWithVaultDir True
+    let mock = mockWithVaultDir
     let isV = evalState V.isVaultDir mock
     assertEqual "isVaultDir" True isV
 
 test_loadVault :: Test
 test_loadVault = TestCase $ do
-    let mock = mockWithVaultDir True
+    let mock = mockWithVaultDir
     let expected = V.Vault {
         V.name = "mockVault",
         V.localname = "local",
@@ -39,23 +41,40 @@ test_loadVault = TestCase $ do
 
 test_isAnyVaultActive :: Test
 test_isAnyVaultActive = TestCase $ do
-    let mock = mockWithVaultDir True
-    let isActive = evalState V.isAnyVaultActive mock
-    assertBool "no vault active" (not isActive)
+    let mock = emptyMock
+    let active = evalState V.isAnyVaultActive mock
+    assertBool "no vault active" (not active)
 
     let var = (V.activeVaultEnvName, "something")
     let mock = mockWithEnvVar var
-    let isActive = evalState V.isAnyVaultActive mock
-    assertBool "vault is active" isActive
+    let active = evalState V.isAnyVaultActive mock
+    assertBool "vault is active" active
 
-mockWithVaultDir :: Bool -> Mock
-mockWithVaultDir d = Mock {
-    hasVaultDir = d,
+test_getActiveVault :: Test
+test_getActiveVault = TestCase $ do
+    let mock = emptyMock
+    let vri = evalState V.getActiveVault mock
+    assertEqual "no vault active" Nothing vri
+
+    let mockVRI = mockVaultRuntimeInfo
+    let var = (V.activeVaultEnvName, show mockVRI)
+    let mock = mockWithEnvVar var
+    let vri = evalState V.getActiveVault mock
+    assertEqual "loaded vault" (Just mockVRI) vri
+
+emptyMock :: Mock
+emptyMock = Mock {
+    hasVaultDir = False,
     envVars = []
+    }
+
+mockWithVaultDir :: Mock
+mockWithVaultDir = emptyMock {
+    hasVaultDir = True
     }
 
 mockWithEnvVar :: (String, String) -> Mock
 mockWithEnvVar var = Mock {
-    hasVaultDir = True,
+    hasVaultDir = False,
     envVars = [var]
 }

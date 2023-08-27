@@ -46,11 +46,12 @@ mockVault = V.Vault {
     V.remotes = ["remoteA", "remoteB"],
     V.remoteStore = "ssh://remoteStore"
 }
-mockVaultRuntimeInfo = VaultRuntimeInfo {
-    srcDir = "/home/user/vaults",
-    loopDev = "/dev/loop9",
-    mapperDev = "/dev/dm-2",
-    mountedRepo = "/run/media/user/localhostname/mockVault",
-    isLocalPartition = True
-}
 
+mockVaultRuntimeInfo = V.VaultRuntimeInfo {
+    V.srcDir = "/home/user/vaults/mockVault",
+    V.loopDev = "/dev/loop9",
+    V.mapperDev = "/dev/dm-2",
+    V.mountedRepo = "/run/media/user/localhostname/mockVault",
+    V.vaultFile = "local.vault",
+    V.isLocalPartition = True
+}
