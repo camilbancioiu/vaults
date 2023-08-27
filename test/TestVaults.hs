@@ -14,7 +14,8 @@ allTests = TestList [
     test_isVaultDir,
     test_loadVault,
     test_isAnyVaultActive,
-    test_getActiveVault
+    test_getActiveVault,
+    test_setActiveVault
     ]
 
 test_isVaultDir :: Test
@@ -61,6 +62,24 @@ test_getActiveVault = TestCase $ do
     let mock = mockWithEnvVar var
     let vri = evalState V.getActiveVault mock
     assertEqual "loaded vault" (Just mockVRI) vri
+
+test_setActiveVault :: Test
+test_setActiveVault = TestCase $ do
+    let mock = emptyMock
+    let mockVRI = mockVaultRuntimeInfo
+    let setget = (V.setActiveVault mockVRI >> V.getActiveVault)
+    let vri = evalState setget mock
+    assertEqual "set and get active vault" (Just mockVRI) vri
+
+test_unsetActiveVault :: Test
+test_unsetActiveVault = TestCase $ do
+    let var = (V.activeVaultEnvName, "something")
+    let mock = mockWithEnvVar var
+    let active = evalState V.isAnyVaultActive mock
+    assertBool "vault is active" active
+
+    let active = evalState (V.unsetActiveVault >> V.isAnyVaultActive) mock
+    assertBool "vault is unset" (not active)
 
 emptyMock :: Mock
 emptyMock = Mock {

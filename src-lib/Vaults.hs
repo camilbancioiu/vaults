@@ -46,6 +46,17 @@ getActiveVault = do
     descriptor <- lookupEnvSub activeVaultEnvName
     return (fmap read descriptor)
 
+setActiveVault :: Substrate m => VaultRuntimeInfo -> m ()
+setActiveVault vri = do
+    let descriptor = show vri
+    setEnvSub activeVaultEnvName descriptor
+    return ()
+
+unsetActiveVault :: Substrate m => m ()
+unsetActiveVault vri = do
+    unsetEnvSub activeVaultEnvName
+    return ()
+
 isAnyVaultActive :: Substrate m  => m Bool
 isAnyVaultActive = do
     maybeEnv <- lookupEnvSub activeVaultEnvName

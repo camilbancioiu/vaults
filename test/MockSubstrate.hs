@@ -19,14 +19,16 @@ addMockEnvVar key val mock =
     where newEnvVars = (key, val):(envVars mock)
 
 instance Substrate (State Mock) where
-    lookupEnvSub = mock_lookupEnvSub
-    dirExistsSub = mock_dirExistsSub
     readFileSub  = mock_readFileSub
+    dirExistsSub = mock_dirExistsSub
+    lookupEnvSub = mock_lookupEnvSub
+    setEnvSub    = mock_setEnvSub
 
-mock_lookupEnvSub :: String -> State Mock (Maybe String)
-mock_lookupEnvSub key = do
-    mock <- get
-    return (lookup key $ envVars mock)
+mock_readFileSub :: FilePath -> State Mock String
+mock_readFileSub ".vault/name" = return (V.name mockVault)
+mock_readFileSub ".vault/local" = return (V.localname mockVault)
+mock_readFileSub ".vault/remotes" = return (unlines $ V.remotes mockVault)
+mock_readFileSub ".vault/remoteStore" = return (V.remoteStore mockVault)
 
 mock_dirExistsSub :: FilePath -> State Mock Bool
 mock_dirExistsSub ".vault" = do
@@ -34,11 +36,13 @@ mock_dirExistsSub ".vault" = do
     return (hasVaultDir mock)
 mock_dirExistsSub _ = return False
 
-mock_readFileSub :: FilePath -> State Mock String
-mock_readFileSub ".vault/name" = return (V.name mockVault)
-mock_readFileSub ".vault/local" = return (V.localname mockVault)
-mock_readFileSub ".vault/remotes" = return (unlines $ V.remotes mockVault)
-mock_readFileSub ".vault/remoteStore" = return (V.remoteStore mockVault)
+mock_lookupEnvSub :: String -> State Mock (Maybe String)
+mock_lookupEnvSub key = do
+    mock <- get
+    return (lookup key $ envVars mock)
+
+mock_setEnvSub :: String -> String -> State Mock ()
+mock_setEnvSub k v = modify (addMockEnvVar k v)
 
 mockVault = V.Vault {
     V.name = "mockVault",
