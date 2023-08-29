@@ -15,7 +15,8 @@ allTests = TestList [
     test_loadVault,
     test_isAnyVaultActive,
     test_getActiveVault,
-    test_setActiveVault
+    test_setActiveVault,
+    test_unsetActiveVault
     ]
 
 test_isVaultDir :: Test

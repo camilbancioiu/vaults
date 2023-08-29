@@ -14,7 +14,6 @@ data Vault = Vault {
     remoteStore :: String
 } deriving (Eq, Show)
 
-
 data VaultRuntimeInfo = VaultRuntimeInfo {
     srcDir :: FilePath,
     loopDev :: FilePath,
@@ -53,7 +52,7 @@ setActiveVault vri = do
     return ()
 
 unsetActiveVault :: Substrate m => m ()
-unsetActiveVault vri = do
+unsetActiveVault = do
     unsetEnvSub activeVaultEnvName
     return ()
 

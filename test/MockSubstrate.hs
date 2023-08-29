@@ -18,11 +18,19 @@ addMockEnvVar key val mock =
     }
     where newEnvVars = (key, val):(envVars mock)
 
+removeMockEnvVar :: String -> Mock -> Mock
+removeMockEnvVar key mock =
+    mock {
+        envVars = newEnvVars
+    }
+    where newEnvVars = filter ((key /=) . fst) (envVars mock)
+
 instance Substrate (State Mock) where
     readFileSub  = mock_readFileSub
     dirExistsSub = mock_dirExistsSub
     lookupEnvSub = mock_lookupEnvSub
     setEnvSub    = mock_setEnvSub
+    unsetEnvSub  = mock_unsetEnvSub
 
 mock_readFileSub :: FilePath -> State Mock String
 mock_readFileSub ".vault/name" = return (V.name mockVault)
@@ -42,7 +50,10 @@ mock_lookupEnvSub key = do
     return (lookup key $ envVars mock)
 
 mock_setEnvSub :: String -> String -> State Mock ()
-mock_setEnvSub k v = modify (addMockEnvVar k v)
+mock_setEnvSub key val = modify (addMockEnvVar key val)
+
+mock_unsetEnvSub :: String -> State Mock ()
+mock_unsetEnvSub key = modify (removeMockEnvVar key)
 
 mockVault = V.Vault {
     V.name = "mockVault",

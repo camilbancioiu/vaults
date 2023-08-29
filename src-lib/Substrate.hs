@@ -8,7 +8,7 @@ class Monad m => Substrate m where
     dirExistsSub :: FilePath -> m Bool
     lookupEnvSub :: String -> m (Maybe String)
     setEnvSub    :: String -> String -> m ()
-    unsetEnvSub  :: m ()
+    unsetEnvSub  :: String -> m ()
 
 instance Substrate IO where
     readFileSub  = Prelude.readFile
