@@ -3,6 +3,7 @@ module Substrate where
 import System.Directory
 import System.Environment
 import System.Process
+import System.Exit
 
 data ExecResult = ExecResult {
     exitCode    :: ExitCode,
@@ -25,7 +26,7 @@ class Monad m => Substrate m where
 
     -- TODO implement with readCreateProcessWithExitCode,
     -- for interactive input
-    execSub      :: String -> [String] -> ExecResult
+    execSub      :: String -> [String] -> m ExecResult
 
 instance Substrate IO where
     readFileSub  = Prelude.readFile
