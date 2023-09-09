@@ -1,6 +1,7 @@
 module Main (main) where
 
-import qualified TestVaults (allTests)
+import qualified TestVaultBasics (allTests)
+import qualified TestVaultOpen (allTests)
 
 import System.Exit
 import Test.HUnit
@@ -13,4 +14,7 @@ main = do
        else return ()
 
 allTests :: Test
-allTests = TestList [ TestVaults.allTests ]
+allTests = TestList [
+    TestVaultBasics.allTests,
+    TestVaultOpen.allTests
+    ]
