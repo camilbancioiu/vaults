@@ -33,7 +33,8 @@ import qualified Vaults.OperationParams as P
 
 allTests :: Test
 allTests = TestList [
-    test_prerequisites
+    test_prerequisites,
+    test_createLoopDevice
     ]
 
 test_prerequisites :: Test
@@ -50,12 +51,25 @@ test_prerequisites = TestList [
         let mock = mockWithActiveVault
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
-        assertOpError "vault already open" result
+        assertOpError "vault already open" result,
+
+    TestLabel "open without a partition filename fails" $
+    TestCase $ do
+        let mock = mockWithVault
+        let params = P.OpenVault {
+                P.partitionFilename = Nothing,
+                P.isForcedOpening = False
+            }
+        let result = runState (openVault params) mock
+        assertOpError "partition filename is required" result
     ]
 
--- test_loopSetupFails :: Test
--- test_loopSetupFails = TestCase $ do
---     assertFailure "test not implemented"
+test_createLoopDevice :: Test
+test_createLoopDevice = TestList [
+    TestLabel "udisksctl loop-setup fails" $
+    TestCase $ do
+        assertFailure "test not implemented"
+    ]
 
 assertOpError :: String -> (OpResult, Mock) -> IO ()
 assertOpError err (opResult, mock) = do
@@ -74,6 +88,13 @@ emptyMock = Mock {
     envVars = [],
     nExecs = 0
     }
+
+mockWithVault :: Mock
+mockWithVault = Mock {
+    hasVaultDir = True,
+    envVars = [],
+    nExecs = 0
+}
 
 mockWithActiveVault :: Mock
 mockWithActiveVault = Mock {

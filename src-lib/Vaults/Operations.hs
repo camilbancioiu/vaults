@@ -1,5 +1,6 @@
 module Vaults.Operations where
 
+import System.Exit
 import System.Directory
 import Control.Monad.Except
 import Data.Maybe
@@ -25,6 +26,17 @@ openVault params = runExceptT $ do
     vi <- lift $ loadVaultInfo
     let partLoc = getPartitionLocation vi fname
     when (partLoc == UnknownPartition) (throwError "unknown vault partition")
+
+    createLoopDevice fname
+
+    return ()
+
+createLoopDevice :: Substrate m => FilePath -> ExceptT String m ()
+createLoopDevice fname = do
+    loopSetup <- lift $ execSub "udisksctl" ["loop-setup", "-f", fname] ""
+    unless
+        (exitCode loopSetup /= ExitSuccess)
+        (throwError $ "loop-setup failed: " ++ (errorOutput loopSetup))
     return ()
 
 canOpenVault :: Substrate m => P.OpenVault -> ExceptT String m ()
