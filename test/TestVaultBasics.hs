@@ -34,8 +34,8 @@ test_loadVaultInfo :: Test
 test_loadVaultInfo = TestCase $ do
     let mock = mockWithVaultDir
     let expected = mockVaultInfo
-    let v = evalState V.loadVaultInfo mock
-    assertEqual "loadVaultInfo" expected v
+    let vi = evalState V.loadVaultInfo mock
+    assertEqual "loadVaultInfo" expected vi
 
 test_isAnyVaultActive :: Test
 test_isAnyVaultActive = TestCase $ do
@@ -81,16 +81,16 @@ test_unsetActiveVault = TestCase $ do
 test_getPartitionLocation :: Test
 test_getPartitionLocation = TestCase $ do
     let vi = mockVaultInfo
+    V.LocalPartition @=? V.getPartitionLocation vi "local.vault"
     V.UnknownPartition @=? V.getPartitionLocation vi ""
     V.UnknownPartition @=? V.getPartitionLocation vi ".vault"
     V.UnknownPartition @=? V.getPartitionLocation vi ".vau"
     V.UnknownPartition @=? V.getPartitionLocation vi "local.vau"
-    V.LocalPartition @=? V.getPartitionLocation vi "local.vault"
     V.UnknownPartition @=? V.getPartitionLocation vi "rem.vault"
     V.UnknownPartition @=? V.getPartitionLocation vi "remote.vault"
+    V.UnknownPartition @=? V.getPartitionLocation vi "remoteC.vault"
     V.RemotePartition @=? V.getPartitionLocation vi "remoteA.vault"
     V.RemotePartition @=? V.getPartitionLocation vi "remoteB.vault"
-    V.UnknownPartition @=? V.getPartitionLocation vi "remoteC.vault"
 
 emptyMock :: Mock
 emptyMock = Mock {

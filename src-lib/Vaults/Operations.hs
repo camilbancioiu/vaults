@@ -2,6 +2,7 @@ module Vaults.Operations where
 
 import System.Directory
 import Control.Monad.Except
+import Data.Maybe
 
 import Vaults.Base
 import Vaults.Substrate
@@ -14,7 +15,16 @@ type OpResult = Either String ()
 openVault :: Substrate m => P.OpenVault -> m (Either String ())
 openVault params = runExceptT $ do
     canOpenVault params
-    v <- lift $ loadVaultInfo
+
+    let mfname = P.partitionFilename params
+    when (isNothing mfname) (throwError "partition filename is required")
+    let fname = case mfname of
+         Nothing -> ""
+         Just fname -> fname
+
+    vi <- lift $ loadVaultInfo
+    let partLoc = getPartitionLocation vi fname
+    when (partLoc == UnknownPartition) (throwError "unknown vault partition")
     return ()
 
 canOpenVault :: Substrate m => P.OpenVault -> ExceptT String m ()
