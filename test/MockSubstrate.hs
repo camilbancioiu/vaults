@@ -33,10 +33,10 @@ instance Substrate (State Mock) where
     unsetEnvSub  = mock_unsetEnvSub
 
 mock_readFileSub :: FilePath -> State Mock String
-mock_readFileSub ".vault/name" = return (V.name mockVault)
-mock_readFileSub ".vault/local" = return (V.localname mockVault)
-mock_readFileSub ".vault/remotes" = return (unlines $ V.remotes mockVault)
-mock_readFileSub ".vault/remoteStore" = return (V.remoteStore mockVault)
+mock_readFileSub ".vault/name" = return (V.name mockVaultInfo)
+mock_readFileSub ".vault/local" = return (V.localname mockVaultInfo)
+mock_readFileSub ".vault/remotes" = return (unlines $ V.remotes mockVaultInfo)
+mock_readFileSub ".vault/remoteStore" = return (V.remoteStore mockVaultInfo)
 
 mock_dirExistsSub :: FilePath -> State Mock Bool
 mock_dirExistsSub ".vault" = do
@@ -55,7 +55,7 @@ mock_setEnvSub key val = modify (addMockEnvVar key val)
 mock_unsetEnvSub :: String -> State Mock ()
 mock_unsetEnvSub key = modify (removeMockEnvVar key)
 
-mockVault = V.Vault {
+mockVaultInfo = V.VaultInfo {
     V.name = "mockVault",
     V.localname = "local",
     V.remotes = ["remoteA", "remoteB"],

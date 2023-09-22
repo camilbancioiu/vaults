@@ -32,7 +32,7 @@ test_isVaultDir = TestCase $ do
 test_loadVault :: Test
 test_loadVault = TestCase $ do
     let mock = mockWithVaultDir
-    let expected = V.Vault {
+    let expected = V.VaultInfo {
         V.name = "mockVault",
         V.localname = "local",
         V.remotes = ["remoteA", "remoteB"],

@@ -7,7 +7,7 @@ import Substrate
 activeVaultEnvName :: String
 activeVaultEnvName = "ACTIVE_VAULT"
 
-data Vault = Vault {
+data VaultInfo = VaultInfo {
     name :: String,
     localname :: String,
     remotes :: [String],
@@ -23,14 +23,14 @@ data VaultRuntimeInfo = VaultRuntimeInfo {
     isLocalPartition :: Bool
 } deriving (Eq, Show, Read)
 
-loadVault :: Substrate m => m Vault
+loadVault :: Substrate m => m VaultInfo
 loadVault = do
     vname <- readFileSub ".vault/name"
     vlocalname <- readFileSub ".vault/local"
     vremotes <- readFileSub ".vault/remotes"
     vremoteStore <- readFileSub ".vault/remoteStore"
 
-    return Vault {
+    return VaultInfo {
         name = vname,
         localname = vlocalname,
         remotes = lines vremotes,
