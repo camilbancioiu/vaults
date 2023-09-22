@@ -10,22 +10,21 @@ import qualified Vaults.OperationParams as P
 type OpResult = Either String ()
 
 openVault :: Substrate m => P.OpenVault -> m (Either String ())
-openVault params = canOpenVault params
+openVault params = do
+    runExceptT (canOpenVault params)
 
-canOpenVault :: Substrate m => P.OpenVault -> m (Either String ())
+
+
+canOpenVault :: Substrate m => P.OpenVault -> ExceptT String m ()
 canOpenVault _ =
-    runExceptT (checkIsVaultDir >> checkIsAnyVaultActive)
+    checkIsVaultDir >> checkIsAnyVaultActive
 
 checkIsVaultDir :: Substrate m => ExceptT String m ()
 checkIsVaultDir = do
     isV <- lift $ isVaultDir
-    if isV /= True
-       then (throwError "non-vault folder")
-       else return ()
+    unless isV (throwError "non-vault folder")
 
 checkIsAnyVaultActive :: Substrate m => ExceptT String m ()
 checkIsAnyVaultActive = do
     isVA <- lift $ isAnyVaultActive
-    if isVA == True
-       then (throwError "vault already open")
-       else return ()
+    when isVA (throwError "vault already open")

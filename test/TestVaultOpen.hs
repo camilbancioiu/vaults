@@ -41,14 +41,14 @@ test_prerequisites = TestList [
     TestLabel "open in non-vault folder fails" $
     TestCase $ do
         let mock = emptyMock
-        let params = P.OpenVault (Just "local.vault") False
+        let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
         assertOpError "non-vault folder" result,
 
     TestLabel "open when vault already open fails" $
     TestCase $ do
         let mock = mockWithActiveVault
-        let params = P.OpenVault (Just "local.vault") False
+        let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
         assertOpError "vault already open" result
     ]
@@ -61,6 +61,12 @@ assertOpError :: String -> (OpResult, Mock) -> IO ()
 assertOpError err (opResult, mock) = do
     assertEqual err (Left err) opResult
     assertEqual "no exec calls" 0 (nExecs mock)
+
+mkOpenVault :: String -> P.OpenVault
+mkOpenVault fname = P.OpenVault {
+    P.partitionFilename = Just fname,
+    P.isForcedOpening = False
+}
 
 emptyMock :: Mock
 emptyMock = Mock {
