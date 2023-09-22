@@ -38,8 +38,8 @@ test_loadVault = TestCase $ do
         V.remotes = ["remoteA", "remoteB"],
         V.remoteStore = "ssh://remoteStore"
         }
-    let v = evalState V.loadVault mock
-    assertEqual "loadVault" expected v
+    let v = evalState V.loadVaultInfo mock
+    assertEqual "loadVaultInfo" expected v
 
 test_isAnyVaultActive :: Test
 test_isAnyVaultActive = TestCase $ do

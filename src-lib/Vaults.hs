@@ -23,8 +23,8 @@ data VaultRuntimeInfo = VaultRuntimeInfo {
     isLocalPartition :: Bool
 } deriving (Eq, Show, Read)
 
-loadVault :: Substrate m => m VaultInfo
-loadVault = do
+loadVaultInfo :: Substrate m => m VaultInfo
+loadVaultInfo = do
     vname <- readFileSub ".vault/name"
     vlocalname <- readFileSub ".vault/local"
     vremotes <- readFileSub ".vault/remotes"
