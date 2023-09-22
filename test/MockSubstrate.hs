@@ -2,13 +2,15 @@
 
 module MockSubstrate where
 
+import System.Exit
 import Control.Monad.State
-import Substrate
-import qualified Vaults as V
+import Vaults.Substrate
+import qualified Vaults.Base as V
 
 data Mock = Mock {
     hasVaultDir :: Bool,
-    envVars :: [(String, String)]
+    envVars :: [(String, String)],
+    nExecs :: Int
 }
 
 addMockEnvVar :: String -> String -> Mock -> Mock
@@ -25,12 +27,19 @@ removeMockEnvVar key mock =
     }
     where newEnvVars = filter ((key /=) . fst) (envVars mock)
 
+incExecs :: Mock -> Mock
+incExecs mock =
+    mock {
+        nExecs = (nExecs mock) + 1
+    }
+
 instance Substrate (State Mock) where
     readFileSub  = mock_readFileSub
     dirExistsSub = mock_dirExistsSub
     lookupEnvSub = mock_lookupEnvSub
     setEnvSub    = mock_setEnvSub
     unsetEnvSub  = mock_unsetEnvSub
+    execSub      = mock_execSub
 
 mock_readFileSub :: FilePath -> State Mock String
 mock_readFileSub ".vault/name" = return (V.name mockVaultInfo)
@@ -55,6 +64,11 @@ mock_setEnvSub key val = modify (addMockEnvVar key val)
 mock_unsetEnvSub :: String -> State Mock ()
 mock_unsetEnvSub key = modify (removeMockEnvVar key)
 
+mock_execSub :: String -> [String] -> String -> State Mock ExecResult
+mock_execSub _ _ _ = do
+    modify incExecs
+    return $ execResult (ExitSuccess, "", "")
+
 mockVaultInfo = V.VaultInfo {
     V.name = "mockVault",
     V.localname = "local",
@@ -67,6 +81,6 @@ mockVaultRuntimeInfo = V.VaultRuntimeInfo {
     V.loopDev = "/dev/loop9",
     V.mapperDev = "/dev/dm-2",
     V.mountedRepo = "/run/media/user/localhostname/mockVault",
-    V.vaultFile = "local.vault",
-    V.isLocalPartition = True
+    V.partition = "local.vault",
+    V.partitionLocation = V.LocalPartition
 }

@@ -1,4 +1,4 @@
-module Substrate where
+module Vaults.Substrate where
 
 import System.Directory
 import System.Environment

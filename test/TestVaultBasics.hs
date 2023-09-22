@@ -5,8 +5,8 @@ import Test.HUnit
 import Data.Maybe
 import Control.Monad.State
 
-import qualified Vaults as V
-import Substrate
+import qualified Vaults.Base as V
+import Vaults.Substrate
 import MockSubstrate
 
 allTests :: Test

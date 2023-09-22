@@ -16,12 +16,13 @@ category:            Data
 extra-source-files:  CHANGELOG.md
 
 library
-  exposed-modules:     Vaults, Substrate
+  exposed-modules:     Vaults.Base, Vaults.Substrate,
+                       Vaults.OperationParams, Vaults.Operations
   -- other-modules:
   -- other-extensions:
   hs-source-dirs:      src-lib
   default-language:    Haskell2010
-  build-depends:       base, directory, process
+  build-depends:       base, directory, process, mtl, extra
 
 executable vaults
   main-is:             Main.hs

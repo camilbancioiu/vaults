@@ -1,11 +1,15 @@
-module Vaults where
+module Vaults.Base where
 
 import Data.Maybe
-
-import Substrate
+import Data.List.Extra
+import Vaults.Substrate
 
 activeVaultEnvName :: String
 activeVaultEnvName = "ACTIVE_VAULT"
+
+data PartitionLocation = LocalPartition
+                       | RemotePartition
+                       deriving (Eq, Show, Read)
 
 data VaultInfo = VaultInfo {
     name :: String,
@@ -19,8 +23,8 @@ data VaultRuntimeInfo = VaultRuntimeInfo {
     loopDev :: FilePath,
     mapperDev :: FilePath,
     mountedRepo :: FilePath,
-    vaultFile :: FilePath,
-    isLocalPartition :: Bool
+    partition :: FilePath,
+    partitionLocation :: PartitionLocation
 } deriving (Eq, Show, Read)
 
 loadVaultInfo :: Substrate m => m VaultInfo

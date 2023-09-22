@@ -1,18 +1,17 @@
 module TestVaultOpen where
 
 import Test.HUnit
+import Control.Monad.State
+
 import MockSubstrate
 
+import qualified Vaults.Base as V
+import Vaults.Operations (openVault, OpResult)
+import qualified Vaults.OperationParams as P
+
 -- TODO test scenarios:
--- fail opening in non-vault folder
--- -- assert failure exit code
--- -- assert no calls to udisksctl
--- fail opening when any vault already open
--- -- assert failure exit code
--- -- assert no calls to udisksctl
---
 -- fail when loop-setup fails
--- -- assert failure exit code
+-- -- assert returned error
 -- -- assert no other calls to udisksctl
 -- fail when unlock fails
 -- -- e.g. wrong passphrase
@@ -42,15 +41,37 @@ test_prerequisites = TestList [
     TestLabel "open in non-vault folder fails" $
     TestCase $ do
         let mock = emptyMock
-        assertFailure "test not implemented"
+        let params = P.OpenVault (Just "local.vault") False
+        let result = runState (openVault params) mock
+        assertOpError "non-vault folder" result,
+
+    TestLabel "open when vault already open fails" $
+    TestCase $ do
+        let mock = mockWithActiveVault
+        let params = P.OpenVault (Just "local.vault") False
+        let result = runState (openVault params) mock
+        assertOpError "vault already open" result
     ]
 
-test_loopSetupFails :: Test
-test_loopSetupFails = TestCase $ do
-    assertFailure "test not implemented"
+-- test_loopSetupFails :: Test
+-- test_loopSetupFails = TestCase $ do
+--     assertFailure "test not implemented"
+
+assertOpError :: String -> (OpResult, Mock) -> IO ()
+assertOpError err (opResult, mock) = do
+    assertEqual err (Left err) opResult
+    assertEqual "no exec calls" 0 (nExecs mock)
 
 emptyMock :: Mock
 emptyMock = Mock {
     hasVaultDir = False,
-    envVars = []
+    envVars = [],
+    nExecs = 0
     }
+
+mockWithActiveVault :: Mock
+mockWithActiveVault = Mock {
+    hasVaultDir = True,
+    envVars = [(V.activeVaultEnvName, "some_vault")],
+    nExecs = 0
+}
