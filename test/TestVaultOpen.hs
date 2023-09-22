@@ -42,7 +42,7 @@ test_prerequisites = TestList [
     TestLabel "open in non-vault folder fails" $
     TestCase $ do
         let mock = emptyMock
-        assertFailure "test incomplete"
+        assertFailure "test not implemented"
     ]
 
 test_loopSetupFails :: Test
