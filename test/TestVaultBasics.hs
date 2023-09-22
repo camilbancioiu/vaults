@@ -12,7 +12,7 @@ import MockSubstrate
 allTests :: Test
 allTests = TestList [
     test_isVaultDir,
-    test_loadVault,
+    test_loadVaultInfo,
     test_isAnyVaultActive,
     test_getActiveVault,
     test_setActiveVault,
@@ -29,8 +29,8 @@ test_isVaultDir = TestCase $ do
     let isV = evalState V.isVaultDir mock
     assertEqual "isVaultDir" True isV
 
-test_loadVault :: Test
-test_loadVault = TestCase $ do
+test_loadVaultInfo :: Test
+test_loadVaultInfo = TestCase $ do
     let mock = mockWithVaultDir
     let expected = V.VaultInfo {
         V.name = "mockVault",
