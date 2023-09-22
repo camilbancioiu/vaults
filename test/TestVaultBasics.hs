@@ -16,7 +16,8 @@ allTests = TestList [
     test_isAnyVaultActive,
     test_getActiveVault,
     test_setActiveVault,
-    test_unsetActiveVault
+    test_unsetActiveVault,
+    test_getPartitionLocation
     ]
 
 test_isVaultDir :: Test
@@ -32,12 +33,7 @@ test_isVaultDir = TestCase $ do
 test_loadVaultInfo :: Test
 test_loadVaultInfo = TestCase $ do
     let mock = mockWithVaultDir
-    let expected = V.VaultInfo {
-        V.name = "mockVault",
-        V.localname = "local",
-        V.remotes = ["remoteA", "remoteB"],
-        V.remoteStore = "ssh://remoteStore"
-        }
+    let expected = mockVaultInfo
     let v = evalState V.loadVaultInfo mock
     assertEqual "loadVaultInfo" expected v
 
@@ -82,10 +78,25 @@ test_unsetActiveVault = TestCase $ do
     let active = evalState (V.unsetActiveVault >> V.isAnyVaultActive) mock
     assertBool "vault is unset" (not active)
 
+test_getPartitionLocation :: Test
+test_getPartitionLocation = TestCase $ do
+    let vi = mockVaultInfo
+    V.UnknownPartition @=? V.getPartitionLocation vi ""
+    V.UnknownPartition @=? V.getPartitionLocation vi ".vault"
+    V.UnknownPartition @=? V.getPartitionLocation vi ".vau"
+    V.UnknownPartition @=? V.getPartitionLocation vi "local.vau"
+    V.LocalPartition @=? V.getPartitionLocation vi "local.vault"
+    V.UnknownPartition @=? V.getPartitionLocation vi "rem.vault"
+    V.UnknownPartition @=? V.getPartitionLocation vi "remote.vault"
+    V.RemotePartition @=? V.getPartitionLocation vi "remoteA.vault"
+    V.RemotePartition @=? V.getPartitionLocation vi "remoteB.vault"
+    V.UnknownPartition @=? V.getPartitionLocation vi "remoteC.vault"
+
 emptyMock :: Mock
 emptyMock = Mock {
     hasVaultDir = False,
-    envVars = []
+    envVars = [],
+    nExecs = 0
     }
 
 mockWithVaultDir :: Mock
@@ -96,5 +107,6 @@ mockWithVaultDir = emptyMock {
 mockWithEnvVar :: (String, String) -> Mock
 mockWithEnvVar var = Mock {
     hasVaultDir = False,
-    envVars = [var]
+    envVars = [var],
+    nExecs = 0
 }

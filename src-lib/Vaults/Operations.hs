@@ -9,11 +9,13 @@ import qualified Vaults.OperationParams as P
 
 type OpResult = Either String ()
 
+-- TODO validate loaded VaultInfo
+-- e.g. for empty name, empty localname etc
 openVault :: Substrate m => P.OpenVault -> m (Either String ())
-openVault params = do
-    runExceptT (canOpenVault params)
-
-
+openVault params = runExceptT $ do
+    canOpenVault params
+    v <- lift $ loadVaultInfo
+    return ()
 
 canOpenVault :: Substrate m => P.OpenVault -> ExceptT String m ()
 canOpenVault _ =

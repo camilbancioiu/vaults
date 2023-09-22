@@ -9,6 +9,7 @@ activeVaultEnvName = "ACTIVE_VAULT"
 
 data PartitionLocation = LocalPartition
                        | RemotePartition
+                       | UnknownPartition
                        deriving (Eq, Show, Read)
 
 data VaultInfo = VaultInfo {
@@ -64,3 +65,15 @@ isAnyVaultActive :: Substrate m  => m Bool
 isAnyVaultActive = do
     maybeEnv <- lookupEnvSub activeVaultEnvName
     return (isJust maybeEnv)
+
+-- TODO refactor this
+getPartitionLocation :: VaultInfo -> FilePath -> PartitionLocation
+getPartitionLocation vi fname =
+    case stripSuffix ".vault" fname of
+         Nothing -> UnknownPartition
+         Just "" -> UnknownPartition
+         Just p -> if p == (localname vi)
+                      then LocalPartition
+                      else if elem p (remotes vi)
+                              then RemotePartition
+                              else UnknownPartition
