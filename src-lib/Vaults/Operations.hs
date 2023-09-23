@@ -34,9 +34,7 @@ openVault params = runExceptT $ do
 createLoopDevice :: Substrate m => FilePath -> ExceptT String m ()
 createLoopDevice fname = do
     loopSetup <- lift $ execSub "udisksctl" ["loop-setup", "-f", fname] ""
-    unless
-        (exitCode loopSetup /= ExitSuccess)
-        (throwError $ "loop-setup failed: " ++ (errorOutput loopSetup))
+    unless (exitCode loopSetup /= ExitSuccess) (throwError "loop-setup failed")
     return ()
 
 canOpenVault :: Substrate m => P.OpenVault -> ExceptT String m ()
