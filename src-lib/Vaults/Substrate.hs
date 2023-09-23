@@ -11,6 +11,7 @@ data ExecResult = ExecResult {
     errorOutput :: String
     }
 
+-- TODO break tuple into individual components
 execResult (xc, o, eo) = ExecResult {
     exitCode = xc,
     output = o,
