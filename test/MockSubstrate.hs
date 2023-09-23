@@ -64,7 +64,7 @@ mock_setEnvSub key val = modify (addMockEnvVar key val)
 mock_unsetEnvSub :: String -> State Mock ()
 mock_unsetEnvSub key = modify (removeMockEnvVar key)
 
--- TODO 
+-- TODO return a pre-configured value
 mock_execSub :: String -> [String] -> String -> State Mock ExecResult
 mock_execSub _ _ _ = do
     modify incExecs
