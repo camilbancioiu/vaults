@@ -9,7 +9,7 @@ import Vaults.Base
 import Vaults.Substrate
 
 data ParamsOpenVault = ParamsOpenVault {
-    partitionFilename :: Maybe FilePath,
+    partitionFilename :: FilePath,
     isForcedOpening :: Bool
 } deriving (Eq, Show)
 
@@ -19,11 +19,8 @@ openVault :: Substrate m => ParamsOpenVault -> m (Either String ())
 openVault params = runExceptT $ do
     canOpenVault params
 
-    let mfname = partitionFilename params
-    when (isNothing mfname) (throwError "partition filename is required")
-    let fname = case mfname of
-         Nothing -> ""
-         Just fname -> fname
+    let fname = partitionFilename params
+    when (length fname == 0) (throwError "partition filename is required")
 
     vi <- lift $ loadVaultInfo
     let partLoc = getPartitionLocation vi fname

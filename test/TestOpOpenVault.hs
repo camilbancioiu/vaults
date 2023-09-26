@@ -61,7 +61,7 @@ test_prerequisites = TestList [
     TestCase $ do
         let mock = mockWithVault
         let params = ParamsOpenVault {
-                partitionFilename = Nothing,
+                partitionFilename = "",
                 isForcedOpening = False
             }
         let result = runState (openVault params) mock
@@ -112,7 +112,7 @@ assertNoExecCalls (_, mock) =
 
 mkOpenVault :: String -> ParamsOpenVault
 mkOpenVault fname = ParamsOpenVault {
-    partitionFilename = Just fname,
+    partitionFilename = fname,
     isForcedOpening = False
 }
 
