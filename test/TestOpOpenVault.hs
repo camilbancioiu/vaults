@@ -89,21 +89,20 @@ mkOpenVault fname = ParamsOpenVault {
 
 emptyMock :: Mock
 emptyMock = Mock {
-    hasVaultDir = False,
-    envVars = [],
-    nExecs = 0
+      hasVaultDir = False
+    , envVars = []
+    , nExecs = 0
+    , execRecorded = []
+    , execResults = []
     }
 
 mockWithVault :: Mock
-mockWithVault = Mock {
-    hasVaultDir = True,
-    envVars = [],
-    nExecs = 0
+mockWithVault = emptyMock {
+      hasVaultDir = True
 }
 
 mockWithActiveVault :: Mock
-mockWithActiveVault = Mock {
-    hasVaultDir = True,
-    envVars = [(V.activeVaultEnvName, "some_vault")],
-    nExecs = 0
+mockWithActiveVault = mockWithVault {
+      hasVaultDir = True
+    , envVars = [(V.activeVaultEnvName, "some_vault")]
 }

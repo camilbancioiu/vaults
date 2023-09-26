@@ -11,7 +11,7 @@ data Mock = Mock {
     hasVaultDir :: Bool,
     envVars :: [(String, String)],
     nExecs :: Int,
-    execRecorded :: [(String, [String]),
+    execRecorded :: [(String, [String])],
     execResults :: [ExecResult]
 }
 
@@ -40,17 +40,17 @@ recordExec execCom mock =
     mock {
         execRecorded = newExecRecorded
     }
-    where newExecRecorded = (execRecorded mock) ++ execCom
+    where newExecRecorded = (execRecorded mock) ++ [execCom]
 
 addMockExecResult :: ExecResult -> Mock -> Mock
 addMockExecResult er mock =
     mock {
         execResults = newExecResults
     }
-    where newExecResults = (execResults mock) ++ er
+    where newExecResults = (execResults mock) ++ [er]
 
 dropLastMockExecResult :: Mock -> Mock
-dropLastMockExecResult =
+dropLastMockExecResult mock =
     mock {
         execResults = init (execResults mock)
     }

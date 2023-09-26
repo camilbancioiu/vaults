@@ -94,9 +94,11 @@ test_getPartitionLocation = TestCase $ do
 
 emptyMock :: Mock
 emptyMock = Mock {
-    hasVaultDir = False,
-    envVars = [],
-    nExecs = 0
+      hasVaultDir = False
+    , envVars = []
+    , nExecs = 0
+    , execRecorded = []
+    , execResults = []
     }
 
 mockWithVaultDir :: Mock
@@ -106,7 +108,9 @@ mockWithVaultDir = emptyMock {
 
 mockWithEnvVar :: (String, String) -> Mock
 mockWithEnvVar var = Mock {
-    hasVaultDir = False,
-    envVars = [var],
-    nExecs = 0
+      hasVaultDir = False
+    , envVars = [var]
+    , nExecs = 0
+    , execRecorded = []
+    , execResults = []
 }
