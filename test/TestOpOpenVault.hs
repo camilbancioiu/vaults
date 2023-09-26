@@ -2,10 +2,12 @@ module TestOpOpenVault where
 
 import Test.HUnit
 import Control.Monad.State
+import System.Exit
 
 import MockSubstrate
 
 import qualified Vaults.Base as V
+import qualified Vaults.Substrate as Sub
 import Vaults.OpOpenVault
 
 -- TODO test scenarios:
@@ -70,7 +72,15 @@ test_createLoopDevice :: Test
 test_createLoopDevice = TestList [
     TestLabel "udisksctl loop-setup error fails" $
     TestCase $ do
-        assertFailure "test not implemented"
+        let mock = addMockExecResult er mockWithVault
+                   where er = Sub.ExecResult {
+                         Sub.exitCode = ExitFailure 16
+                       , Sub.output = ""
+                       , Sub.errorOutput = "didnt work"
+                   }
+
+        let result = runState (createLoopDevice "/what") mock
+        assertOpError "loop-setup failed" result
     ]
 
 assertOpError :: String -> (V.OpResult, Mock) -> IO ()
