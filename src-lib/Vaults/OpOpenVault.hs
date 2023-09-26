@@ -1,4 +1,4 @@
-module Vaults.Operations where
+module Vaults.OpOpenVault where
 
 import System.Exit
 import System.Directory
@@ -7,17 +7,19 @@ import Data.Maybe
 
 import Vaults.Base
 import Vaults.Substrate
-import qualified Vaults.OperationParams as P
 
-type OpResult = Either String ()
+data ParamsOpenVault = ParamsOpenVault {
+    partitionFilename :: Maybe FilePath,
+    isForcedOpening :: Bool
+} deriving (Eq, Show)
 
 -- TODO validate loaded VaultInfo
 -- e.g. for empty name, empty localname etc
-openVault :: Substrate m => P.OpenVault -> m (Either String ())
+openVault :: Substrate m => ParamsOpenVault -> m (Either String ())
 openVault params = runExceptT $ do
     canOpenVault params
 
-    let mfname = P.partitionFilename params
+    let mfname = partitionFilename params
     when (isNothing mfname) (throwError "partition filename is required")
     let fname = case mfname of
          Nothing -> ""
@@ -37,7 +39,7 @@ createLoopDevice fname = do
     unless (exitCode loopSetup /= ExitSuccess) (throwError "loop-setup failed")
     return ()
 
-canOpenVault :: Substrate m => P.OpenVault -> ExceptT String m ()
+canOpenVault :: Substrate m => ParamsOpenVault -> ExceptT String m ()
 canOpenVault _ =
     checkIsVaultDir >> checkIsAnyVaultActive
 

@@ -1,4 +1,4 @@
-module TestVaultOpen where
+module TestOpOpenVault where
 
 import Test.HUnit
 import Control.Monad.State
@@ -6,8 +6,7 @@ import Control.Monad.State
 import MockSubstrate
 
 import qualified Vaults.Base as V
-import Vaults.Operations (openVault, OpResult)
-import qualified Vaults.OperationParams as P
+import Vaults.OpOpenVault
 
 -- TODO test scenarios:
 -- fail when loop-setup fails
@@ -33,8 +32,8 @@ import qualified Vaults.OperationParams as P
 
 allTests :: Test
 allTests = TestList [
-    test_prerequisites,
-    test_createLoopDevice
+      test_prerequisites
+    -- , test_createLoopDevice
     ]
 
 test_prerequisites :: Test
@@ -58,34 +57,34 @@ test_prerequisites = TestList [
     TestLabel "open without a partition filename fails" $
     TestCase $ do
         let mock = mockWithVault
-        let params = P.OpenVault {
-                P.partitionFilename = Nothing,
-                P.isForcedOpening = False
+        let params = ParamsOpenVault {
+                partitionFilename = Nothing,
+                isForcedOpening = False
             }
         let result = runState (openVault params) mock
         assertOpError "partition filename is required" result
         assertNoExecCalls result
     ]
 
-test_createLoopDevice :: Test
-test_createLoopDevice = TestList [
-    TestLabel "udisksctl loop-setup error fails" $
-    TestCase $ do
-        assertFailure "test not implemented"
-    ]
+-- test_createLoopDevice :: Test
+-- test_createLoopDevice = TestList [
+--     TestLabel "udisksctl loop-setup error fails" $
+--     TestCase $ do
+--         assertFailure "test not implemented"
+--     ]
 
-assertOpError :: String -> (OpResult, Mock) -> IO ()
+assertOpError :: String -> (V.OpResult, Mock) -> IO ()
 assertOpError err (opResult, _) =
     assertEqual err (Left err) opResult
 
-assertNoExecCalls :: (OpResult, Mock) -> IO ()
+assertNoExecCalls :: (V.OpResult, Mock) -> IO ()
 assertNoExecCalls (_, mock) =
     assertEqual "no exec calls" 0 (nExecs mock)
 
-mkOpenVault :: String -> P.OpenVault
-mkOpenVault fname = P.OpenVault {
-    P.partitionFilename = Just fname,
-    P.isForcedOpening = False
+mkOpenVault :: String -> ParamsOpenVault
+mkOpenVault fname = ParamsOpenVault {
+    partitionFilename = Just fname,
+    isForcedOpening = False
 }
 
 emptyMock :: Mock

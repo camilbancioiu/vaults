@@ -12,6 +12,8 @@ data PartitionLocation = LocalPartition
                        | UnknownPartition
                        deriving (Eq, Show, Read)
 
+type OpResult = Either String ()
+
 data VaultInfo = VaultInfo {
     name :: String,
     localname :: String,

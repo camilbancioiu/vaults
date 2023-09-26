@@ -1,4 +1,4 @@
-module TestVaultBasics where
+module TestBase where
 
 import Test.HUnit
 
