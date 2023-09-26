@@ -11,13 +11,13 @@ import MockSubstrate
 
 allTests :: Test
 allTests = TestList [
-    test_isVaultDir,
-    test_loadVaultInfo,
-    test_isAnyVaultActive,
-    test_getActiveVault,
-    test_setActiveVault,
-    test_unsetActiveVault,
-    test_getPartitionLocation
+      test_isVaultDir
+    , test_loadVaultInfo
+    , test_isAnyVaultActive
+    , test_getActiveVault
+    , test_setActiveVault
+    , test_unsetActiveVault
+    , test_getPartitionLocation
     ]
 
 test_isVaultDir :: Test
