@@ -69,7 +69,9 @@ test_prerequisites = TestList [
             }
         let result = runState (openVault params) mock
         assertOpError "partition filename is required" result
-        assertNoExecCalls result,
+        assertNoExecCalls result
+
+    ]
 
 
 test_createLoopDevice :: Test
@@ -109,14 +111,15 @@ test_openVault = TestList [
 
     TestLabel "unlock error fails opening and deletes loop device" $
     TestCase $ do
-        let mock = addMockExecResult er mockWithVault
-                   where er = Sub.ExecResult {
+        let mock = mockWithVault
+        let mock = addMockExecResult ser mock
+                   where ser = Sub.ExecResult {
                          Sub.exitCode = ExitSuccess
                        , Sub.output = ""
                        , Sub.errorOutput = ""
                    }
-        let mock = addMockExecResult er mockWithVault
-                   where er = Sub.ExecResult {
+        let mock = addMockExecResult fer mock
+                   where fer = Sub.ExecResult {
                          Sub.exitCode = ExitFailure 16
                        , Sub.output = ""
                        , Sub.errorOutput = "didnt work"
@@ -127,7 +130,10 @@ test_openVault = TestList [
         assertOpError "unlock failed" result
         let mock = snd result
         assertEqual "loop-setup, unlock, loop-delete were called"
-            [("udisksctl", ["loop-setup", "-f", "local.vault"])]
+            [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
+            , ("udisksctl", ["unlock", "-b", "/dev/loopN"])
+            , ("udisksctl", ["loop-delete", "-b", "/dev/loopN"])
+            ]
             (execRecorded mock)
     ]
 
