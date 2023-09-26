@@ -33,7 +33,7 @@ import Vaults.OpOpenVault
 allTests :: Test
 allTests = TestList [
       test_prerequisites
-    -- , test_createLoopDevice
+    , test_createLoopDevice
     ]
 
 test_prerequisites :: Test
@@ -66,12 +66,12 @@ test_prerequisites = TestList [
         assertNoExecCalls result
     ]
 
--- test_createLoopDevice :: Test
--- test_createLoopDevice = TestList [
---     TestLabel "udisksctl loop-setup error fails" $
---     TestCase $ do
---         assertFailure "test not implemented"
---     ]
+test_createLoopDevice :: Test
+test_createLoopDevice = TestList [
+    TestLabel "udisksctl loop-setup error fails" $
+    TestCase $ do
+        assertFailure "test not implemented"
+    ]
 
 assertOpError :: String -> (V.OpResult, Mock) -> IO ()
 assertOpError err (opResult, _) =

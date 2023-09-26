@@ -10,7 +10,9 @@ import qualified Vaults.Base as V
 data Mock = Mock {
     hasVaultDir :: Bool,
     envVars :: [(String, String)],
-    nExecs :: Int
+    nExecs :: Int,
+    execRecorded :: [(String, [String]),
+    execResults :: [ExecResult]
 }
 
 addMockEnvVar :: String -> String -> Mock -> Mock
@@ -31,6 +33,26 @@ incExecs :: Mock -> Mock
 incExecs mock =
     mock {
         nExecs = (nExecs mock) + 1
+    }
+
+recordExec :: (String, [String]) -> Mock -> Mock
+recordExec execCom mock =
+    mock {
+        execRecorded = newExecRecorded
+    }
+    where newExecRecorded = (execRecorded mock) ++ execCom
+
+addMockExecResult :: ExecResult -> Mock -> Mock
+addMockExecResult er mock =
+    mock {
+        execResults = newExecResults
+    }
+    where newExecResults = (execResults mock) ++ er
+
+dropLastMockExecResult :: Mock -> Mock
+dropLastMockExecResult =
+    mock {
+        execResults = init (execResults mock)
     }
 
 instance Substrate (State Mock) where
@@ -64,11 +86,12 @@ mock_setEnvSub key val = modify (addMockEnvVar key val)
 mock_unsetEnvSub :: String -> State Mock ()
 mock_unsetEnvSub key = modify (removeMockEnvVar key)
 
--- TODO return a pre-configured value
 mock_execSub :: String -> [String] -> String -> State Mock ExecResult
-mock_execSub _ _ _ = do
+mock_execSub executable params _ = do
+    modify $ recordExec (executable, params)
     modify incExecs
-    return $ execResult (ExitSuccess, "", "")
+    er <- gets $ last . execResults
+    return er
 
 mockVaultInfo = V.VaultInfo {
     V.name = "mockVault",
