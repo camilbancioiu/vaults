@@ -2,6 +2,7 @@ module TestOpOpenVault where
 
 import Test.HUnit
 import Control.Monad.State
+import Control.Monad.Except
 import System.Exit
 
 import MockSubstrate
@@ -65,7 +66,25 @@ test_prerequisites = TestList [
             }
         let result = runState (openVault params) mock
         assertOpError "partition filename is required" result
-        assertNoExecCalls result
+        assertNoExecCalls result,
+
+    TestLabel "loop-setup error fails opening" $
+    TestCase $ do
+        let mock = addMockExecResult er mockWithVault
+                   where er = Sub.ExecResult {
+                         Sub.exitCode = ExitFailure 16
+                       , Sub.output = ""
+                       , Sub.errorOutput = "didnt work"
+                   }
+
+        let params = mkOpenVault "local.vault"
+
+        let result = runState (openVault params) mock
+        assertOpError "loop-setup failed" result
+        let mock = snd result
+        assertEqual "only loop-setup was called"
+            [("udisksctl", ["loop-setup", "-f", "local.vault"])]
+            (execRecorded mock)
     ]
 
 test_createLoopDevice :: Test
@@ -79,7 +98,7 @@ test_createLoopDevice = TestList [
                        , Sub.errorOutput = "didnt work"
                    }
 
-        let result = runState (createLoopDevice "/what") mock
+        let result = runState (runExceptT $ createLoopDevice "/what") mock
         assertOpError "loop-setup failed" result
     ]
 

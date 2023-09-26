@@ -29,12 +29,12 @@ openVault params = runExceptT $ do
     let partLoc = getPartitionLocation vi fname
     when (partLoc == UnknownPartition) (throwError "unknown vault partition")
 
-    lift $ createLoopDevice fname
+    createLoopDevice fname
 
     return ()
 
-createLoopDevice :: Substrate m => FilePath -> m (Either String ())
-createLoopDevice fname = runExceptT $ do
+createLoopDevice :: Substrate m => FilePath -> ExceptT String m ()
+createLoopDevice fname = do
     loopSetup <- lift $ execSub "udisksctl" ["loop-setup", "-f", fname] ""
     when (exitCode loopSetup /= ExitSuccess) (throwError "loop-setup failed")
     return ()
