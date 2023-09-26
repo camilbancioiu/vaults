@@ -33,6 +33,7 @@ class Monad m => Substrate m where
     -- normal process.
     execSub      :: String -> [String] -> String -> m ExecResult
 
+-- TODO move this in src-exe
 instance Substrate IO where
     readFileSub  = Prelude.readFile
     dirExistsSub = System.Directory.doesDirectoryExist
