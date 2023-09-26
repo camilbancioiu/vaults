@@ -44,14 +44,16 @@ test_prerequisites = TestList [
         let mock = emptyMock
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
-        assertOpError "non-vault folder" result,
+        assertOpError "non-vault folder" result
+        assertNoExecCalls result,
 
     TestLabel "open when vault already open fails" $
     TestCase $ do
         let mock = mockWithActiveVault
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
-        assertOpError "vault already open" result,
+        assertOpError "vault already open" result
+        assertNoExecCalls result,
 
     TestLabel "open without a partition filename fails" $
     TestCase $ do
@@ -62,18 +64,22 @@ test_prerequisites = TestList [
             }
         let result = runState (openVault params) mock
         assertOpError "partition filename is required" result
+        assertNoExecCalls result
     ]
 
 test_createLoopDevice :: Test
 test_createLoopDevice = TestList [
-    TestLabel "udisksctl loop-setup fails" $
+    TestLabel "udisksctl loop-setup error fails" $
     TestCase $ do
         assertFailure "test not implemented"
     ]
 
 assertOpError :: String -> (OpResult, Mock) -> IO ()
-assertOpError err (opResult, mock) = do
+assertOpError err (opResult, _) =
     assertEqual err (Left err) opResult
+
+assertNoExecCalls :: (OpResult, Mock) -> IO ()
+assertNoExecCalls (_, mock) =
     assertEqual "no exec calls" 0 (nExecs mock)
 
 mkOpenVault :: String -> P.OpenVault
