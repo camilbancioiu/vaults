@@ -178,7 +178,29 @@ test_openVault = TestList [
             , ("udisksctl", ["lock", "-b", "/dev/dm-4"])
             , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
             ]
+            (execRecorded mockAfterExec),
+
+    TestLabel "mount succeeds" $
+    TestCase $ do
+        let mock = addMockExecResults ers mockWithVault
+                   where ers = [loopSetupOk, unlockOk, mountOk]
+                         loopSetupOk  = Sub.ExecResult ExitSuccess loopSetupOut ""
+                         unlockOk     = Sub.ExecResult ExitSuccess unlockOut ""
+                         mountOk      = Sub.ExecResult ExitSuccess mountOut ""
+                         loopSetupOut = "Mapped file local.vault as /dev/loop42."
+                         unlockOut    = "Unlocked /dev/loop42 as /dev/dm-4."
+                         mountOut     = "Mounted /dev/dm-4 at /mnt/point"
+        let params = mkOpenVault "local.vault"
+        let result = runState (openVault params) mock
+        let mockAfterExec = snd result
+        assertEqual "mount succeeds" (Right ()) (fst result)
+        assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
+            [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
+            , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
+            , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
+            ]
             (execRecorded mockAfterExec)
+
     ]
 
 test_parsingUdisksctlOutput :: Test
@@ -234,7 +256,8 @@ mkOpenVault fname = ParamsOpenVault {
 
 emptyMock :: Mock
 emptyMock = Mock {
-      hasVaultDir = False
+      currentDir = "/home/user"
+    , hasVaultDir = False
     , envVars = []
     , nExecs = 0
     , execRecorded = []

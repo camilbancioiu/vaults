@@ -17,6 +17,7 @@ class Monad m => Substrate m where
     lookupEnvSub :: String -> m (Maybe String)
     setEnvSub    :: String -> String -> m ()
     unsetEnvSub  :: String -> m ()
+    chdirSub     :: String -> m ()
 
     -- TODO implement with readCreateProcessWithExitCode,
     -- which is safe because udisksctl does not use stdout and stdin to request
