@@ -27,13 +27,22 @@ openVault params = runExceptT $ do
     when (partLoc == UnknownPartition) (throwError "unknown vault partition")
 
     createLoopDevice fname
+    unlockDevice "what"
 
     return ()
 
+
 createLoopDevice :: Substrate m => FilePath -> ExceptT String m ()
 createLoopDevice fname = do
-    loopSetup <- lift $ execSub "udisksctl" ["loop-setup", "-f", fname] ""
-    when (exitCode loopSetup /= ExitSuccess) (throwError "loop-setup failed")
+    result <- lift $ execSub "udisksctl" ["loop-setup", "-f", fname] ""
+    when (exitCode result /= ExitSuccess) (throwError "loop-setup failed")
+    return ()
+
+
+unlockDevice :: Substrate m => FilePath -> ExceptT String m ()
+unlockDevice dev = do
+    result <- lift $ execSub "udisksctl" ["unlock", "-b", dev] ""
+    when (exitCode result /= ExitSuccess) (throwError "unlock failed")
     return ()
 
 canOpenVault :: Substrate m => ParamsOpenVault -> ExceptT String m ()

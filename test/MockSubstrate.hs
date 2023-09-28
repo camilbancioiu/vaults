@@ -7,13 +7,15 @@ import Control.Monad.State
 import Vaults.Substrate
 import qualified Vaults.Base as V
 
+import Debug.Trace
+
 data Mock = Mock {
     hasVaultDir :: Bool,
     envVars :: [(String, String)],
     nExecs :: Int,
     execRecorded :: [(String, [String])],
     execResults :: [ExecResult]
-}
+} deriving Show
 
 addMockEnvVar :: String -> String -> Mock -> Mock
 addMockEnvVar key val mock =
@@ -95,7 +97,9 @@ mock_execSub executable params _ = do
     modify $ recordExec (executable, params)
     modify incExecs
     er <- gets $ head . execResults
+
     modify dropHeadMockExecResult
+
     return er
 
 mockVaultInfo = V.VaultInfo {

@@ -9,7 +9,7 @@ data ExecResult = ExecResult {
     exitCode    :: ExitCode,
     output      :: String,
     errorOutput :: String
-    }
+} deriving Show
 
 -- TODO break tuple into individual components
 execResult (xc, o, eo) = ExecResult {
