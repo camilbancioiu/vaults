@@ -34,6 +34,13 @@ openVault params = runExceptT $ do
                  deleteLoopDevice devFile
                  throwError e)
 
+    mountPoint <- catchError
+        (mountDevice mapperDev)
+        (\e -> do
+                 lockDevice mapperDev
+                 deleteLoopDevice devFile
+                 throwError e)
+
     return ()
 
 -- TODO validate parameter fname
@@ -58,15 +65,22 @@ unlockDevice devFile = do
          Left _ -> throwError "unlock failed"
          Right mapperDev -> return mapperDev
 
+-- TODO validate parameter mapperDev
+lockDevice :: Substrate m => FilePath -> ExceptT String m ()
+lockDevice mapperDev = do
+    result <- lift $ execSub "udisksctl" ["lock", "-b", mapperDev] ""
+    when (exitCode result /= ExitSuccess) (throwError "lock failed")
+    return ()
+
 -- TODO mount as readonly
 mountDevice :: Substrate m => FilePath -> ExceptT String m FilePath
 mountDevice mapperDev = do
     result <- lift $ execSub "udisksctl" ["mount", "-b", mapperDev] ""
-    when (exitCode result /= ExitSuccess) (throwError "mounting failed")
+    when (exitCode result /= ExitSuccess) (throwError "mount failed")
 
     let parsedMountpoint = parseOutputMount (output result)
     case parsedMountpoint of
-         Left _ -> throwError "mounting failed"
+         Left _ -> throwError "mount failed"
          Right mountpoint -> return mountpoint
 
 -- TODO validate parameter devFile
@@ -107,7 +121,8 @@ parseUdisksctlOutput endDot nElements output = do
           when (elem '.' lastElemNoDot) invalidOutput
           return lastElemNoDot
     else
-        return lastElement
+       do when (elem '.' lastElement) invalidOutput
+          return lastElement
 
 invalidOutput :: Either String a
 invalidOutput = (Left "invalid udisksctl output")

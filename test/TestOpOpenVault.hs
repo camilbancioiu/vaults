@@ -32,6 +32,7 @@ allTests = TestList [
     , test_createLoopDevice
     , test_deleteLoopDevice
     , test_unlockDevice
+    , test_mountDevice
     , test_parsingUdisksctlOutput
     , test_openVault
     ]
@@ -110,7 +111,17 @@ test_deleteLoopDevice = TestList [
                    where loopDeleteOk = Sub.ExecResult ExitSuccess "undefined" ""
         let result = runState (runExceptT $ deleteLoopDevice "/dev/loop42") mock
         assertEqual "loop-delete succeeds" (Right ()) (fst result)
- ]
+    ]
+
+test_mountDevice :: Test
+test_mountDevice = TestList [
+    TestLabel "udisksctl mount succeeds" $
+    TestCase $ do
+        let mock = addMockExecResult mountOk mockWithVault
+                   where mountOk = Sub.ExecResult ExitSuccess "Mounted /dev/dm-8 at /mnt/point" ""
+        let result = runState (runExceptT $ mountDevice "/dev/dm-8") mock
+        assertEqual "mount succeeds" (Right "/mnt/point") (fst result)
+    ]
 
 test_openVault :: Test
 test_openVault = TestList [
@@ -130,10 +141,10 @@ test_openVault = TestList [
     TestCase $ do
         let mock = addMockExecResults ers mockWithVault
                    where ers = [loopSetupOk, unlockFail, loopDeleteOk]
-                         loopSetupOk = Sub.ExecResult ExitSuccess loopSetupOut ""
-                         loopSetupOut = "Mapped file local.vault as /dev/loop42."
-                         unlockFail = Sub.ExecResult (ExitFailure 16) "" "didnt work"
+                         loopSetupOk  = Sub.ExecResult ExitSuccess loopSetupOut ""
+                         unlockFail   = Sub.ExecResult (ExitFailure 16) "" "didnt work"
                          loopDeleteOk = Sub.ExecResult ExitSuccess "" ""
+                         loopSetupOut = "Mapped file local.vault as /dev/loop42."
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
@@ -143,7 +154,31 @@ test_openVault = TestList [
             , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
             , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
             ]
+            (execRecorded mockAfterExec),
+
+    TestLabel "mount error fails opening and undoes mount and loop-setup" $
+    TestCase $ do
+        let mock = addMockExecResults ers mockWithVault
+                   where ers = [loopSetupOk, unlockOk, mountFail, lockOk, loopDeleteOk]
+                         loopSetupOk  = Sub.ExecResult ExitSuccess loopSetupOut ""
+                         unlockOk     = Sub.ExecResult ExitSuccess unlockOut ""
+                         mountFail    = Sub.ExecResult (ExitFailure 16) "" "didnt work"
+                         lockOk       = Sub.ExecResult ExitSuccess "Locked /dev/dm-4." ""
+                         loopDeleteOk = Sub.ExecResult ExitSuccess "" ""
+                         loopSetupOut = "Mapped file local.vault as /dev/loop42."
+                         unlockOut    = "Unlocked /dev/loop42 as /dev/dm-4."
+        let params = mkOpenVault "local.vault"
+        let result = runState (openVault params) mock
+        let mockAfterExec = snd result
+        assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
+            [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
+            , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
+            , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
+            , ("udisksctl", ["lock", "-b", "/dev/dm-4"])
+            , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
+            ]
             (execRecorded mockAfterExec)
+        assertOpError "mount failed" result
     ]
 
 test_parsingUdisksctlOutput :: Test
@@ -170,7 +205,16 @@ test_parsingUdisksctlOutput = TestList [
         let output = "Unlocked /dev/loop42 as /dev/dm-4"
         parseOutputUnlock output @?= invalidOutput
         let output = "Unlocked /dev/loop42 as /dev/dm-4."
-        parseOutputUnlock output @?= (Right "/dev/dm-4")
+        parseOutputUnlock output @?= (Right "/dev/dm-4"),
+
+    TestLabel "parsing output of mount" $
+    TestCase $ do
+        let output = ""
+        parseOutputMount output @?= invalidOutput
+        let output = "Mounted /dev/dm-4 as /mnt/point."
+        parseOutputMount output @?= invalidOutput
+        let output = "Mounted /dev/dm-4 as /mnt/point"
+        parseOutputMount output @?= (Right "/mnt/point")
 
     ]
 
