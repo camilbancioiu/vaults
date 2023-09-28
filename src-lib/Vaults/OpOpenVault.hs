@@ -26,7 +26,7 @@ openVault params = runExceptT $ do
     let partLoc = getPartitionLocation vi fname
     when (partLoc == UnknownPartition) (throwError "unknown vault partition")
 
-    createLoopDevice fname
+    -- createLoopDevice fname
 
     return ()
 

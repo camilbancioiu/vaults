@@ -40,6 +40,7 @@ allTests = TestList [
     , test_openVault
     ]
 
+
 test_prerequisites :: Test
 test_prerequisites = TestList [
     TestLabel "open in non-vault folder fails" $
