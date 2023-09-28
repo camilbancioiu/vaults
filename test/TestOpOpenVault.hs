@@ -135,7 +135,10 @@ test_openVault = TestList [
         let mockAfterExec = snd result
         assertEqual "only loop-setup was called"
             [("udisksctl", ["loop-setup", "-f", "local.vault"])]
-            (execRecorded mockAfterExec),
+            (execRecorded mockAfterExec)
+        assertEqual "current directory not changed"
+            "/home/user"
+            (currentDir mockAfterExec),
 
     TestLabel "unlock error fails opening and deletes loop device" $
     TestCase $ do
@@ -154,7 +157,10 @@ test_openVault = TestList [
             , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
             , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
             ]
-            (execRecorded mockAfterExec),
+            (execRecorded mockAfterExec)
+        assertEqual "current directory not changed"
+            "/home/user"
+            (currentDir mockAfterExec),
 
     TestLabel "mount error fails opening and undoes mount and loop-setup" $
     TestCase $ do
@@ -178,7 +184,10 @@ test_openVault = TestList [
             , ("udisksctl", ["lock", "-b", "/dev/dm-4"])
             , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
             ]
-            (execRecorded mockAfterExec),
+            (execRecorded mockAfterExec)
+        assertEqual "current directory not changed"
+            "/home/user"
+            (currentDir mockAfterExec),
 
     TestLabel "mount succeeds" $
     TestCase $ do
@@ -200,6 +209,9 @@ test_openVault = TestList [
             , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
             ]
             (execRecorded mockAfterExec)
+        assertEqual "current directory changed to mountpoint"
+            "/mnt/point"
+            (currentDir mockAfterExec)
 
     ]
 
