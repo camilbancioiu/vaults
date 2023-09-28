@@ -27,7 +27,12 @@ openVault params = runExceptT $ do
     when (partLoc == UnknownPartition) (throwError "unknown vault partition")
 
     devFile <- createLoopDevice fname
-    unlockDevice devFile
+
+    catchError
+        (unlockDevice devFile)
+        (\e -> do
+                 deleteLoopDevice devFile
+                 throwError e)
 
     return ()
 
