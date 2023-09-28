@@ -44,15 +44,19 @@ recordExec execCom mock =
 
 addMockExecResult :: ExecResult -> Mock -> Mock
 addMockExecResult er mock =
+    addMockExecResults [er] mock
+
+addMockExecResults :: [ExecResult] -> Mock -> Mock
+addMockExecResults ers mock =
     mock {
         execResults = newExecResults
     }
-    where newExecResults = (execResults mock) ++ [er]
+    where newExecResults = (execResults mock) ++ ers
 
-dropLastMockExecResult :: Mock -> Mock
-dropLastMockExecResult mock =
+dropHeadMockExecResult :: Mock -> Mock
+dropHeadMockExecResult mock =
     mock {
-        execResults = init (execResults mock)
+        execResults = tail (execResults mock)
     }
 
 instance Substrate (State Mock) where
@@ -90,7 +94,8 @@ mock_execSub :: String -> [String] -> String -> State Mock ExecResult
 mock_execSub executable params _ = do
     modify $ recordExec (executable, params)
     modify incExecs
-    er <- gets $ last . execResults
+    er <- gets $ head . execResults
+    modify dropHeadMockExecResult
     return er
 
 mockVaultInfo = V.VaultInfo {

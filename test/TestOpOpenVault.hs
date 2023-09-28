@@ -96,11 +96,8 @@ test_openVault = TestList [
     TestLabel "loop-setup error fails opening" $
     TestCase $ do
         let mock = addMockExecResult er mockWithVault
-                   where er = Sub.ExecResult {
-                         Sub.exitCode = ExitFailure 16
-                       , Sub.output = ""
-                       , Sub.errorOutput = "didnt work"
-                   }
+                   where er = Sub.ExecResult (ExitFailure 16) "" "didnt work"
+
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
         assertOpError "loop-setup failed" result
@@ -112,23 +109,14 @@ test_openVault = TestList [
 
     TestLabel "unlock error fails opening and deletes loop device" $
     TestCase $ do
-        let mock = mockWithVault
-        let mock = addMockExecResult ser mock
-                   where ser = Sub.ExecResult {
-                         Sub.exitCode = ExitSuccess
-                       , Sub.output = ""
-                       , Sub.errorOutput = ""
-                   }
-        let mock = addMockExecResult fer mock
-                   where fer = Sub.ExecResult {
-                         Sub.exitCode = ExitFailure 16
-                       , Sub.output = ""
-                       , Sub.errorOutput = "didnt work"
-                   }
+        let mock = addMockExecResults [ser, fer] mockWithVault
+                   where ser = Sub.ExecResult ExitSuccess "" ""
+                         fer = Sub.ExecResult (ExitFailure 16) "" "didnt work"
 
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
         assertOpError "unlock failed" result
+
         let mock = snd result
         assertEqual "loop-setup, unlock, loop-delete were called"
             [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
