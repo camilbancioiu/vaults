@@ -92,34 +92,6 @@ test_createLoopDevice = TestList [
     ]
 
 
-test_parsingUdisksctlOutput :: Test
-test_parsingUdisksctlOutput = TestList [
-    TestLabel "parsing output of loop-setup" $
-    TestCase $ do
-        let output = ""
-        parseOutputLoopSetup output @?= invalidOutput
-        let output = "Mapped dummy.vault as /dev/loop42."
-        parseOutputLoopSetup output @?= invalidOutput
-        let output = "Mapped file dummy.vault as ."
-        parseOutputLoopSetup output @?= invalidOutput
-        let output = "Mapped file dummy.vault as /dev/lo.op42."
-        parseOutputLoopSetup output @?= invalidOutput
-        let output = "Mapped file dummy.vault as /dev/loop42"
-        parseOutputLoopSetup output @=? invalidOutput,
-        let output = "Mapped file dummy.vault as /dev/loop42."
-        parseOutputLoopSetup output @=? (Right "/dev/loop42"),
-
-    TestLabel "parsing output of unlock" $
-    TestCase $ do
-        let output = ""
-        parseOutputUnlock output @?= invalidOutput
-        let output = "Unlocked /dev/loop42 as /dev/dm-4"
-        parseOutputUnlock output @?= invalidOutput
-        let output = "Unlocked /dev/loop42 as /dev/dm-4."
-        parseOutputUnlock output @?= (Right "/dev/dm-4")
-
-    ]
-
 test_unlockDevice :: Test
 test_unlockDevice = TestList [
     TestLabel "udisksctl unlock error fails" $
@@ -180,6 +152,34 @@ test_openVault = TestList [
             , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
             ]
             (execRecorded mockAfterExec)
+    ]
+
+test_parsingUdisksctlOutput :: Test
+test_parsingUdisksctlOutput = TestList [
+    TestLabel "parsing output of loop-setup" $
+    TestCase $ do
+        let output = ""
+        parseOutputLoopSetup output @?= invalidOutput
+        let output = "Mapped dummy.vault as /dev/loop42."
+        parseOutputLoopSetup output @?= invalidOutput
+        let output = "Mapped file dummy.vault as ."
+        parseOutputLoopSetup output @?= invalidOutput
+        let output = "Mapped file dummy.vault as /dev/lo.op42."
+        parseOutputLoopSetup output @?= invalidOutput
+        let output = "Mapped file dummy.vault as /dev/loop42"
+        parseOutputLoopSetup output @=? invalidOutput
+        let output = "Mapped file dummy.vault as /dev/loop42."
+        parseOutputLoopSetup output @=? (Right "/dev/loop42"),
+
+    TestLabel "parsing output of unlock" $
+    TestCase $ do
+        let output = ""
+        parseOutputUnlock output @?= invalidOutput
+        let output = "Unlocked /dev/loop42 as /dev/dm-4"
+        parseOutputUnlock output @?= invalidOutput
+        let output = "Unlocked /dev/loop42 as /dev/dm-4."
+        parseOutputUnlock output @?= (Right "/dev/dm-4")
+
     ]
 
 assertOpError :: (Eq a, Show a) => String -> (Either String a, Mock) -> IO ()

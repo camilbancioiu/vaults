@@ -95,5 +95,5 @@ parseUdisksctlOutput endDot nElements output = do
     else
         return lastElement
 
-invalidOutput :: Either String FilePath
+invalidOutput :: Either String a
 invalidOutput = (Left "invalid udisksctl output")
