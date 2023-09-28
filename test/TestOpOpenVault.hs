@@ -170,6 +170,7 @@ test_openVault = TestList [
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
+        assertOpError "mount failed" result
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
             , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
@@ -178,7 +179,6 @@ test_openVault = TestList [
             , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
             ]
             (execRecorded mockAfterExec)
-        assertOpError "mount failed" result
     ]
 
 test_parsingUdisksctlOutput :: Test
