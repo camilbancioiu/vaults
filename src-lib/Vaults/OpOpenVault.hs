@@ -47,13 +47,16 @@ createLoopDevice fname = do
          Left _ -> throwError "loop-setup failed"
          Right devFile -> return devFile
 
--- TODO validate devFile
--- TODO parse mapper device from stdout and return it
+-- TODO validate parameter devFile
 unlockDevice :: Substrate m => FilePath -> ExceptT String m FilePath
 unlockDevice devFile = do
     result <- lift $ execSub "udisksctl" ["unlock", "-b", devFile] ""
     when (exitCode result /= ExitSuccess) (throwError "unlock failed")
-    return "/dev/null"
+
+    let parsedMapperDev = parseOutputUnlock (output result)
+    case parsedMapperDev of
+         Left _ -> throwError "unlock failed"
+         Right mapperDev -> return mapperDev
 
 -- TODO validate devFile
 deleteLoopDevice :: Substrate m => FilePath -> ExceptT String m ()
