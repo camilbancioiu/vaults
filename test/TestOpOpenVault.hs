@@ -39,6 +39,7 @@ allTests = TestList [
     , test_createLoopDevice
     , test_deleteLoopDevice
     , test_unlockDevice
+    , test_parsingUdisksctlOutput
     , test_openVault
     ]
 
@@ -81,19 +82,6 @@ test_createLoopDevice = TestList [
         let result = runState (runExceptT $ createLoopDevice "/what") mock
         assertOpError "loop-setup failed" result,
 
-    TestLabel "parsing output of loop-setup" $
-    TestCase $ do
-        let output = ""
-        (parseCreateLoopOutput output) @?= (Left "invalid loop-setup output")
-        let output = "Mapped dummy.vault as /dev/loop42."
-        (parseCreateLoopOutput output) @?= (Left "invalid loop-setup output")
-        let output = "Mapped file dummy.vault as ."
-        (parseCreateLoopOutput output) @?= (Left "invalid loop-setup output")
-        let output = "Mapped file dummy.vault as /dev/lo.op42."
-        (parseCreateLoopOutput output) @?= (Left "invalid loop-setup output")
-        let output = "Mapped file dummy.vault as /dev/loop42."
-        (parseCreateLoopOutput output) @=? (Right "/dev/loop42"),
-
     TestLabel "udisksctl loop-setup succeeds and returns device path" $
     TestCase $ do
         let mock = addMockExecResult loopSetupOk mockWithVault
@@ -101,6 +89,35 @@ test_createLoopDevice = TestList [
                          outStr = "Mapped file dummy.vault as /dev/loop42."
         let result = runState (runExceptT $ createLoopDevice "dummy.vault") mock
         assertEqual "loop-setup success" (Right "/dev/loop42") (fst result)
+    ]
+
+
+test_parsingUdisksctlOutput :: Test
+test_parsingUdisksctlOutput = TestList [
+    TestLabel "parsing output of loop-setup" $
+    TestCase $ do
+        let output = ""
+        parseOutputLoopSetup output @?= invalidOutput
+        let output = "Mapped dummy.vault as /dev/loop42."
+        parseOutputLoopSetup output @?= invalidOutput
+        let output = "Mapped file dummy.vault as ."
+        parseOutputLoopSetup output @?= invalidOutput
+        let output = "Mapped file dummy.vault as /dev/lo.op42."
+        parseOutputLoopSetup output @?= invalidOutput
+        let output = "Mapped file dummy.vault as /dev/loop42"
+        parseOutputLoopSetup output @=? invalidOutput,
+        let output = "Mapped file dummy.vault as /dev/loop42."
+        parseOutputLoopSetup output @=? (Right "/dev/loop42"),
+
+    TestLabel "parsing output of unlock" $
+    TestCase $ do
+        let output = ""
+        parseOutputUnlock output @?= invalidOutput
+        let output = "Unlocked /dev/loop42 as /dev/dm-4"
+        parseOutputUnlock output @?= invalidOutput
+        let output = "Unlocked /dev/loop42 as /dev/dm-4."
+        parseOutputUnlock output @?= (Right "/dev/dm-4")
+
     ]
 
 test_unlockDevice :: Test
@@ -115,9 +132,10 @@ test_unlockDevice = TestList [
     TestLabel "udisksctl unlock succeeds" $
     TestCase $ do
         let mock = addMockExecResult unlockOk mockWithVault
-                   where unlockOk = Sub.ExecResult ExitSuccess "undefined" ""
+                   where unlockOk = Sub.ExecResult ExitSuccess outStr ""
+                         outStr = "Unlocked /dev/loop24 as /dev/dm-8."
         let result = runState (runExceptT $ unlockDevice "what") mock
-        assertEqual "unlock succeeds" (Right ()) (fst result)
+        assertEqual "unlock succeeds" (Right "/dev/dm-8") (fst result)
     ]
 
 test_deleteLoopDevice :: Test

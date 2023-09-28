@@ -28,7 +28,7 @@ openVault params = runExceptT $ do
 
     devFile <- createLoopDevice fname
 
-    catchError
+    mapperDev <- catchError
         (unlockDevice devFile)
         (\e -> do
                  deleteLoopDevice devFile
@@ -42,18 +42,18 @@ createLoopDevice fname = do
     result <- lift $ execSub "udisksctl" ["loop-setup", "-f", fname] ""
     when (exitCode result /= ExitSuccess) (throwError "loop-setup failed")
 
-    let parsedDevFile = parseCreateLoopOutput (output result)
+    let parsedDevFile = parseOutputLoopSetup (output result)
     case parsedDevFile of
          Left _ -> throwError "loop-setup failed"
          Right devFile -> return devFile
 
 -- TODO validate devFile
 -- TODO parse mapper device from stdout and return it
-unlockDevice :: Substrate m => FilePath -> ExceptT String m ()
+unlockDevice :: Substrate m => FilePath -> ExceptT String m FilePath
 unlockDevice devFile = do
     result <- lift $ execSub "udisksctl" ["unlock", "-b", devFile] ""
     when (exitCode result /= ExitSuccess) (throwError "unlock failed")
-    return ()
+    return "/dev/null"
 
 -- TODO validate devFile
 deleteLoopDevice :: Substrate m => FilePath -> ExceptT String m ()
@@ -76,15 +76,24 @@ checkIsAnyVaultActive = do
     isVA <- lift $ isAnyVaultActive
     when isVA (throwError "vault already open")
 
-parseCreateLoopOutput :: String -> Either String FilePath
-parseCreateLoopOutput output = do
+parseOutputLoopSetup = parseUdisksctlOutput True 5
+parseOutputUnlock = parseUdisksctlOutput True 4
+parseOutputMount = parseUdisksctlOutput False 4
+
+parseUdisksctlOutput :: Bool -> Int -> String -> Either String FilePath
+parseUdisksctlOutput endDot nElements output = do
     let elements = words output
-    when (length elements /= 5) (Left "invalid loop-setup output")
+    when (length elements /= nElements) invalidOutput
 
-    let devFileWithDot = last elements
-    when (devFileWithDot == ".") (Left "invalid loop-setup output")
+    let lastElement = last elements
+    if endDot then
+       do when (not $ elem '.' lastElement) invalidOutput
+          when (lastElement == ".") invalidOutput
+          let lastElemNoDot = init lastElement
+          when (elem '.' lastElemNoDot) invalidOutput
+          return lastElemNoDot
+    else
+        return lastElement
 
-    let devFile = init devFileWithDot
-    when (elem '.' devFile) (Left "invalid loop-setup output")
-
-    return devFile
+invalidOutput :: Either String FilePath
+invalidOutput = (Left "invalid udisksctl output")
