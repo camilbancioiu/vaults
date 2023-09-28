@@ -11,13 +11,6 @@ data ExecResult = ExecResult {
     errorOutput :: String
 } deriving Show
 
--- TODO break tuple into individual components
-execResult (xc, o, eo) = ExecResult {
-    exitCode = xc,
-    output = o,
-    errorOutput = eo
-}
-
 class Monad m => Substrate m where
     readFileSub  :: FilePath -> m String
     dirExistsSub :: FilePath -> m Bool
