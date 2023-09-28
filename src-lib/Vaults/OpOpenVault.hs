@@ -36,7 +36,7 @@ openVault params = runExceptT $ do
 
     return ()
 
--- TODO validate fname
+-- TODO validate parameter fname
 createLoopDevice :: Substrate m => FilePath -> ExceptT String m FilePath
 createLoopDevice fname = do
     result <- lift $ execSub "udisksctl" ["loop-setup", "-f", fname] ""
@@ -58,7 +58,18 @@ unlockDevice devFile = do
          Left _ -> throwError "unlock failed"
          Right mapperDev -> return mapperDev
 
--- TODO validate devFile
+-- TODO mount as readonly
+mountDevice :: Substrate m => FilePath -> ExceptT String m FilePath
+mountDevice mapperDev = do
+    result <- lift $ execSub "udisksctl" ["mount", "-b", mapperDev] ""
+    when (exitCode result /= ExitSuccess) (throwError "mounting failed")
+
+    let parsedMountpoint = parseOutputMount (output result)
+    case parsedMountpoint of
+         Left _ -> throwError "mounting failed"
+         Right mountpoint -> return mountpoint
+
+-- TODO validate parameter devFile
 deleteLoopDevice :: Substrate m => FilePath -> ExceptT String m ()
 deleteLoopDevice devFile = do
     result <- lift $ execSub "udisksctl" ["loop-delete", "-b", devFile] ""

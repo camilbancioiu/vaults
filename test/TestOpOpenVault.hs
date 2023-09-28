@@ -12,13 +12,6 @@ import qualified Vaults.Substrate as Sub
 import Vaults.OpOpenVault
 
 -- TODO test scenarios:
--- fail when loop-setup fails
--- -- assert returned error
--- -- assert no other calls to udisksctl
--- fail when unlock fails
--- -- e.g. wrong passphrase
--- -- assert loop-delete called
--- -- assert no other calls to udisksctl
 -- fail when mounting fails fails
 -- -- assert lock called
 -- -- assert loop-delete called
@@ -82,7 +75,7 @@ test_createLoopDevice = TestList [
         let result = runState (runExceptT $ createLoopDevice "/what") mock
         assertOpError "loop-setup failed" result,
 
-    TestLabel "udisksctl loop-setup succeeds and returns device path" $
+    TestLabel "udisksctl loop-setup succeeds" $
     TestCase $ do
         let mock = addMockExecResult loopSetupOk mockWithVault
                    where loopSetupOk = Sub.ExecResult ExitSuccess outStr ""
@@ -90,7 +83,6 @@ test_createLoopDevice = TestList [
         let result = runState (runExceptT $ createLoopDevice "dummy.vault") mock
         assertEqual "loop-setup success" (Right "/dev/loop42") (fst result)
     ]
-
 
 test_unlockDevice :: Test
 test_unlockDevice = TestList [
