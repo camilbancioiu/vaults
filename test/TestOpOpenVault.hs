@@ -37,9 +37,10 @@ allTests :: Test
 allTests = TestList [
       test_prerequisites
     , test_createLoopDevice
+    , test_deleteLoopDevice
+    , test_unlockDevice
     , test_openVault
     ]
-
 
 test_prerequisites :: Test
 test_prerequisites = TestList [
@@ -51,7 +52,6 @@ test_prerequisites = TestList [
         assertOpError "non-vault folder" result
         assertNoExecCalls result,
 
-
     TestLabel "open when vault already open fails" $
     TestCase $ do
         let mock = mockWithActiveVault
@@ -59,7 +59,6 @@ test_prerequisites = TestList [
         let result = runState (openVault params) mock
         assertOpError "vault already open" result
         assertNoExecCalls result,
-
 
     TestLabel "open without a partition filename fails" $
     TestCase $ do
@@ -71,25 +70,65 @@ test_prerequisites = TestList [
         let result = runState (openVault params) mock
         assertOpError "partition filename is required" result
         assertNoExecCalls result
-
     ]
-
 
 test_createLoopDevice :: Test
 test_createLoopDevice = TestList [
     TestLabel "udisksctl loop-setup error fails" $
     TestCase $ do
         let mock = addMockExecResult er mockWithVault
-                   where er = Sub.ExecResult {
-                         Sub.exitCode = ExitFailure 16
-                       , Sub.output = ""
-                       , Sub.errorOutput = "didnt work"
-                   }
-
+                   where er = Sub.ExecResult (ExitFailure 16) "" "didnt work"
         let result = runState (runExceptT $ createLoopDevice "/what") mock
-        assertOpError "loop-setup failed" result
+        assertOpError "loop-setup failed" result,
+
+    TestLabel "parsing output of loop-setup" $
+    TestCase $ do
+        let output = ""
+        (parseCreateLoopOutput output) @?= (Left "invalid loop-setup output")
+        let output = "Mapped dummy.vault as /dev/loop42."
+        (parseCreateLoopOutput output) @?= (Left "invalid loop-setup output")
+        let output = "Mapped file dummy.vault as ."
+        (parseCreateLoopOutput output) @?= (Left "invalid loop-setup output")
+        let output = "Mapped file dummy.vault as /dev/lo.op42."
+        (parseCreateLoopOutput output) @?= (Left "invalid loop-setup output")
+        let output = "Mapped file dummy.vault as /dev/loop42."
+        (parseCreateLoopOutput output) @=? (Right "/dev/loop42"),
+
+    TestLabel "udisksctl loop-setup succeeds and returns device path" $
+    TestCase $ do
+        let mock = addMockExecResult loopSetupOk mockWithVault
+                   where loopSetupOk = Sub.ExecResult ExitSuccess outStr ""
+                         outStr = "Mapped file dummy.vault as /dev/loop42."
+        let result = runState (runExceptT $ createLoopDevice "dummy.vault") mock
+        assertEqual "loop-setup success" (Right "/dev/loop42") (fst result)
     ]
 
+test_unlockDevice :: Test
+test_unlockDevice = TestList [
+    TestLabel "udisksctl unlock error fails" $
+    TestCase $ do
+        let mock = addMockExecResult loopSetupFail mockWithVault
+                   where loopSetupFail = Sub.ExecResult (ExitFailure 16) "" "didnt work"
+        let result = runState (runExceptT $ unlockDevice "what") mock
+        assertOpError "unlock failed" result,
+
+    TestLabel "udisksctl unlock succeeds" $
+    TestCase $ do
+        let mock = addMockExecResult unlockOk mockWithVault
+                   where unlockOk = Sub.ExecResult ExitSuccess "undefined" ""
+        let result = runState (runExceptT $ unlockDevice "what") mock
+        assertEqual "unlock succeeds" (Right ()) (fst result)
+    ]
+
+test_deleteLoopDevice :: Test
+test_deleteLoopDevice = TestList [
+    TestLabel "udisksctl loop-delete succeeds" $
+    TestCase $ do
+        let mock = addMockExecResult loopDeleteOk mockWithVault
+                   where loopDeleteOk = Sub.ExecResult ExitSuccess "undefined" ""
+        let result = runState (runExceptT $ deleteLoopDevice "/dev/loop42") mock
+        assertEqual "loop-delete succeeds" (Right ()) (fst result)
+ ]
 
 test_openVault :: Test
 test_openVault = TestList [
@@ -97,37 +136,35 @@ test_openVault = TestList [
     TestCase $ do
         let mock = addMockExecResult er mockWithVault
                    where er = Sub.ExecResult (ExitFailure 16) "" "didnt work"
-
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
         assertOpError "loop-setup failed" result
-        let mock = snd result
+        let mockAfterExec = snd result
         assertEqual "only loop-setup was called"
             [("udisksctl", ["loop-setup", "-f", "local.vault"])]
-            (execRecorded mock),
-
+            (execRecorded mockAfterExec),
 
     TestLabel "unlock error fails opening and deletes loop device" $
     TestCase $ do
-        let mock = addMockExecResults [ser, fer] mockWithVault
-                   where ser = Sub.ExecResult ExitSuccess "" ""
-                         fer = Sub.ExecResult (ExitFailure 16) "" "didnt work"
-
+        let mock = addMockExecResults ers mockWithVault
+                   where ers = [loopSetupOk, unlockFail, loopDeleteOk]
+                         loopSetupOk = Sub.ExecResult ExitSuccess loopSetupOut ""
+                         loopSetupOut = "Mapped file local.vault as /dev/loop42."
+                         unlockFail = Sub.ExecResult (ExitFailure 16) "" "didnt work"
+                         loopDeleteOk = Sub.ExecResult ExitSuccess "" ""
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
+        let mockAfterExec = snd result
         assertOpError "unlock failed" result
-
-        let mock = snd result
         assertEqual "loop-setup, unlock, loop-delete were called"
             [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
-            , ("udisksctl", ["unlock", "-b", "/dev/loopN"])
-            , ("udisksctl", ["loop-delete", "-b", "/dev/loopN"])
+            , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
+            , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
             ]
-            (execRecorded mock)
+            (execRecorded mockAfterExec)
     ]
 
-
-assertOpError :: String -> (V.OpResult, Mock) -> IO ()
+assertOpError :: (Eq a, Show a) => String -> (Either String a, Mock) -> IO ()
 assertOpError err (opResult, _) =
     assertEqual err (Left err) opResult
 

@@ -97,9 +97,7 @@ mock_execSub executable params _ = do
     modify $ recordExec (executable, params)
     modify incExecs
     er <- gets $ head . execResults
-
     modify dropHeadMockExecResult
-
     return er
 
 mockVaultInfo = V.VaultInfo {
