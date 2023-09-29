@@ -13,6 +13,7 @@ data ParamsOpenVault = ParamsOpenVault {
     isForcedOpening :: Bool
 } deriving (Eq, Show)
 
+-- TODO set vri to env var
 -- TODO validate loaded VaultInfo
 -- e.g. for empty name, empty localname etc
 openVault :: Substrate m => ParamsOpenVault -> m (Either String ())
