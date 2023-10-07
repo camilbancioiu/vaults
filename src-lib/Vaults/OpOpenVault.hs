@@ -18,7 +18,8 @@ data ParamsOpenVault = ParamsOpenVault {
 -- e.g. for empty name, empty localname etc
 openVault :: Substrate m => ParamsOpenVault -> m (Either String ())
 openVault params = runExceptT $ do
-    canOpenVault params
+    checkIsVaultDir
+    checkIsAnyVaultActive
 
     let fname = partitionFilename params
     when (length fname == 0) (throwError "partition filename is required")
@@ -90,10 +91,6 @@ deleteLoopDevice devFile = do
     result <- lift $ execSub "udisksctl" ["loop-delete", "-b", devFile] ""
     when (exitCode result /= ExitSuccess) (throwError "loop-delete failed")
     return ()
-
-canOpenVault :: Substrate m => ParamsOpenVault -> ExceptT String m ()
-canOpenVault _ =
-    checkIsVaultDir >> checkIsAnyVaultActive
 
 checkIsVaultDir :: Substrate m => ExceptT String m ()
 checkIsVaultDir = do
