@@ -138,7 +138,8 @@ test_openVault = TestList [
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
             "/home/user"
-            (currentDir mockAfterExec),
+            (currentDir mockAfterExec)
+        assertNoVaultEnvVar mockAfterExec,
 
     TestLabel "unlock error fails opening and deletes loop device" $
     TestCase $ do
@@ -160,7 +161,8 @@ test_openVault = TestList [
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
             "/home/user"
-            (currentDir mockAfterExec),
+            (currentDir mockAfterExec)
+        assertNoVaultEnvVar mockAfterExec,
 
     TestLabel "mount error fails opening and undoes mount and loop-setup" $
     TestCase $ do
@@ -187,7 +189,8 @@ test_openVault = TestList [
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
             "/home/user"
-            (currentDir mockAfterExec),
+            (currentDir mockAfterExec)
+        assertNoVaultEnvVar mockAfterExec,
 
     TestLabel "mount succeeds" $
     TestCase $ do
@@ -259,6 +262,18 @@ assertOpError err (opResult, _) =
 assertNoExecCalls :: (V.OpResult, Mock) -> IO ()
 assertNoExecCalls (_, mock) =
     assertEqual "no exec calls" 0 (nExecs mock)
+
+assertNoVaultEnvVar :: Mock -> IO ()
+assertNoVaultEnvVar mock =
+    assertEqual "no vault env var"
+        Nothing
+        (lookup key $ envVars mock)
+    where key = V.activeVaultEnvName
+
+assertVaultEnvVarSet :: Mock -> IO ()
+    assertBool "vault env var set" (isJust envVar)
+    where envVar = (lookup key $ envVars mock)
+          key = V.activeVaultEnvName
 
 mkOpenVault :: String -> ParamsOpenVault
 mkOpenVault fname = ParamsOpenVault {
