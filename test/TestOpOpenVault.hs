@@ -166,7 +166,7 @@ test_openVault = TestList [
             (currentDir mockAfterExec)
         assertNoVaultEnvVar mockAfterExec,
 
-    TestLabel "mount error prevents opening and undoes mount and loop-setup" $
+    TestLabel "mount error prevents opening and undoes unlock and loop-setup" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVault
                    where results = [loopSetupOk, unlockOk, mountFail, lockOk, loopDeleteOk]
@@ -194,7 +194,7 @@ test_openVault = TestList [
             (currentDir mockAfterExec)
         assertNoVaultEnvVar mockAfterExec,
 
-    TestLabel "mount succeeds" $
+    TestLabel "mount succeeds, no inner repo" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVault
                    where results = [loopSetupOk, unlockOk, mountOk]
@@ -216,6 +216,32 @@ test_openVault = TestList [
             (execRecorded mockAfterExec)
         assertEqual "current directory changed to mountpoint"
             "/mnt/point"
+            (currentDir mockAfterExec)
+        assertVaultEnvVarSet mockAfterExec,
+
+    -- TODO globally defined mocked ExecResults, e.g. loopSetupOk
+    TestLabel "mount succeeds, vault has inner repo" $
+    TestCase $ do
+        let mock = addMockExecResults results mockWithVault
+                   where results = [loopSetupOk, unlockOk, mountOk]
+                         loopSetupOk  = Sub.ExecResult ExitSuccess loopSetupOut ""
+                         unlockOk     = Sub.ExecResult ExitSuccess unlockOut ""
+                         mountOk      = Sub.ExecResult ExitSuccess mountOut ""
+                         loopSetupOut = "Mapped file local.vault as /dev/loop42."
+                         unlockOut    = "Unlocked /dev/loop42 as /dev/dm-4."
+                         mountOut     = "Mounted /dev/dm-4 at /mnt/point"
+        let params = mkOpenVault "local.vault"
+        let result = runState (openVault params) mock
+        let mockAfterExec = snd result
+        assertEqual "mount succeeds" (Right ()) (fst result)
+        assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
+            [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
+            , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
+            , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
+            ]
+            (execRecorded mockAfterExec)
+        assertEqual "current directory changed to repo within mountpoint"
+            "/mnt/point/repo"
             (currentDir mockAfterExec)
         assertVaultEnvVarSet mockAfterExec
 
@@ -289,6 +315,7 @@ emptyMock :: Mock
 emptyMock = Mock {
       currentDir = "/home/user"
     , hasVaultDir = False
+    , hasRepoDir = False
     , envVars = []
     , nExecs = 0
     , execRecorded = []

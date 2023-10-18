@@ -12,6 +12,7 @@ import Debug.Trace
 data Mock = Mock {
     currentDir :: String,
     hasVaultDir :: Bool,
+    hasRepoDir :: Bool,
     envVars :: [(String, String)],
     nExecs :: Int,
     execRecorded :: [(String, [String])],
@@ -87,6 +88,9 @@ mock_dirExistsSub :: FilePath -> State Mock Bool
 mock_dirExistsSub ".vault" = do
     mock <- get
     return (hasVaultDir mock)
+mock_dirExistsSub "repo" = do
+    mock <- get
+    return (hasRepoDir mock)
 mock_dirExistsSub _ = return False
 
 mock_lookupEnvSub :: String -> State Mock (Maybe String)
