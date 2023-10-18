@@ -45,6 +45,7 @@ openVault params = runExceptT $ do
 
     lift $ chdirSub mountPoint
 
+
 -- TODO validate parameter fname
 createLoopDevice :: Substrate m => FilePath -> ExceptT String m FilePath
 createLoopDevice fname = do

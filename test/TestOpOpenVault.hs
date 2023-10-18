@@ -145,8 +145,8 @@ test_openVault = TestList [
 
     TestLabel "unlock error fails opening and deletes loop device" $
     TestCase $ do
-        let mock = addMockExecResults ers mockWithVault
-                   where ers = [loopSetupOk, unlockFail, loopDeleteOk]
+        let mock = addMockExecResults results mockWithVault
+                   where results = [loopSetupOk, unlockFail, loopDeleteOk]
                          loopSetupOk  = Sub.ExecResult ExitSuccess loopSetupOut ""
                          unlockFail   = Sub.ExecResult (ExitFailure 16) "" "didnt work"
                          loopDeleteOk = Sub.ExecResult ExitSuccess "" ""
@@ -168,8 +168,8 @@ test_openVault = TestList [
 
     TestLabel "mount error fails opening and undoes mount and loop-setup" $
     TestCase $ do
-        let mock = addMockExecResults ers mockWithVault
-                   where ers = [loopSetupOk, unlockOk, mountFail, lockOk, loopDeleteOk]
+        let mock = addMockExecResults results mockWithVault
+                   where results = [loopSetupOk, unlockOk, mountFail, lockOk, loopDeleteOk]
                          loopSetupOk  = Sub.ExecResult ExitSuccess loopSetupOut ""
                          unlockOk     = Sub.ExecResult ExitSuccess unlockOut ""
                          mountFail    = Sub.ExecResult (ExitFailure 16) "" "didnt work"
@@ -196,8 +196,8 @@ test_openVault = TestList [
 
     TestLabel "mount succeeds" $
     TestCase $ do
-        let mock = addMockExecResults ers mockWithVault
-                   where ers = [loopSetupOk, unlockOk, mountOk]
+        let mock = addMockExecResults results mockWithVault
+                   where results = [loopSetupOk, unlockOk, mountOk]
                          loopSetupOk  = Sub.ExecResult ExitSuccess loopSetupOut ""
                          unlockOk     = Sub.ExecResult ExitSuccess unlockOut ""
                          mountOk      = Sub.ExecResult ExitSuccess mountOut ""
