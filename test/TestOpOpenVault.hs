@@ -217,12 +217,21 @@ test_openVault = TestList [
         assertEqual "current directory changed to mountpoint"
             "/mnt/point"
             (currentDir mockAfterExec)
-        assertVaultEnvVarSet mockAfterExec,
+
+        let vri = V.VaultRuntimeInfo {
+                  V.srcDir = "/home/user",
+                  V.loopDev = "/dev/loop42",
+                  V.mapperDev = "/dev/dm-4",
+                  V.mountedRepo = "/mnt/point",
+                  V.partition = "local.vault",
+                  V.partitionLocation = V.LocalPartition
+              }
+        assertActiveVaultEnvVarSet vri mockAfterExec,
 
     -- TODO globally defined mocked ExecResults, e.g. loopSetupOk
     TestLabel "mount succeeds, vault has inner repo" $
     TestCase $ do
-        let mock = addMockExecResults results mockWithVault
+        let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [loopSetupOk, unlockOk, mountOk]
                          loopSetupOk  = Sub.ExecResult ExitSuccess loopSetupOut ""
                          unlockOk     = Sub.ExecResult ExitSuccess unlockOut ""
@@ -240,10 +249,22 @@ test_openVault = TestList [
             , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
             ]
             (execRecorded mockAfterExec)
+        assertEqual "prev directory is mountpoint"
+            "/mnt/point"
+            (prevDir mockAfterExec)
         assertEqual "current directory changed to repo within mountpoint"
-            "/mnt/point/repo"
+            "repo"
             (currentDir mockAfterExec)
-        assertVaultEnvVarSet mockAfterExec
+
+        let vri = V.VaultRuntimeInfo {
+                  V.srcDir = "/home/user",
+                  V.loopDev = "/dev/loop42",
+                  V.mapperDev = "/dev/dm-4",
+                  V.mountedRepo = "/mnt/point/repo",
+                  V.partition = "local.vault",
+                  V.partitionLocation = V.LocalPartition
+              }
+        assertActiveVaultEnvVarSet vri mockAfterExec
 
     ]
 
@@ -301,9 +322,17 @@ assertNoVaultEnvVar mock =
 
 assertVaultEnvVarSet :: Mock -> IO ()
 assertVaultEnvVarSet mock =
-    assertBool "vault env var set" (isJust envVar)
-    where envVar = (lookup key $ envVars mock)
+    assertBool "vault env var set" (isJust mEnvVar)
+    where mEnvVar = (lookup key $ envVars mock)
           key = V.activeVaultEnvName
+
+assertActiveVaultEnvVarSet :: V.VaultRuntimeInfo -> Mock -> IO ()
+assertActiveVaultEnvVarSet vri mock = do
+    let key = V.activeVaultEnvName
+    let mEnvVar = (lookup key $ envVars mock)
+    case mEnvVar of
+         Nothing -> assertFailure "no vault env var"
+         Just envVar -> assertEqual "active vault as expected" vri (read envVar)
 
 mkOpenVault :: String -> ParamsOpenVault
 mkOpenVault fname = ParamsOpenVault {
@@ -314,6 +343,7 @@ mkOpenVault fname = ParamsOpenVault {
 emptyMock :: Mock
 emptyMock = Mock {
       currentDir = "/home/user"
+    , prevDir = "/"
     , hasVaultDir = False
     , hasRepoDir = False
     , envVars = []
@@ -324,8 +354,15 @@ emptyMock = Mock {
 
 mockWithVault :: Mock
 mockWithVault = emptyMock {
-      hasVaultDir = True
+    hasVaultDir = True
 }
+
+mockWithVaultAndRepoDir :: Mock
+mockWithVaultAndRepoDir = emptyMock {
+      hasVaultDir = True
+    , hasRepoDir = True
+}
+
 
 mockWithActiveVault :: Mock
 mockWithActiveVault = mockWithVault {

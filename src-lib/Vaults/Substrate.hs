@@ -12,12 +12,13 @@ data ExecResult = ExecResult {
 } deriving Show
 
 class Monad m => Substrate m where
-    readFileSub  :: FilePath -> m String
-    dirExistsSub :: FilePath -> m Bool
-    lookupEnvSub :: String -> m (Maybe String)
-    setEnvSub    :: String -> String -> m ()
-    unsetEnvSub  :: String -> m ()
-    chdirSub     :: String -> m ()
+    readFileSub      :: FilePath -> m String
+    dirExistsSub     :: FilePath -> m Bool
+    lookupEnvSub     :: String -> m (Maybe String)
+    setEnvSub        :: String -> String -> m ()
+    unsetEnvSub      :: String -> m ()
+    getDirSub        :: m String
+    changeDirSub     :: String -> m ()
 
     -- TODO implement with readCreateProcessWithExitCode,
     -- which is safe because udisksctl does not use stdout and stdin to request

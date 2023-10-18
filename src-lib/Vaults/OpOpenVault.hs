@@ -13,7 +13,6 @@ data ParamsOpenVault = ParamsOpenVault {
     isForcedOpening :: Bool
 } deriving (Eq, Show)
 
--- TODO set vri to env var
 -- TODO validate loaded VaultInfo
 -- e.g. for empty name, empty localname etc
 openVault :: Substrate m => ParamsOpenVault -> m (Either String ())
@@ -28,6 +27,7 @@ openVault params = runExceptT $ do
     let partLoc = getPartitionLocation vi fname
     when (partLoc == UnknownPartition) (throwError "unknown vault partition")
 
+    dirBeforeOpening <- lift $ getDirSub
     devFile <- createLoopDevice fname
 
     mapperDev <- catchError
@@ -43,7 +43,24 @@ openVault params = runExceptT $ do
                  deleteLoopDevice devFile
                  throwError e)
 
-    lift $ chdirSub mountPoint
+    lift $ changeDirSub mountPoint
+
+    hasRepoDir <- lift $ dirExistsSub "repo"
+    when hasRepoDir (lift $ changeDirSub "repo")
+
+    let repoDir = if hasRepoDir then mountPoint ++ "/repo"
+                                else mountPoint
+
+    let vri = VaultRuntimeInfo {
+              srcDir = dirBeforeOpening
+            , loopDev = devFile
+            , mapperDev = mapperDev
+            , mountedRepo = repoDir
+            , partition = fname
+            , partitionLocation = partLoc
+        }
+
+    lift $ setEnvSub activeVaultEnvName (show vri)
 
 
 -- TODO validate parameter fname

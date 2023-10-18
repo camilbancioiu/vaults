@@ -10,7 +10,8 @@ import qualified Vaults.Base as V
 import Debug.Trace
 
 data Mock = Mock {
-    currentDir :: String,
+    currentDir :: FilePath,
+    prevDir :: FilePath,
     hasVaultDir :: Bool,
     hasRepoDir :: Bool,
     envVars :: [(String, String)],
@@ -22,8 +23,10 @@ data Mock = Mock {
 setCurrentDir :: String -> Mock -> Mock
 setCurrentDir dir mock =
     mock {
-        currentDir = dir
+        currentDir = dir,
+        prevDir = previousMockDir
     }
+    where previousMockDir = currentDir mock
 
 addMockEnvVar :: String -> String -> Mock -> Mock
 addMockEnvVar key val mock =
@@ -75,7 +78,8 @@ instance Substrate (State Mock) where
     lookupEnvSub = mock_lookupEnvSub
     setEnvSub    = mock_setEnvSub
     unsetEnvSub  = mock_unsetEnvSub
-    chdirSub     = mock_chdirSub
+    getDirSub    = mock_getDirSub
+    changeDirSub = mock_changeDirSub
     execSub      = mock_execSub
 
 mock_readFileSub :: FilePath -> State Mock String
@@ -100,8 +104,11 @@ mock_setEnvSub key val = modify (addMockEnvVar key val)
 mock_unsetEnvSub :: String -> State Mock ()
 mock_unsetEnvSub key = modify (removeMockEnvVar key)
 
-mock_chdirSub :: String -> State Mock ()
-mock_chdirSub dir = modify (setCurrentDir dir)
+mock_getDirSub :: State Mock String
+mock_getDirSub = gets currentDir
+
+mock_changeDirSub :: String -> State Mock ()
+mock_changeDirSub dir = modify (setCurrentDir dir)
 
 mock_execSub :: String -> [String] -> String -> State Mock ExecResult
 mock_execSub executable params _ = do
