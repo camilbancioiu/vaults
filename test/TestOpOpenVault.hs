@@ -14,7 +14,7 @@ import qualified Vaults.Substrate as Sub
 import Vaults.OpOpenVault
 
 -- TODO test scenarios:
--- fail when mounting fails fails
+-- fail when mounting
 -- -- assert lock called
 -- -- assert loop-delete called
 -- -- assert no other calls to udisksctl
@@ -71,7 +71,7 @@ test_prerequisites = TestList [
 
 test_createLoopDevice :: Test
 test_createLoopDevice = TestList [
-    TestLabel "udisksctl loop-setup error fails" $
+    TestLabel "udisksctl loop-setup error prevents creating loop dev" $
     TestCase $ do
         let mock = addMockExecResult er mockWithVault
                    where er = Sub.ExecResult (ExitFailure 16) "" "didnt work"
@@ -89,7 +89,7 @@ test_createLoopDevice = TestList [
 
 test_unlockDevice :: Test
 test_unlockDevice = TestList [
-    TestLabel "udisksctl unlock error fails" $
+    TestLabel "udisksctl unlock error prevents unlocking" $
     TestCase $ do
         let mock = addMockExecResult loopSetupFail mockWithVault
                    where loopSetupFail = Sub.ExecResult (ExitFailure 16) "" "didnt work"
@@ -127,7 +127,7 @@ test_mountDevice = TestList [
 
 test_openVault :: Test
 test_openVault = TestList [
-    TestLabel "loop-setup error fails opening" $
+    TestLabel "loop-setup error prevents opening" $
     TestCase $ do
         let mock = addMockExecResult er mockWithVault
                    where er = Sub.ExecResult (ExitFailure 16) "" "didnt work"
@@ -143,7 +143,7 @@ test_openVault = TestList [
             (currentDir mockAfterExec)
         assertNoVaultEnvVar mockAfterExec,
 
-    TestLabel "unlock error fails opening and deletes loop device" $
+    TestLabel "unlock error prevents opening and deletes loop device" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVault
                    where results = [loopSetupOk, unlockFail, loopDeleteOk]
@@ -166,7 +166,7 @@ test_openVault = TestList [
             (currentDir mockAfterExec)
         assertNoVaultEnvVar mockAfterExec,
 
-    TestLabel "mount error fails opening and undoes mount and loop-setup" $
+    TestLabel "mount error prevents opening and undoes mount and loop-setup" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVault
                    where results = [loopSetupOk, unlockOk, mountFail, lockOk, loopDeleteOk]
