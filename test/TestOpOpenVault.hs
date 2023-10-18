@@ -5,6 +5,8 @@ import Control.Monad.State
 import Control.Monad.Except
 import System.Exit
 
+import Data.Maybe
+
 import MockSubstrate
 
 import qualified Vaults.Base as V
@@ -215,6 +217,7 @@ test_openVault = TestList [
         assertEqual "current directory changed to mountpoint"
             "/mnt/point"
             (currentDir mockAfterExec)
+        assertVaultEnvVarSet mockAfterExec
 
     ]
 
@@ -271,6 +274,7 @@ assertNoVaultEnvVar mock =
     where key = V.activeVaultEnvName
 
 assertVaultEnvVarSet :: Mock -> IO ()
+assertVaultEnvVarSet mock =
     assertBool "vault env var set" (isJust envVar)
     where envVar = (lookup key $ envVars mock)
           key = V.activeVaultEnvName
