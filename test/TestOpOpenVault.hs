@@ -14,14 +14,6 @@ import qualified Vaults.Substrate as Sub
 import Vaults.OpOpenVault
 
 -- TODO test scenarios:
--- fail when mounting
--- -- assert lock called
--- -- assert loop-delete called
--- -- assert no other calls to udisksctl
---
--- succeed opening vault in correct conditions
--- -- assert cwd
--- -- assert active vault runtime info in env
 -- succeed opening with partition name only
 -- -- i.e. extension .vault added correctly
 --
@@ -73,16 +65,13 @@ test_createLoopDevice :: Test
 test_createLoopDevice = TestList [
     TestLabel "udisksctl loop-setup error prevents creating loop dev" $
     TestCase $ do
-        let mock = addMockExecResult er mockWithVault
-                   where er = Sub.ExecResult (ExitFailure 16) "" "didnt work"
+        let mock = addMockExecResult loopSetupFail mockWithVault
         let result = runState (runExceptT $ createLoopDevice "/what") mock
         assertOpError "loop-setup failed" result,
 
     TestLabel "udisksctl loop-setup succeeds" $
     TestCase $ do
         let mock = addMockExecResult loopSetupOk mockWithVault
-                   where loopSetupOk = Sub.ExecResult ExitSuccess outStr ""
-                         outStr = "Mapped file dummy.vault as /dev/loop42."
         let result = runState (runExceptT $ createLoopDevice "dummy.vault") mock
         assertEqual "loop-setup success" (Right "/dev/loop42") (fst result)
     ]
@@ -92,17 +81,14 @@ test_unlockDevice = TestList [
     TestLabel "udisksctl unlock error prevents unlocking" $
     TestCase $ do
         let mock = addMockExecResult loopSetupFail mockWithVault
-                   where loopSetupFail = Sub.ExecResult (ExitFailure 16) "" "didnt work"
         let result = runState (runExceptT $ unlockDevice "what") mock
         assertOpError "unlock failed" result,
 
     TestLabel "udisksctl unlock succeeds" $
     TestCase $ do
         let mock = addMockExecResult unlockOk mockWithVault
-                   where unlockOk = Sub.ExecResult ExitSuccess outStr ""
-                         outStr = "Unlocked /dev/loop24 as /dev/dm-8."
         let result = runState (runExceptT $ unlockDevice "what") mock
-        assertEqual "unlock succeeds" (Right "/dev/dm-8") (fst result)
+        assertEqual "unlock succeeds" (Right "/dev/dm-4") (fst result)
     ]
 
 test_deleteLoopDevice :: Test
@@ -110,7 +96,6 @@ test_deleteLoopDevice = TestList [
     TestLabel "udisksctl loop-delete succeeds" $
     TestCase $ do
         let mock = addMockExecResult loopDeleteOk mockWithVault
-                   where loopDeleteOk = Sub.ExecResult ExitSuccess "undefined" ""
         let result = runState (runExceptT $ deleteLoopDevice "/dev/loop42") mock
         assertEqual "loop-delete succeeds" (Right ()) (fst result)
     ]
@@ -120,8 +105,7 @@ test_mountDevice = TestList [
     TestLabel "udisksctl mount succeeds" $
     TestCase $ do
         let mock = addMockExecResult mountOk mockWithVault
-                   where mountOk = Sub.ExecResult ExitSuccess "Mounted /dev/dm-8 at /mnt/point" ""
-        let result = runState (runExceptT $ mountDevice "/dev/dm-8") mock
+        let result = runState (runExceptT $ mountDevice "/dev/dm-4") mock
         assertEqual "mount succeeds" (Right "/mnt/point") (fst result)
     ]
 
@@ -129,8 +113,7 @@ test_openVault :: Test
 test_openVault = TestList [
     TestLabel "loop-setup error prevents opening" $
     TestCase $ do
-        let mock = addMockExecResult er mockWithVault
-                   where er = Sub.ExecResult (ExitFailure 16) "" "didnt work"
+        let mock = addMockExecResult loopSetupFail mockWithVault
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
         assertOpError "loop-setup failed" result
@@ -147,10 +130,6 @@ test_openVault = TestList [
     TestCase $ do
         let mock = addMockExecResults results mockWithVault
                    where results = [loopSetupOk, unlockFail, loopDeleteOk]
-                         loopSetupOk  = Sub.ExecResult ExitSuccess loopSetupOut ""
-                         unlockFail   = Sub.ExecResult (ExitFailure 16) "" "didnt work"
-                         loopDeleteOk = Sub.ExecResult ExitSuccess "" ""
-                         loopSetupOut = "Mapped file local.vault as /dev/loop42."
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
@@ -198,12 +177,6 @@ test_openVault = TestList [
     TestCase $ do
         let mock = addMockExecResults results mockWithVault
                    where results = [loopSetupOk, unlockOk, mountOk]
-                         loopSetupOk  = Sub.ExecResult ExitSuccess loopSetupOut ""
-                         unlockOk     = Sub.ExecResult ExitSuccess unlockOut ""
-                         mountOk      = Sub.ExecResult ExitSuccess mountOut ""
-                         loopSetupOut = "Mapped file local.vault as /dev/loop42."
-                         unlockOut    = "Unlocked /dev/loop42 as /dev/dm-4."
-                         mountOut     = "Mounted /dev/dm-4 at /mnt/point"
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
@@ -228,17 +201,10 @@ test_openVault = TestList [
               }
         assertActiveVaultEnvVarSet vri mockAfterExec,
 
-    -- TODO globally defined mocked ExecResults, e.g. loopSetupOk
     TestLabel "mount succeeds, vault has inner repo" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [loopSetupOk, unlockOk, mountOk]
-                         loopSetupOk  = Sub.ExecResult ExitSuccess loopSetupOut ""
-                         unlockOk     = Sub.ExecResult ExitSuccess unlockOut ""
-                         mountOk      = Sub.ExecResult ExitSuccess mountOut ""
-                         loopSetupOut = "Mapped file local.vault as /dev/loop42."
-                         unlockOut    = "Unlocked /dev/loop42 as /dev/dm-4."
-                         mountOut     = "Mounted /dev/dm-4 at /mnt/point"
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
@@ -305,6 +271,16 @@ test_parsingUdisksctlOutput = TestList [
 
     ]
 
+loopSetupOk  = Sub.ExecResult ExitSuccess loopSetupOut ""
+loopSetupFail = Sub.ExecResult (ExitFailure 16) "" "didnt work"
+loopDeleteOk = Sub.ExecResult ExitSuccess "" ""
+unlockOk     = Sub.ExecResult ExitSuccess unlockOut ""
+unlockFail   = Sub.ExecResult (ExitFailure 16) "" "didnt work"
+mountOk      = Sub.ExecResult ExitSuccess mountOut ""
+loopSetupOut = "Mapped file local.vault as /dev/loop42."
+unlockOut    = "Unlocked /dev/loop42 as /dev/dm-4."
+mountOut     = "Mounted /dev/dm-4 at /mnt/point"
+
 assertOpError :: (Eq a, Show a) => String -> (Either String a, Mock) -> IO ()
 assertOpError err (opResult, _) =
     assertEqual err (Left err) opResult
@@ -362,7 +338,6 @@ mockWithVaultAndRepoDir = emptyMock {
       hasVaultDir = True
     , hasRepoDir = True
 }
-
 
 mockWithActiveVault :: Mock
 mockWithActiveVault = mockWithVault {
