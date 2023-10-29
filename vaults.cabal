@@ -16,7 +16,7 @@ category:            Data
 extra-source-files:  CHANGELOG.md
 
 library
-  exposed-modules:     Vaults.Base, Vaults.Substrate,
+  exposed-modules:     Vaults.Base, Vaults.Substrate, Vaults.Udisksctl,
                        Vaults.OpOpenVault
   -- other-modules:
   -- other-extensions:
@@ -37,6 +37,6 @@ test-suite vaults-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Test.hs
-  other-modules:       MockSubstrate, TestBase, TestOpOpenVault
+  other-modules:       MockSubstrate, TestBase, TestUdisksctl, TestOpOpenVault
   build-depends:       base, vaults,
                        HUnit, mtl

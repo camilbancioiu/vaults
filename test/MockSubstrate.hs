@@ -72,6 +72,16 @@ dropHeadMockExecResult mock =
         execResults = tail (execResults mock)
     }
 
+loopSetupOk   = ExecResult ExitSuccess loopSetupOut ""
+loopSetupFail = ExecResult (ExitFailure 16) "" "didnt work"
+loopDeleteOk  = ExecResult ExitSuccess "" ""
+unlockOk      = ExecResult ExitSuccess unlockOut ""
+unlockFail    = ExecResult (ExitFailure 16) "" "didnt work"
+mountOk       = ExecResult ExitSuccess mountOut ""
+loopSetupOut  = "Mapped file local.vault as /dev/loop42."
+unlockOut     = "Unlocked /dev/loop42 as /dev/dm-4."
+mountOut      = "Mounted /dev/dm-4 at /mnt/point"
+
 instance Substrate (State Mock) where
     readFileSub  = mock_readFileSub
     dirExistsSub = mock_dirExistsSub
@@ -132,4 +142,33 @@ mockVaultRuntimeInfo = V.VaultRuntimeInfo {
     V.mountedRepo = "/run/media/user/localhostname/mockVault",
     V.partition = "local.vault",
     V.partitionLocation = V.LocalPartition
+}
+
+emptyMock :: Mock
+emptyMock = Mock {
+      currentDir = "/home/user"
+    , prevDir = "/"
+    , hasVaultDir = False
+    , hasRepoDir = False
+    , envVars = []
+    , nExecs = 0
+    , execRecorded = []
+    , execResults = []
+    }
+
+mockWithVault :: Mock
+mockWithVault = emptyMock {
+    hasVaultDir = True
+}
+
+mockWithVaultAndRepoDir :: Mock
+mockWithVaultAndRepoDir = emptyMock {
+      hasVaultDir = True
+    , hasRepoDir = True
+}
+
+mockWithActiveVault :: Mock
+mockWithActiveVault = mockWithVault {
+      hasVaultDir = True
+    , envVars = [(V.activeVaultEnvName, "some_vault")]
 }
