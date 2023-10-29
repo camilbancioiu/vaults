@@ -85,13 +85,6 @@ unlockDevice devFile = do
          Left _ -> throwError "unlock failed"
          Right mapperDev -> return mapperDev
 
--- TODO validate parameter mapperDev
-lockDevice :: Substrate m => FilePath -> ExceptT String m ()
-lockDevice mapperDev = do
-    result <- lift $ execSub "udisksctl" ["lock", "-b", mapperDev] ""
-    when (exitCode result /= ExitSuccess) (throwError "lock failed")
-    return ()
-
 -- TODO mount as readonly
 mountDevice :: Substrate m => FilePath -> ExceptT String m FilePath
 mountDevice mapperDev = do
@@ -102,6 +95,13 @@ mountDevice mapperDev = do
     case parsedMountpoint of
          Left _ -> throwError "mount failed"
          Right mountpoint -> return mountpoint
+
+-- TODO validate parameter mapperDev
+lockDevice :: Substrate m => FilePath -> ExceptT String m ()
+lockDevice mapperDev = do
+    result <- lift $ execSub "udisksctl" ["lock", "-b", mapperDev] ""
+    when (exitCode result /= ExitSuccess) (throwError "lock failed")
+    return ()
 
 -- TODO validate parameter devFile
 deleteLoopDevice :: Substrate m => FilePath -> ExceptT String m ()
