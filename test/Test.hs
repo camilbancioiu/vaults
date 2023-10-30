@@ -1,10 +1,11 @@
 module Main (main) where
 
-import qualified TestBase (allTests)
-import qualified TestOpOpenVault (allTests)
-
 import System.Exit
 import Test.HUnit
+
+import qualified TestBase (allTests)
+import qualified TestUdisksctl (allTests)
+import qualified TestOpOpenVault (allTests)
 
 main :: IO ()
 main = do
@@ -16,5 +17,6 @@ main = do
 allTests :: Test
 allTests = TestList [
     TestBase.allTests,
+    TestUdisksctl.allTests,
     TestOpOpenVault.allTests
     ]

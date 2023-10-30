@@ -30,7 +30,7 @@ test_prerequisites = TestList [
     TestLabel "open in non-vault folder fails" $
     TestCase $ do
         let mock = emptyMock
-        let params = mkOpenVault "local.vault"
+        let params = mkParamsOpenVault "local.vault"
         let result = runState (openVault params) mock
         assertOpError "non-vault folder" result
         assertNoExecCalls result,
@@ -38,7 +38,7 @@ test_prerequisites = TestList [
     TestLabel "open when vault already open fails" $
     TestCase $ do
         let mock = mockWithActiveVault
-        let params = mkOpenVault "local.vault"
+        let params = mkParamsOpenVault "local.vault"
         let result = runState (openVault params) mock
         assertOpError "vault already open" result
         assertNoExecCalls result,
@@ -60,7 +60,7 @@ test_openVault = TestList [
     TestLabel "loop-setup error prevents opening" $
     TestCase $ do
         let mock = addMockExecResult loopSetupFail mockWithVaultDir
-        let params = mkOpenVault "local.vault"
+        let params = mkParamsOpenVault "local.vault"
         let result = runState (openVault params) mock
         assertOpError "loop-setup failed" result
         let mockAfterExec = snd result
@@ -76,7 +76,7 @@ test_openVault = TestList [
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultDir
                    where results = [loopSetupOk, unlockFail, loopDeleteOk]
-        let params = mkOpenVault "local.vault"
+        let params = mkParamsOpenVault "local.vault"
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
         assertOpError "unlock failed" result
@@ -102,7 +102,7 @@ test_openVault = TestList [
                          loopDeleteOk = Sub.ExecResult ExitSuccess "" ""
                          loopSetupOut = "Mapped file local.vault as /dev/loop42."
                          unlockOut    = "Unlocked /dev/loop42 as /dev/dm-4."
-        let params = mkOpenVault "local.vault"
+        let params = mkParamsOpenVault "local.vault"
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
         assertOpError "mount failed" result
@@ -123,7 +123,7 @@ test_openVault = TestList [
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultDir
                    where results = [loopSetupOk, unlockOk, mountOk]
-        let params = mkOpenVault "local.vault"
+        let params = mkParamsOpenVault "local.vault"
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
         assertEqual "mount succeeds" (Right ()) (fst result)
@@ -151,7 +151,7 @@ test_openVault = TestList [
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [loopSetupOk, unlockOk, mountOk]
-        let params = mkOpenVault "local.vault"
+        let params = mkParamsOpenVault "local.vault"
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
         assertEqual "mount succeeds" (Right ()) (fst result)
@@ -180,8 +180,8 @@ test_openVault = TestList [
 
     ]
 
-mkOpenVault :: String -> ParamsOpenVault
-mkOpenVault fname = ParamsOpenVault {
+mkParamsOpenVault :: String -> ParamsOpenVault
+mkParamsOpenVault fname = ParamsOpenVault {
     partitionFilename = fname,
     isForcedOpening = False
 }
