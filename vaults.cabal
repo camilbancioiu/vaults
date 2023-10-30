@@ -37,6 +37,6 @@ test-suite vaults-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Test.hs
-  other-modules:       MockSubstrate, TestBase, TestUdisksctl, TestOpOpenVault
+  other-modules:       MockSubstrate, Assertions, TestBase, TestUdisksctl, TestOpOpenVault
   build-depends:       base, vaults,
                        HUnit, mtl

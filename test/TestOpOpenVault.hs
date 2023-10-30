@@ -5,9 +5,8 @@ import Control.Monad.State
 import Control.Monad.Except
 import System.Exit
 
-import Data.Maybe
-
 import MockSubstrate
+import Assertions
 
 import qualified Vaults.Base as V
 import qualified Vaults.Substrate as Sub
@@ -46,7 +45,7 @@ test_prerequisites = TestList [
 
     TestLabel "open without a partition filename fails" $
     TestCase $ do
-        let mock = mockWithVault
+        let mock = mockWithVaultDir
         let params = ParamsOpenVault {
                 partitionFilename = "",
                 isForcedOpening = False
@@ -60,7 +59,7 @@ test_openVault :: Test
 test_openVault = TestList [
     TestLabel "loop-setup error prevents opening" $
     TestCase $ do
-        let mock = addMockExecResult loopSetupFail mockWithVault
+        let mock = addMockExecResult loopSetupFail mockWithVaultDir
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
         assertOpError "loop-setup failed" result
@@ -75,7 +74,7 @@ test_openVault = TestList [
 
     TestLabel "unlock error prevents opening and deletes loop device" $
     TestCase $ do
-        let mock = addMockExecResults results mockWithVault
+        let mock = addMockExecResults results mockWithVaultDir
                    where results = [loopSetupOk, unlockFail, loopDeleteOk]
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
@@ -94,7 +93,7 @@ test_openVault = TestList [
 
     TestLabel "mount error prevents opening and undoes unlock and loop-setup" $
     TestCase $ do
-        let mock = addMockExecResults results mockWithVault
+        let mock = addMockExecResults results mockWithVaultDir
                    where results = [loopSetupOk, unlockOk, mountFail, lockOk, loopDeleteOk]
                          loopSetupOk  = Sub.ExecResult ExitSuccess loopSetupOut ""
                          unlockOk     = Sub.ExecResult ExitSuccess unlockOut ""
@@ -122,7 +121,7 @@ test_openVault = TestList [
 
     TestLabel "mount succeeds, no inner repo" $
     TestCase $ do
-        let mock = addMockExecResults results mockWithVault
+        let mock = addMockExecResults results mockWithVaultDir
                    where results = [loopSetupOk, unlockOk, mountOk]
         let params = mkOpenVault "local.vault"
         let result = runState (openVault params) mock
@@ -180,35 +179,6 @@ test_openVault = TestList [
         assertActiveVaultEnvVarSet vri mockAfterExec
 
     ]
-
-assertOpError :: (Eq a, Show a) => String -> (Either String a, Mock) -> IO ()
-assertOpError err (opResult, _) =
-    assertEqual err (Left err) opResult
-
-assertNoExecCalls :: (V.OpResult, Mock) -> IO ()
-assertNoExecCalls (_, mock) =
-    assertEqual "no exec calls" 0 (nExecs mock)
-
-assertNoVaultEnvVar :: Mock -> IO ()
-assertNoVaultEnvVar mock =
-    assertEqual "no vault env var"
-        Nothing
-        (lookup key $ envVars mock)
-    where key = V.activeVaultEnvName
-
-assertVaultEnvVarSet :: Mock -> IO ()
-assertVaultEnvVarSet mock =
-    assertBool "vault env var set" (isJust mEnvVar)
-    where mEnvVar = (lookup key $ envVars mock)
-          key = V.activeVaultEnvName
-
-assertActiveVaultEnvVarSet :: V.VaultRuntimeInfo -> Mock -> IO ()
-assertActiveVaultEnvVarSet vri mock = do
-    let key = V.activeVaultEnvName
-    let mEnvVar = (lookup key $ envVars mock)
-    case mEnvVar of
-         Nothing -> assertFailure "no vault env var"
-         Just envVar -> assertEqual "active vault as expected" vri (read envVar)
 
 mkOpenVault :: String -> ParamsOpenVault
 mkOpenVault fname = ParamsOpenVault {

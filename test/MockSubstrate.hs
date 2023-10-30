@@ -156,10 +156,10 @@ emptyMock = Mock {
     , execResults = []
     }
 
-mockWithVault :: Mock
-mockWithVault = emptyMock {
+mockWithVaultDir :: Mock
+mockWithVaultDir = emptyMock {
     hasVaultDir = True
-}
+    }
 
 mockWithVaultAndRepoDir :: Mock
 mockWithVaultAndRepoDir = emptyMock {
@@ -168,7 +168,11 @@ mockWithVaultAndRepoDir = emptyMock {
 }
 
 mockWithActiveVault :: Mock
-mockWithActiveVault = mockWithVault {
-      hasVaultDir = True
-    , envVars = [(V.activeVaultEnvName, "some_vault")]
+mockWithActiveVault = mockWithVaultDir {
+    envVars = [(V.activeVaultEnvName, "some_vault")]
+}
+
+mockWithEnvVar :: (String, String) -> Mock
+mockWithEnvVar var = emptyMock {
+    envVars = [var]
 }

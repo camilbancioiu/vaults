@@ -98,32 +98,3 @@ test_getPartitionLocation = TestCase $ do
     V.UnknownPartition @=? V.getPartitionLocation vi "remoteC.vault"
     V.RemotePartition @=? V.getPartitionLocation vi "remoteA.vault"
     V.RemotePartition @=? V.getPartitionLocation vi "remoteB.vault"
-
-emptyMock :: Mock
-emptyMock = Mock {
-      currentDir = "/home/user"
-    , prevDir = "/"
-    , hasVaultDir = False
-    , hasRepoDir = False
-    , envVars = []
-    , nExecs = 0
-    , execRecorded = []
-    , execResults = []
-    }
-
-mockWithVaultDir :: Mock
-mockWithVaultDir = emptyMock {
-    hasVaultDir = True
-    }
-
-mockWithEnvVar :: (String, String) -> Mock
-mockWithEnvVar var = Mock {
-      currentDir = "/home/user"
-    , prevDir = "/"
-    , hasVaultDir = False
-    , hasRepoDir = False
-    , envVars = [var]
-    , nExecs = 0
-    , execRecorded = []
-    , execResults = []
-}
