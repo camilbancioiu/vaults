@@ -95,13 +95,6 @@ test_openVault = TestList [
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultDir
                    where results = [loopSetupOk, unlockOk, mountFail, lockOk, loopDeleteOk]
-                         loopSetupOk  = Sub.ExecResult ExitSuccess loopSetupOut ""
-                         unlockOk     = Sub.ExecResult ExitSuccess unlockOut ""
-                         mountFail    = Sub.ExecResult (ExitFailure 16) "" "didnt work"
-                         lockOk       = Sub.ExecResult ExitSuccess "Locked /dev/dm-4." ""
-                         loopDeleteOk = Sub.ExecResult ExitSuccess "" ""
-                         loopSetupOut = "Mapped file local.vault as /dev/loop42."
-                         unlockOut    = "Unlocked /dev/loop42 as /dev/dm-4."
         let params = mkParamsOpenVault "local.vault"
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
