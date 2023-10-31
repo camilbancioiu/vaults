@@ -74,6 +74,11 @@ isAnyVaultActive = do
     maybeEnv <- lookupEnvSub activeVaultEnvName
     return (isJust maybeEnv)
 
+ensureIsVaultActive :: Substrate m => ExceptT String m ()
+ensureIsVaultActive = do
+    isVA <- lift $ isAnyVaultActive
+    unless isVA (throwError "no vault open")
+
 ensureNoVaultActive :: Substrate m => ExceptT String m ()
 ensureNoVaultActive = do
     isVA <- lift $ isAnyVaultActive
