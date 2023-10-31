@@ -17,8 +17,8 @@ data ParamsOpenVault = ParamsOpenVault {
 -- e.g. for empty name, empty localname etc
 openVault :: Substrate m => ParamsOpenVault -> m (Either String ())
 openVault params = runExceptT $ do
-    checkIsVaultDir
-    checkIsAnyVaultActive
+    ensureIsVaultDir
+    ensureNoVaultActive
 
     let fname = partitionFilename params
     when (length fname == 0) (throwError "partition filename is required")
@@ -61,14 +61,3 @@ openVault params = runExceptT $ do
         }
 
     lift $ setEnvSub activeVaultEnvName (show vri)
-
-
-checkIsVaultDir :: Substrate m => ExceptT String m ()
-checkIsVaultDir = do
-    isV <- lift $ isVaultDir
-    unless isV (throwError "non-vault folder")
-
-checkIsAnyVaultActive :: Substrate m => ExceptT String m ()
-checkIsAnyVaultActive = do
-    isVA <- lift $ isAnyVaultActive
-    when isVA (throwError "vault already open")
