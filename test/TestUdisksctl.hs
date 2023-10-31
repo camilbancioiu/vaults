@@ -60,11 +60,22 @@ test_deleteLoopDevice = TestList [
 
 test_mountDevice :: Test
 test_mountDevice = TestList [
+    -- TODO test case for mounting an already mounted device
     TestLabel "udisksctl mount succeeds" $
     TestCase $ do
         let mock = addMockExecResult mountOk mockWithVaultDir
         let result = runState (runExceptT $ mountDevice "/dev/dm-4") mock
         assertEqual "mount succeeds" (Right "/mnt/point") (fst result)
+    ]
+
+test_unmountDevice :: Test
+test_unmountDevice = TestList [
+    -- TODO test case for unmounting an unmounted device
+    TestLabel "udisksctl unmount succeeds" $
+    TestCase $ do
+        let mock = addMockExecResult unmountOk mockWithVaultDir
+        let result = runState (runExceptT $ unmountDevice "/dev/dm-4") mock
+        assertEqual "unmount succeeded" (Right ()) (fst result)
     ]
 
 test_parsingUdisksctlOutput :: Test

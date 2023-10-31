@@ -74,10 +74,12 @@ isAnyVaultActive = do
     maybeEnv <- lookupEnvSub activeVaultEnvName
     return (isJust maybeEnv)
 
-ensureIsVaultActive :: Substrate m => ExceptT String m ()
+ensureIsVaultActive :: Substrate m => ExceptT String m VaultRuntimeInfo
 ensureIsVaultActive = do
-    isVA <- lift $ isAnyVaultActive
-    unless isVA (throwError "no vault open")
+    mvri <- lift $ getActiveVault
+    case mvri of
+         Nothing -> (throwError "cannot read vault runtime info")
+         Just vri -> return vri
 
 ensureNoVaultActive :: Substrate m => ExceptT String m ()
 ensureNoVaultActive = do

@@ -8,8 +8,8 @@ import MockSubstrate
 import qualified Vaults.Base as V
 
 assertOpError :: (Eq a, Show a) => String -> (Either String a, Mock) -> IO ()
-assertOpError err (opResult, _) =
-    assertEqual err (Left err) opResult
+assertOpError errmsg (opResult, _) =
+    assertEqual errmsg (Left errmsg) opResult
 
 assertNoExecCalls :: (V.OpResult, Mock) -> IO ()
 assertNoExecCalls (_, mock) =

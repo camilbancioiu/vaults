@@ -39,6 +39,12 @@ mountDevice mapperDev = do
          Right mountpoint -> return mountpoint
 
 -- TODO validate parameter mapperDev
+unmountDevice :: Substrate m => FilePath -> ExceptT String m ()
+unmountDevice mapperDev = do
+    result <- lift $ execSub "udisksctl" ["unmount", "-b", mapperDev] ""
+    when (exitCode result /= ExitSuccess) (throwError "unmount failed")
+
+-- TODO validate parameter mapperDev
 lockDevice :: Substrate m => FilePath -> ExceptT String m ()
 lockDevice mapperDev = do
     result <- lift $ execSub "udisksctl" ["lock", "-b", mapperDev] ""
