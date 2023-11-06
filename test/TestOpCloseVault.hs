@@ -51,11 +51,15 @@ test_closeVault = TestList [
                    where results = [unmountOk, lockOk, loopDeleteOk]
         let result = runState closeVault mock
         let mockAfterExec = snd result
+        assertNoVaultEnvVar mockAfterExec
         assertEqual "srcDir; unmounted, locked, deleted loop; delete env descriptor"
             [ ("udisksctl", ["unmount", "-b", "/dev/dm-2"])
             , ("udisksctl", ["lock", "-b", "/dev/dm-2"])
             , ("udisksctl", ["loop-delete", "-b", "/dev/loop9"])
             ]
             (execRecorded mockAfterExec)
+        assertEqual "dir changed"
+            "/home/user/vaults/mockVault"
+            (currentDir mockAfterExec)
     ]
 
