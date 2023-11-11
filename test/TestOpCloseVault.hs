@@ -30,12 +30,7 @@ test_prerequisites = TestList [
 test_closeVault :: Test
 test_closeVault = TestList [
     -- TODO closing *local* vault succeeds
-    --  assert expected udisksctl commands called
     --  assert git log updated
-    --  assert cwd becomes srcDir
-    --  assert repoDir is unreadable
-    --  assert mapperDev and loopDev have been released
-    --  assert no active vault
 
     -- TODO closing *remote* vault succeeds
     --  assert cwd becomes srcDir
@@ -52,14 +47,15 @@ test_closeVault = TestList [
         let result = runState closeVault mock
         let mockAfterExec = snd result
         assertNoVaultEnvVar mockAfterExec
-        assertEqual "srcDir; unmounted, locked, deleted loop; delete env descriptor"
+        assertEqual "unmounted, locked, deleted loop"
             [ ("udisksctl", ["unmount", "-b", "/dev/dm-2"])
             , ("udisksctl", ["lock", "-b", "/dev/dm-2"])
             , ("udisksctl", ["loop-delete", "-b", "/dev/loop9"])
             ]
             (execRecorded mockAfterExec)
-        assertEqual "dir changed"
+        assertEqual "dir changed to srcDir"
             "/home/user/vaults/mockVault"
             (currentDir mockAfterExec)
+
     ]
 
