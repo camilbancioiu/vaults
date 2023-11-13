@@ -172,7 +172,7 @@ mockWithVaultAndRepoDir = emptyMock {
 }
 
 mockWithActiveVault :: Mock
-mockWithActiveVault = mockWithVaultDir {
+mockWithActiveVault = mockWithVaultAndRepoDir {
     envVars = [(V.activeVaultEnvName, show mockVaultRuntimeInfo)]
 }
 
