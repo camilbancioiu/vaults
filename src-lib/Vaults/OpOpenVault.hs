@@ -1,6 +1,7 @@
 module Vaults.OpOpenVault where
 
 import System.Directory
+import System.FilePath.Posix
 import Control.Monad.Except
 import Data.Maybe
 
@@ -57,6 +58,7 @@ openVault params = runExceptT $ do
             , mapperDev = mapperDev
             , mountedRepo = repoDir
             , partition = fname
+            , partitionName = takeBaseName fname
             , partitionLocation = partLoc
         }
 

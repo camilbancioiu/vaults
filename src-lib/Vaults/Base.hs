@@ -28,6 +28,7 @@ data VaultRuntimeInfo = VaultRuntimeInfo {
     mapperDev :: FilePath,
     mountedRepo :: FilePath,
     partition :: FilePath,
+    partitionName :: FilePath,
     partitionLocation :: PartitionLocation
 } deriving (Eq, Show, Read)
 
