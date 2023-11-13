@@ -136,6 +136,7 @@ test_openVault = TestList [
                   V.mapperDev = "/dev/dm-4",
                   V.mountedRepo = "/mnt/point",
                   V.partition = "local.vault",
+                  V.partitionName = "local",
                   V.partitionLocation = V.LocalPartition
               }
         assertActiveVaultEnvVarSet vri mockAfterExec,
@@ -167,6 +168,7 @@ test_openVault = TestList [
                   V.mapperDev = "/dev/dm-4",
                   V.mountedRepo = "/mnt/point/repo",
                   V.partition = "local.vault",
+                  V.partitionName = "local",
                   V.partitionLocation = V.LocalPartition
               }
         assertActiveVaultEnvVarSet vri mockAfterExec

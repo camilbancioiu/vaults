@@ -144,6 +144,7 @@ mockVaultRuntimeInfo = V.VaultRuntimeInfo {
     V.mapperDev = "/dev/dm-2",
     V.mountedRepo = "/run/media/user/localhostname/mockVault",
     V.partition = "local.vault",
+    V.partitionName = "local",
     V.partitionLocation = V.LocalPartition
 }
 
