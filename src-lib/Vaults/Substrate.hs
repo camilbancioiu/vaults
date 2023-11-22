@@ -35,3 +35,15 @@ instance Substrate IO where
     lookupEnvSub = System.Environment.lookupEnv
     setEnvSub    = System.Environment.setEnv
     unsetEnvSub  = System.Environment.unsetEnv
+    execSub      = execIOProcess
+
+execIOProcess :: String -> [String] -> String -> IO ExecResult
+execIOProcess cmd args sin = do
+    let pcmd = (proc cmd args)
+    result <- readCreateProcessWithExitCode pcmd sin
+    let (exc, sout, serr) = result
+    return ExecResult {
+        exitCode = exc,
+        output = sout,
+        errorOutput = serr
+    }
