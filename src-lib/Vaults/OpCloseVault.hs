@@ -20,6 +20,11 @@ closeVault = runExceptT $ do
 saveCommitLog :: Substrate m => VaultRuntimeInfo -> m (Either String ())
 saveCommitLog vri = runExceptT $ do
     let dir = srcDir vri
-    let local = partitionName vri
+    let localname = partitionName vri
+
+    result <- lift $ execSub "git" ["log", "--format=%H"] ""
+    when (exitCode result /= ExitSuccess) (throwError "git log failed")
+
+    let commitLog = output result
 
     return ()
