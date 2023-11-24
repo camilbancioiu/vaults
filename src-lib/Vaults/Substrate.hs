@@ -13,6 +13,7 @@ data ExecResult = ExecResult {
 
 class Monad m => Substrate m where
     readFileSub      :: FilePath -> m String
+    writeFileSub     :: FilePath -> String -> m ()
     dirExistsSub     :: FilePath -> m Bool
     lookupEnvSub     :: String -> m (Maybe String)
     setEnvSub        :: String -> String -> m ()

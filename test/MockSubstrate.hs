@@ -17,7 +17,8 @@ data Mock = Mock {
     envVars :: [(String, String)],
     nExecs :: Int,
     execRecorded :: [(String, [String])],
-    execResults :: [ExecResult]
+    execResults :: [ExecResult],
+    writtenFile :: (String, String)
 } deriving Show
 
 setCurrentDir :: String -> Mock -> Mock
@@ -27,6 +28,12 @@ setCurrentDir dir mock =
         prevDir = previousMockDir
     }
     where previousMockDir = currentDir mock
+
+addWrittenFile :: FilePath -> String -> Mock -> Mock
+addWrittenFile fpath contents mock =
+    mock {
+        writtenFile = (fpath, contents)
+    }
 
 addMockEnvVar :: String -> String -> Mock -> Mock
 addMockEnvVar key val mock =
@@ -87,6 +94,7 @@ mountOut      = "Mounted /dev/dm-4 at /mnt/point"
 
 instance Substrate (State Mock) where
     readFileSub  = mock_readFileSub
+    writeFileSub = mock_writeFileSub
     dirExistsSub = mock_dirExistsSub
     lookupEnvSub = mock_lookupEnvSub
     setEnvSub    = mock_setEnvSub
@@ -100,6 +108,10 @@ mock_readFileSub ".vault/name" = return (V.name mockVaultInfo)
 mock_readFileSub ".vault/local" = return (V.localname mockVaultInfo)
 mock_readFileSub ".vault/remotes" = return (unlines $ V.remotes mockVaultInfo)
 mock_readFileSub ".vault/remoteStore" = return (V.remoteStore mockVaultInfo)
+
+mock_writeFileSub :: FilePath -> String -> State Mock ()
+mock_writeFileSub fpath contents =
+    modify (addWrittenFile fpath contents)
 
 mock_dirExistsSub :: FilePath -> State Mock Bool
 mock_dirExistsSub ".vault" = gets hasVaultDir
