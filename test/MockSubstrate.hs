@@ -88,9 +88,11 @@ mountOk       = ExecResult ExitSuccess mountOut ""
 unmountOk     = ExecResult ExitSuccess "" ""
 mountFail     = ExecResult (ExitFailure 16) "" "didnt work"
 lockOk        = ExecResult ExitSuccess "Locked /dev/dm-4." ""
+gitLogOk      = ExecResult ExitSuccess gitLogOut ""
 loopSetupOut  = "Mapped file local.vault as /dev/loop42."
 unlockOut     = "Unlocked /dev/loop42 as /dev/dm-4."
 mountOut      = "Mounted /dev/dm-4 at /mnt/point"
+gitLogOut     = "38a3\nfb22\n8c2a\n02ad\n"
 
 instance Substrate (State Mock) where
     readFileSub  = mock_readFileSub
@@ -170,6 +172,7 @@ emptyMock = Mock {
     , nExecs = 0
     , execRecorded = []
     , execResults = []
+    , writtenFile = ("", "")
     }
 
 mockWithVaultDir :: Mock

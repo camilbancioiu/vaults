@@ -43,7 +43,7 @@ test_closeVault = TestList [
     TestLabel "closing vault succeeds" $
     TestCase $ do
         let mock = addMockExecResults results mockWithActiveVault
-                   where results = [unmountOk, lockOk, loopDeleteOk]
+                   where results = [gitLogOk, unmountOk, lockOk, loopDeleteOk]
         let result = runState closeVault mock
         let mockAfterExec = snd result
         assertNoVaultEnvVar mockAfterExec
