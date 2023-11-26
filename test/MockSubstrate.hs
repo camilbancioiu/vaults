@@ -18,7 +18,7 @@ data Mock = Mock {
     nExecs :: Int,
     execRecorded :: [(String, [String])],
     execResults :: [ExecResult],
-    writtenFile :: (String, String)
+    writtenFile :: (FilePath, FilePath, String)
 } deriving Show
 
 setCurrentDir :: String -> Mock -> Mock
@@ -32,8 +32,9 @@ setCurrentDir dir mock =
 addWrittenFile :: FilePath -> String -> Mock -> Mock
 addWrittenFile fpath contents mock =
     mock {
-        writtenFile = (fpath, contents)
+        writtenFile = (cwd, fpath, contents)
     }
+    where cwd = currentDir mock
 
 addMockEnvVar :: String -> String -> Mock -> Mock
 addMockEnvVar key val mock =
@@ -172,7 +173,7 @@ emptyMock = Mock {
     , nExecs = 0
     , execRecorded = []
     , execResults = []
-    , writtenFile = ("", "")
+    , writtenFile = ("", "", "")
     }
 
 mockWithVaultDir :: Mock

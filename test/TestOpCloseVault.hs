@@ -57,6 +57,9 @@ test_closeVault = TestList [
         assertEqual "dir changed to srcDir"
             "/home/user/vaults/mockVault"
             (currentDir mockAfterExec)
+        assertEqual "git log saved"
+            ("/home/user/vaults/mockVault", "local.log", gitLogOut)
+            (writtenFile mockAfterExec)
 
     ]
 
