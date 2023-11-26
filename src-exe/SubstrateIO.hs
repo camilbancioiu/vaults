@@ -5,6 +5,8 @@ import System.Environment
 import System.Process
 import System.Exit
 
+import Vaults.Substrate
+
 instance Substrate IO where
     readFileSub  = Prelude.readFile
     dirExistsSub = System.Directory.doesDirectoryExist
