@@ -1,0 +1,25 @@
+module Vaults.SubstrateIO where
+
+import System.Directory
+import System.Environment
+import System.Process
+import System.Exit
+
+instance Substrate IO where
+    readFileSub  = Prelude.readFile
+    dirExistsSub = System.Directory.doesDirectoryExist
+    lookupEnvSub = System.Environment.lookupEnv
+    setEnvSub    = System.Environment.setEnv
+    unsetEnvSub  = System.Environment.unsetEnv
+    execSub      = execIOProcess
+
+execIOProcess :: String -> [String] -> String -> IO ExecResult
+execIOProcess cmd args sin = do
+    let pcmd = (proc cmd args)
+    result <- readCreateProcessWithExitCode pcmd sin
+    let (exc, sout, serr) = result
+    return ExecResult {
+        exitCode = exc,
+        output = sout,
+        errorOutput = serr
+    }
