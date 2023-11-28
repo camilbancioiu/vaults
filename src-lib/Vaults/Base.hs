@@ -1,5 +1,7 @@
 module Vaults.Base where
 
+import Debug.Trace
+
 import Data.Maybe
 import Data.List.Extra
 import Control.Monad.Except
@@ -40,11 +42,14 @@ loadVaultInfo = do
     vremoteStore <- readFileSub ".vault/remoteStore"
 
     return VaultInfo {
-        name = vname,
-        localname = vlocalname,
+        name = stripTrailingNewline vname,
+        localname = stripTrailingNewline vlocalname,
         remotes = lines vremotes,
-        remoteStore = vremoteStore
+        remoteStore = stripTrailingNewline vremoteStore
     }
+
+stripTrailingNewline :: String -> String
+stripTrailingNewline s = takeWhile (/='\n') s
 
 isVaultDir :: Substrate m => m Bool
 isVaultDir = dirExistsSub ".vault"
@@ -93,7 +98,7 @@ getPartitionLocation vi fname =
     case stripSuffix ".vault" fname of
          Nothing -> UnknownPartition
          Just "" -> UnknownPartition
-         Just p -> if p == (localname vi)
+         Just p -> if p == (localname (traceShow vi vi))
                       then LocalPartition
                       else if elem p (remotes vi)
                               then RemotePartition

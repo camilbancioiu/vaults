@@ -1,4 +1,4 @@
-module Vaults.SubstrateIO where
+module SubstrateIO where
 
 import System.Directory
 import System.Environment
@@ -9,10 +9,13 @@ import Vaults.Substrate
 
 instance Substrate IO where
     readFileSub  = Prelude.readFile
+    writeFileSub = Prelude.writeFile
     dirExistsSub = System.Directory.doesDirectoryExist
     lookupEnvSub = System.Environment.lookupEnv
     setEnvSub    = System.Environment.setEnv
     unsetEnvSub  = System.Environment.unsetEnv
+    getDirSub    = System.Directory.getCurrentDirectory
+    changeDirSub = System.Directory.setCurrentDirectory
     execSub      = execIOProcess
 
 execIOProcess :: String -> [String] -> String -> IO ExecResult

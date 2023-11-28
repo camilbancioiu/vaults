@@ -26,7 +26,7 @@ openVault params = runExceptT $ do
 
     vi <- lift $ loadVaultInfo
     let partLoc = getPartitionLocation vi fname
-    when (partLoc == UnknownPartition) (throwError "unknown vault partition")
+    when (partLoc == UnknownPartition) (throwError $ "unknown vault partition " ++ fname)
 
     dirBeforeOpening <- lift $ getDirSub
     devFile <- createLoopDevice fname

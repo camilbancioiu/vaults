@@ -32,6 +32,7 @@ test_isVaultDir = TestCase $ do
     assertEqual "isVaultDir" True isV
 
 
+-- TODO test when files contain trailing newlines
 test_loadVaultInfo :: Test
 test_loadVaultInfo = TestCase $ do
     let mock = mockWithVaultDir
