@@ -8,9 +8,12 @@ data Operation = OpenVault FilePath
                deriving Show
 
 operationsParser :: ParserInfo Operation
-operationsParser = info ops (progDesc "operation")
-                   where ops = subparser $ opOpenVault <> opCloseVault
-                         opOpenVault = command "open" (info opOpenVaultParser (progDesc "open vault"))
-                         opCloseVault = command "close" (info opCloseVaultParser (progDesc "close vault"))
-                         opOpenVaultParser = OpenVault <$> argument str (metavar "FILE")
-                         opCloseVaultParser = pure CloseVault
+operationsParser = info operations (progDesc "operation")
+
+operations = subparser $ opOpenVault <> opCloseVault
+
+opOpenVault = command "open" (info opOpenVaultParser (progDesc "open vault"))
+opOpenVaultParser = OpenVault <$> argument str (metavar "FILE")
+
+opCloseVault = command "close" (info opCloseVaultParser (progDesc "close vault"))
+opCloseVaultParser = pure CloseVault

@@ -2,9 +2,8 @@ module Main where
 
 import Options.Applicative
 import CLI
-
--- vault open partition.vault
--- vault close
+import Vaults.OpOpenVault
+import Vaults.OpCloseVault
 
 main :: IO ()
 main = do
