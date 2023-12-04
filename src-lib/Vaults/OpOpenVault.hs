@@ -19,7 +19,7 @@ data ParamsOpenVault = ParamsOpenVault {
 openVault :: Substrate m => ParamsOpenVault -> m (Either String ())
 openVault params = runExceptT $ do
     ensureIsVaultDir
-    ensureNoVaultActive
+    ensureNoVaultActive -- TODO remove
 
     let fname = partitionFilename params
     when (length fname == 0) (throwError "partition filename is required")
@@ -46,6 +46,7 @@ openVault params = runExceptT $ do
 
     lift $ changeDirSub mountPoint
 
+    -- TODO if ensureIsVaultDir, then the folder repo/.git must exist
     hasRepoDir <- lift $ dirExistsSub "repo"
     when hasRepoDir (lift $ changeDirSub "repo")
 
