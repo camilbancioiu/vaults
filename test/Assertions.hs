@@ -6,10 +6,20 @@ import Test.HUnit
 import MockSubstrate
 
 import qualified Vaults.Base as V
+import qualified Vaults.Substrate as VS
 
 assertOpError :: (Eq a, Show a) => String -> (Either String a, Mock) -> IO ()
-assertOpError errmsg (opResult, _) =
-    assertEqual errmsg (Left errmsg) opResult
+assertOpError assertMsg (opResult, _) =
+    assertEqual assertMsg (Left assertMsg) opResult
+
+assertOpParamsError :: (Eq a, Show a) => String -> [String] -> VS.ExecResult -> (Either String a, Mock) -> IO ()
+assertOpParamsError assertMsg params failedExec (opResult, _) =
+    assertEqual assertMsg (Left errMsg) opResult
+        where errMsg = (head params)
+                       ++ " failed: "
+                       ++ (VS.errorOutput failedExec)
+                       ++ "\ncommand"
+                       ++ (show params)
 
 assertNoExecCalls :: (V.OpResult, Mock) -> IO ()
 assertNoExecCalls (_, mock) =
