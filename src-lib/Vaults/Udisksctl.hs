@@ -8,8 +8,8 @@ import Vaults.Substrate
 -- TODO validate parameter fname
 createLoopDevice :: Substrate m => FilePath -> ExceptT String m FilePath
 createLoopDevice fname = do
-    result <- lift $ execSub "udisksctl" ["loop-setup", "-f", fname] ""
-    when (exitCode result /= ExitSuccess) (throwError "loop-setup failed")
+    let params = ["loop-setup", "-f", fname]
+    result <- runUdisksctlCommand params
 
     let parsedDevFile = parseOutputLoopSetup (output result)
     case parsedDevFile of
@@ -57,6 +57,22 @@ deleteLoopDevice devFile = do
     result <- lift $ execSub "udisksctl" ["loop-delete", "-b", devFile] ""
     when (exitCode result /= ExitSuccess) (throwError "loop-delete failed")
     return ()
+
+runUdisksctlCommand :: Substrate m => [String] -> ExceptT String m ExecResult
+runUdisksctlCommand params =
+    do
+        result <- lift $ execSub "udisksctl" params ""
+        when (exitCode result /= ExitSuccess)
+             (throwError (makeErrorMsg params result))
+        return result
+
+makeErrorMsg :: [String] -> ExecResult -> String
+makeErrorMsg params result =
+    if exitCode result == ExitSuccess
+       then "success"
+       else op ++ " failed: " ++ stdErr ++ "\ncommand: " ++ (show params)
+            where op = head (params)
+                  stdErr = errorOutput result
 
 parseOutputLoopSetup = parseUdisksctlOutput True 5
 parseOutputUnlock = parseUdisksctlOutput True 4

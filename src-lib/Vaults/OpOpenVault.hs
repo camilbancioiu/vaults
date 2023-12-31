@@ -16,6 +16,7 @@ data ParamsOpenVault = ParamsOpenVault {
 
 -- TODO validate loaded VaultInfo
 -- e.g. for empty name, empty localname etc
+-- TODO handle isForcedOpening
 openVault :: Substrate m => ParamsOpenVault -> m (Either String ())
 openVault params = runExceptT $ do
     ensureIsVaultDir

@@ -9,7 +9,7 @@ data ExecResult = ExecResult {
     exitCode    :: ExitCode,
     output      :: String,
     errorOutput :: String
-} deriving Show
+} deriving (Eq, Show)
 
 class Monad m => Substrate m where
     readFileSub      :: FilePath -> m String

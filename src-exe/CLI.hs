@@ -3,7 +3,7 @@ module CLI where
 import System.FilePath.Posix
 import Options.Applicative
 
-data Operation = OpenVault FilePath
+data Operation = OpenVault FilePath Bool
                | CloseVault
                deriving Show
 
@@ -14,6 +14,7 @@ operations = subparser $ opOpenVault <> opCloseVault
 
 opOpenVault = command "open" (info opOpenVaultParser (progDesc "open vault"))
 opOpenVaultParser = OpenVault <$> argument str (metavar "FILE")
+                              <*> switch (long "force" <> short 'f' <> help "forced opening")
 
 opCloseVault = command "close" (info opCloseVaultParser (progDesc "close vault"))
 opCloseVaultParser = pure CloseVault
