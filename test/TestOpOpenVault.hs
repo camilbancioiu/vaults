@@ -61,11 +61,13 @@ test_openVault = TestList [
     TestCase $ do
         let mock = addMockExecResult loopSetupFail mockWithVaultDir
         let params = mkParamsOpenVault "local.vault"
+        let failParams = ["loop-setup", "-f", "local.vault"]
         let result = runState (openVault params) mock
-        assertOpError "loop-setup failed" result
         let mockAfterExec = snd result
+        assertOpParamsError
+            "loop-setup failed" failParams loopSetupFail result
         assertEqual "only loop-setup was called"
-            [("udisksctl", ["loop-setup", "-f", "local.vault"])]
+            [("udisksctl", failParams)]
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
             "/home/user"
@@ -77,12 +79,13 @@ test_openVault = TestList [
         let mock = addMockExecResults results mockWithVaultDir
                    where results = [loopSetupOk, unlockFail, loopDeleteOk]
         let params = mkParamsOpenVault "local.vault"
+        let failParams = ["unlock", "-b", "/dev/loop42"]
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
-        assertOpError "unlock failed" result
+        assertOpParamsError "unlock failed" failParams unlockFail result
         assertEqual "loop-setup, unlock, loop-delete were called"
             [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
-            , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
+            , ("udisksctl", failParams)
             , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
             ]
             (execRecorded mockAfterExec)

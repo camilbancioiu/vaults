@@ -18,7 +18,7 @@ assertOpParamsError assertMsg params failedExec (opResult, _) =
         where errMsg = (head params)
                        ++ " failed: "
                        ++ (VS.errorOutput failedExec)
-                       ++ "\ncommand"
+                       ++ "\ncommand: "
                        ++ (show params)
 
 assertNoExecCalls :: (V.OpResult, Mock) -> IO ()

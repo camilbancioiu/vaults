@@ -19,8 +19,8 @@ createLoopDevice fname = do
 -- TODO validate parameter devFile
 unlockDevice :: Substrate m => FilePath -> ExceptT String m FilePath
 unlockDevice devFile = do
-    result <- lift $ execSub "udisksctl" ["unlock", "-b", devFile] ""
-    when (exitCode result /= ExitSuccess) (throwError "unlock failed")
+    let params = ["unlock", "-b", devFile]
+    result <- runUdisksctlCommand params
 
     let parsedMapperDev = parseOutputUnlock (output result)
     case parsedMapperDev of

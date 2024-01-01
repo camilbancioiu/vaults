@@ -24,29 +24,37 @@ test_createLoopDevice = TestList [
     TestLabel "udisksctl loop-setup error prevents creating loop dev" $
     TestCase $ do
         let mock = addMockExecResult loopSetupFail mockWithVaultDir
-        let result = runState (runExceptT $ createLoopDevice "/what") mock
-        assertOpError "loop-setup failed" result,
+        let result = runState (runExceptT $ createLoopDevice dummyPartition) mock
+        assertOpParamsError
+            "loop-setup failed"
+            ["loop-setup", "-f", dummyPartition]
+            loopSetupFail
+            result,
 
     TestLabel "udisksctl loop-setup succeeds" $
     TestCase $ do
         let mock = addMockExecResult loopSetupOk mockWithVaultDir
-        let result = runState (runExceptT $ createLoopDevice "dummy.vault") mock
-        assertEqual "loop-setup success" (Right "/dev/loop42") (fst result)
+        let result = runState (runExceptT $ createLoopDevice dummyPartition) mock
+        assertEqual "loop-setup success" (Right dummyLoopDev) (fst result)
     ]
 
 test_unlockDevice :: Test
 test_unlockDevice = TestList [
     TestLabel "udisksctl unlock error prevents unlocking" $
     TestCase $ do
-        let mock = addMockExecResult loopSetupFail mockWithVaultDir
-        let result = runState (runExceptT $ unlockDevice "what") mock
-        assertOpError "unlock failed" result,
+        let mock = addMockExecResult unlockFail mockWithVaultDir
+        let result = runState (runExceptT $ unlockDevice dummyLoopDev) mock
+        assertOpParamsError
+            "unlock failed"
+            ["unlock", "-b", dummyLoopDev]
+            unlockFail
+            result,
 
     TestLabel "udisksctl unlock succeeds" $
     TestCase $ do
         let mock = addMockExecResult unlockOk mockWithVaultDir
-        let result = runState (runExceptT $ unlockDevice "what") mock
-        assertEqual "unlock succeeds" (Right "/dev/dm-4") (fst result)
+        let result = runState (runExceptT $ unlockDevice dummyLoopDev) mock
+        assertEqual "unlock succeeds" (Right dummyMapperDev) (fst result)
     ]
 
 test_deleteLoopDevice :: Test
@@ -54,7 +62,7 @@ test_deleteLoopDevice = TestList [
     TestLabel "udisksctl loop-delete succeeds" $
     TestCase $ do
         let mock = addMockExecResult loopDeleteOk mockWithVaultDir
-        let result = runState (runExceptT $ deleteLoopDevice "/dev/loop42") mock
+        let result = runState (runExceptT $ deleteLoopDevice dummyLoopDev) mock
         assertEqual "loop-delete succeeds" (Right ()) (fst result)
     ]
 
@@ -64,8 +72,8 @@ test_mountDevice = TestList [
     TestLabel "udisksctl mount succeeds" $
     TestCase $ do
         let mock = addMockExecResult mountOk mockWithVaultDir
-        let result = runState (runExceptT $ mountDevice "/dev/dm-4") mock
-        assertEqual "mount succeeds" (Right "/mnt/point") (fst result)
+        let result = runState (runExceptT $ mountDevice dummyMapperDev) mock
+        assertEqual "mount succeeds" (Right dummyMountpoint) (fst result)
     ]
 
 test_unmountDevice :: Test
@@ -74,7 +82,7 @@ test_unmountDevice = TestList [
     TestLabel "udisksctl unmount succeeds" $
     TestCase $ do
         let mock = addMockExecResult unmountOk mockWithVaultDir
-        let result = runState (runExceptT $ unmountDevice "/dev/dm-4") mock
+        let result = runState (runExceptT $ unmountDevice dummyMapperDev) mock
         assertEqual "unmount succeeded" (Right ()) (fst result)
     ]
 

@@ -80,20 +80,26 @@ dropHeadMockExecResult mock =
         execResults = tail (execResults mock)
     }
 
-loopSetupOk   = ExecResult ExitSuccess loopSetupOut ""
+dummyPartition = "local.vault"
+dummyLoopDev = "/dev/loop42"
+dummyMapperDev = "/dev/dm-4"
+dummyMountpoint = "/mnt/point"
+
+loopSetupOk   = ExecResult ExitSuccess loopSetupOutput ""
 loopSetupFail = ExecResult (ExitFailure 16) "" "didnt work"
 loopDeleteOk  = ExecResult ExitSuccess "" ""
-unlockOk      = ExecResult ExitSuccess unlockOut ""
+unlockOk      = ExecResult ExitSuccess unlockOutput ""
 unlockFail    = ExecResult (ExitFailure 16) "" "didnt work"
-mountOk       = ExecResult ExitSuccess mountOut ""
+mountOk       = ExecResult ExitSuccess mountOutput ""
 unmountOk     = ExecResult ExitSuccess "" ""
 mountFail     = ExecResult (ExitFailure 16) "" "didnt work"
-lockOk        = ExecResult ExitSuccess "Locked /dev/dm-4." ""
-gitLogOk      = ExecResult ExitSuccess gitLogOut ""
-loopSetupOut  = "Mapped file local.vault as /dev/loop42."
-unlockOut     = "Unlocked /dev/loop42 as /dev/dm-4."
-mountOut      = "Mounted /dev/dm-4 at /mnt/point"
-gitLogOut     = "38a3\nfb22\n8c2a\n02ad\n"
+lockOk        = ExecResult ExitSuccess lockOutput ""
+gitLogOk      = ExecResult ExitSuccess gitLogOutput ""
+loopSetupOutput  = "Mapped file " ++ dummyPartition ++ " as " ++ dummyLoopDev ++ "."
+unlockOutput     = "Unlocked " ++ dummyLoopDev ++ " as " ++ dummyMapperDev ++ "."
+mountOutput      = "Mounted " ++ dummyMapperDev ++ " at " ++ dummyMountpoint
+lockOutput       = "Locked " ++ dummyMapperDev ++ "."
+gitLogOutput     = "38a3\nfb22\n8c2a\n02ad\n"
 
 instance Substrate (State Mock) where
     readFileSub  = mock_readFileSub
