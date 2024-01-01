@@ -64,8 +64,7 @@ test_openVault = TestList [
         let failParams = ["loop-setup", "-f", "local.vault"]
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
-        assertOpParamsError
-            "loop-setup failed" failParams loopSetupFail result
+        assertOpParamsError "loop-setup failed" failParams loopSetupFail result
         assertEqual "only loop-setup was called"
             [("udisksctl", failParams)]
             (execRecorded mockAfterExec)

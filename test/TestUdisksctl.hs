@@ -24,12 +24,9 @@ test_createLoopDevice = TestList [
     TestLabel "udisksctl loop-setup error prevents creating loop dev" $
     TestCase $ do
         let mock = addMockExecResult loopSetupFail mockWithVaultDir
+        let failParams = ["loop-setup", "-f", dummyPartition]
         let result = runState (runExceptT $ createLoopDevice dummyPartition) mock
-        assertOpParamsError
-            "loop-setup failed"
-            ["loop-setup", "-f", dummyPartition]
-            loopSetupFail
-            result,
+        assertOpParamsError "loop-setup failed" failParams loopSetupFail result,
 
     TestLabel "udisksctl loop-setup succeeds" $
     TestCase $ do
@@ -43,12 +40,9 @@ test_unlockDevice = TestList [
     TestLabel "udisksctl unlock error prevents unlocking" $
     TestCase $ do
         let mock = addMockExecResult unlockFail mockWithVaultDir
+        let failParams = ["unlock", "-b", dummyLoopDev]
         let result = runState (runExceptT $ unlockDevice dummyLoopDev) mock
-        assertOpParamsError
-            "unlock failed"
-            ["unlock", "-b", dummyLoopDev]
-            unlockFail
-            result,
+        assertOpParamsError "unlock failed" failParams unlockFail result,
 
     TestLabel "udisksctl unlock succeeds" $
     TestCase $ do
