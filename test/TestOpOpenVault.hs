@@ -98,13 +98,14 @@ test_openVault = TestList [
         let mock = addMockExecResults results mockWithVaultDir
                    where results = [loopSetupOk, unlockOk, mountFail, lockOk, loopDeleteOk]
         let params = mkParamsOpenVault "local.vault"
+        let failParams = ["mount", "-b", "/dev/dm-4"]
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
-        assertOpError "mount failed" result
+        assertOpParamsError "mount failed" failParams mountFail result
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
             , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
-            , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
+            , ("udisksctl", failParams)
             , ("udisksctl", ["lock", "-b", "/dev/dm-4"])
             , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
             ]

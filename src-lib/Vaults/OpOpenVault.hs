@@ -7,7 +7,7 @@ import Data.Maybe
 
 import Vaults.Base
 import Vaults.Substrate
-import Vaults.Udisksctl
+import qualified Vaults.Udisksctl as U
 
 data ParamsOpenVault = ParamsOpenVault {
     partitionFilename :: FilePath,
@@ -30,19 +30,19 @@ openVault params = runExceptT $ do
     when (partLoc == UnknownPartition) (throwError $ "unknown vault partition " ++ fname)
 
     dirBeforeOpening <- lift $ getDirSub
-    devFile <- createLoopDevice fname
+    devFile <- U.createLoopDevice fname
 
     mapperDev <- catchError
-        (unlockDevice devFile)
+        (U.unlockDevice devFile)
         (\e -> do
-                 deleteLoopDevice devFile
+                 U.deleteLoopDevice devFile
                  throwError e)
 
     mountPoint <- catchError
-        (mountDevice mapperDev)
+        (U.mountDevice mapperDev)
         (\e -> do
-                 lockDevice mapperDev
-                 deleteLoopDevice devFile
+                 U.lockDevice mapperDev
+                 U.deleteLoopDevice devFile
                  throwError e)
 
     lift $ changeDirSub mountPoint

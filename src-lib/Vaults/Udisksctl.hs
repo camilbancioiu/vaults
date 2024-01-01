@@ -30,8 +30,8 @@ unlockDevice devFile = do
 -- TODO mount as readonly
 mountDevice :: Substrate m => FilePath -> ExceptT String m FilePath
 mountDevice mapperDev = do
-    result <- lift $ execSub "udisksctl" ["mount", "-b", mapperDev] ""
-    when (exitCode result /= ExitSuccess) (throwError "mount failed")
+    let params = ["mount", "-b", mapperDev]
+    result <- runUdisksctlCommand params
 
     let parsedMountpoint = parseOutputMount (output result)
     case parsedMountpoint of
@@ -41,21 +41,22 @@ mountDevice mapperDev = do
 -- TODO validate parameter mapperDev
 unmountDevice :: Substrate m => FilePath -> ExceptT String m ()
 unmountDevice mapperDev = do
-    result <- lift $ execSub "udisksctl" ["unmount", "-b", mapperDev] ""
-    when (exitCode result /= ExitSuccess) (throwError "unmount failed")
+    let params = ["unmount", "-b", mapperDev]
+    _ <- runUdisksctlCommand params
+    return ()
 
 -- TODO validate parameter mapperDev
 lockDevice :: Substrate m => FilePath -> ExceptT String m ()
 lockDevice mapperDev = do
-    result <- lift $ execSub "udisksctl" ["lock", "-b", mapperDev] ""
-    when (exitCode result /= ExitSuccess) (throwError "lock failed")
+    let params = ["lock", "-b", mapperDev]
+    _ <- runUdisksctlCommand params
     return ()
 
 -- TODO validate parameter devFile
 deleteLoopDevice :: Substrate m => FilePath -> ExceptT String m ()
 deleteLoopDevice devFile = do
-    result <- lift $ execSub "udisksctl" ["loop-delete", "-b", devFile] ""
-    when (exitCode result /= ExitSuccess) (throwError "loop-delete failed")
+    let params = ["loop-delete", "-b", devFile]
+    _ <- runUdisksctlCommand params
     return ()
 
 runUdisksctlCommand :: Substrate m => [String] -> ExceptT String m ExecResult
