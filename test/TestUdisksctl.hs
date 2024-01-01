@@ -112,6 +112,10 @@ test_parsingUdisksctlOutput = TestList [
         parseOutputMount output @?= invalidOutput
         let output = "Mounted /dev/dm-4 as /mnt/point."
         parseOutputMount output @?= invalidOutput
+        let output = "Mounted /dev/dm-4 as /mnt/this.point."
+        parseOutputMount output @?= invalidOutput
+        let output = "Mounted /dev/dm-4 as /mnt/this.point"
+        parseOutputMount output @?= (Right "/mnt/this.point")
         let output = "Mounted /dev/dm-4 as /mnt/point"
         parseOutputMount output @?= (Right "/mnt/point")
 

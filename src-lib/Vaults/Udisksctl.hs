@@ -86,13 +86,13 @@ parseUdisksctlOutput endDot nElements output = do
 
     let lastElement = last elements
     if endDot then
-       do when (not $ elem '.' lastElement) invalidOutput
+       do when (last lastElement /= '.') invalidOutput
           when (lastElement == ".") invalidOutput
           let lastElemNoDot = init lastElement
           when (elem '.' lastElemNoDot) invalidOutput
           return lastElemNoDot
     else
-       do when (elem '.' lastElement) invalidOutput
+       do when (last lastElement == '.') invalidOutput
           return lastElement
 
 invalidOutput :: Either String a
