@@ -12,16 +12,26 @@ closeVault :: Substrate.Substrate m => m (Either String ())
 closeVault = runExceptT $ do
     vri <- Base.ensureIsVaultActive
 
-    result <- lift $ Substrate.exec "git" ["log", "--format=%H"] ""
-    when (Substrate.exitCode result /= ExitSuccess) (throwError "git log failed")
-    let commitLog = Substrate.output result
+    -- TODO if this is not a real vault with a git repo, do not extract the
+    -- commit log
+    commitLog <- extractCommitLog
 
     lift $ Substrate.changeDir (Base.srcDir vri)
-    let logFilename = (Base.partitionName vri) ++ ".log"
-    lift $ Substrate.writeFile logFilename commitLog
-
     U.unmountDevice (Base.mapperDev vri)
     U.lockDevice (Base.mapperDev vri)
     U.deleteLoopDevice (Base.loopDev vri)
-
     lift $ Substrate.unsetEnv Base.activeVaultEnvName
+
+    saveCommitLog vri commitLog
+
+extractCommitLog :: Substrate.Substrate m => ExceptT String m String
+extractCommitLog = do
+    result <- lift $ Substrate.exec "git" ["log", "--format=%H"] ""
+    when (Substrate.exitCode result /= ExitSuccess) (throwError "git log failed")
+    let commitLog = Substrate.output result
+    return commitLog
+
+saveCommitLog :: Substrate.Substrate m => Base.VaultRuntimeInfo -> String -> ExceptT String m ()
+saveCommitLog vri commitLog = do
+    let logFilename = (Base.partitionName vri) ++ ".log"
+    lift $ Substrate.writeFile logFilename commitLog
