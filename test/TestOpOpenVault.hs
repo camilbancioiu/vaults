@@ -139,7 +139,7 @@ test_openVault = TestList [
                   Base.loopDev = "/dev/loop42",
                   Base.mapperDev = "/dev/dm-4",
                   Base.mountpoint = "/mnt/point",
-                  Base.repositoryDir = "",
+                  Base.repositoryDir = "/mnt/point",
                   Base.partition = "local.vault",
                   Base.partitionName = "local",
                   Base.partitionLocation = Base.LocalPartition
@@ -164,7 +164,7 @@ test_openVault = TestList [
             "/mnt/point"
             (prevDir mockAfterExec)
         assertEqual "current directory changed to repo within mountpoint"
-            "repo"
+            "/mnt/point/repo"
             (currentDir mockAfterExec)
 
         let vri = Base.VaultRuntimeInfo {
