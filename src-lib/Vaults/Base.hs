@@ -28,7 +28,8 @@ data VaultRuntimeInfo = VaultRuntimeInfo {
     srcDir :: FilePath,
     loopDev :: FilePath,
     mapperDev :: FilePath,
-    mountedRepo :: FilePath,
+    repositoryDir :: FilePath,
+    mountpoint :: FilePath,
     partition :: FilePath,
     partitionName :: FilePath,
     partitionLocation :: PartitionLocation

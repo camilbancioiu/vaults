@@ -5,7 +5,7 @@ import System.FilePath.Posix
 import Control.Monad.Except
 import Data.Maybe
 
-import Vaults.Base
+import qualified Vaults.Base as Base
 import Vaults.Substrate
 import qualified Vaults.Udisksctl as U
 
@@ -19,17 +19,18 @@ data ParamsOpenVault = ParamsOpenVault {
 -- TODO handle isForcedOpening
 openVault :: Substrate m => ParamsOpenVault -> m (Either String ())
 openVault params = runExceptT $ do
-    ensureIsVaultDir
-    ensureNoVaultActive -- TODO remove
+    Base.ensureIsVaultDir
+    Base.ensureNoVaultActive
 
     let fname = partitionFilename params
     when (length fname == 0) (throwError "partition filename is required")
 
-    vi <- lift $ loadVaultInfo
-    let partLoc = getPartitionLocation vi fname
-    when (partLoc == UnknownPartition) (throwError $ "unknown vault partition " ++ fname)
+    vi <- lift $ Base.loadVaultInfo
+    let partLoc = Base.getPartitionLocation vi fname
+    when (partLoc == Base.UnknownPartition) (throwError $ "unknown vault partition " ++ fname)
 
     dirBeforeOpening <- lift $ getDirSub
+
     devFile <- U.createLoopDevice fname
 
     mapperDev <- catchError
@@ -38,30 +39,31 @@ openVault params = runExceptT $ do
                  U.deleteLoopDevice devFile
                  throwError e)
 
-    mountPoint <- catchError
+    mountpoint <- catchError
         (U.mountDevice mapperDev)
         (\e -> do
                  U.lockDevice mapperDev
                  U.deleteLoopDevice devFile
                  throwError e)
 
-    lift $ changeDirSub mountPoint
+    lift $ changeDirSub mountpoint
 
     -- TODO if ensureIsVaultDir, then the folder repo/.git must exist
     hasRepoDir <- lift $ dirExistsSub "repo"
     when hasRepoDir (lift $ changeDirSub "repo")
 
-    let repoDir = if hasRepoDir then mountPoint ++ "/repo"
-                                else mountPoint
+    let repoDir = if hasRepoDir then mountpoint ++ "/repo"
+                                else ""
 
-    let vri = VaultRuntimeInfo {
-              srcDir = dirBeforeOpening
-            , loopDev = devFile
-            , mapperDev = mapperDev
-            , mountedRepo = repoDir
-            , partition = fname
-            , partitionName = takeBaseName fname
-            , partitionLocation = partLoc
+    let vri = Base.VaultRuntimeInfo {
+              Base.srcDir = dirBeforeOpening
+            , Base.loopDev = devFile
+            , Base.mountpoint = mountpoint
+            , Base.repositoryDir = repoDir
+            , Base.mapperDev = mapperDev
+            , Base.partition = fname
+            , Base.partitionName = takeBaseName fname
+            , Base.partitionLocation = partLoc
         }
 
-    lift $ setEnvSub activeVaultEnvName (show vri)
+    lift $ setEnvSub Base.activeVaultEnvName (show vri)
