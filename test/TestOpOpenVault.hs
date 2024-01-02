@@ -1,15 +1,16 @@
 module TestOpOpenVault where
 
-import Test.HUnit
 import Control.Monad.State
 import Control.Monad.Except
 import System.Exit
 
-import MockSubstrate
-import Assertions
+import qualified Vaults.Base as Base
+import qualified Vaults.Substrate as Substrate
 
-import qualified Vaults.Base as V
-import qualified Vaults.Substrate as Sub
+import Test.HUnit
+import Assertions
+import MockSubstrate
+
 import Vaults.OpOpenVault
 
 -- TODO test scenarios:
@@ -133,15 +134,15 @@ test_openVault = TestList [
             "/mnt/point"
             (currentDir mockAfterExec)
 
-        let vri = V.VaultRuntimeInfo {
-                  V.srcDir = "/home/user",
-                  V.loopDev = "/dev/loop42",
-                  V.mapperDev = "/dev/dm-4",
-                  V.mountpoint = "/mnt/point",
-                  V.repositoryDir = "",
-                  V.partition = "local.vault",
-                  V.partitionName = "local",
-                  V.partitionLocation = V.LocalPartition
+        let vri = Base.VaultRuntimeInfo {
+                  Base.srcDir = "/home/user",
+                  Base.loopDev = "/dev/loop42",
+                  Base.mapperDev = "/dev/dm-4",
+                  Base.mountpoint = "/mnt/point",
+                  Base.repositoryDir = "",
+                  Base.partition = "local.vault",
+                  Base.partitionName = "local",
+                  Base.partitionLocation = Base.LocalPartition
               }
         assertActiveVaultEnvVarSet vri mockAfterExec,
 
@@ -166,15 +167,15 @@ test_openVault = TestList [
             "repo"
             (currentDir mockAfterExec)
 
-        let vri = V.VaultRuntimeInfo {
-                  V.srcDir = "/home/user",
-                  V.loopDev = "/dev/loop42",
-                  V.mapperDev = "/dev/dm-4",
-                  V.mountpoint = "/mnt/point",
-                  V.repositoryDir = "/mnt/point/repo",
-                  V.partition = "local.vault",
-                  V.partitionName = "local",
-                  V.partitionLocation = V.LocalPartition
+        let vri = Base.VaultRuntimeInfo {
+                  Base.srcDir = "/home/user",
+                  Base.loopDev = "/dev/loop42",
+                  Base.mapperDev = "/dev/dm-4",
+                  Base.mountpoint = "/mnt/point",
+                  Base.repositoryDir = "/mnt/point/repo",
+                  Base.partition = "local.vault",
+                  Base.partitionName = "local",
+                  Base.partitionLocation = Base.LocalPartition
               }
         assertActiveVaultEnvVarSet vri mockAfterExec
 

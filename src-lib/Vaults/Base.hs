@@ -1,7 +1,5 @@
 module Vaults.Base where
 
-import Debug.Trace
-
 import Data.Maybe
 import Data.List.Extra
 import Control.Monad.Except
@@ -100,7 +98,7 @@ getPartitionLocation vi fname =
     case stripSuffix ".vault" fname of
          Nothing -> UnknownPartition
          Just "" -> UnknownPartition
-         Just p -> if p == (localname (traceShow vi vi))
+         Just p -> if p == (localname vi)
                       then LocalPartition
                       else if elem p (remotes vi)
                               then RemotePartition

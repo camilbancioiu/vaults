@@ -5,8 +5,8 @@ module MockSubstrate where
 import System.Exit
 import Control.Monad.State
 
+import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
-import qualified Vaults.Base as V
 
 import Debug.Trace
 
@@ -114,10 +114,10 @@ instance Substrate.Substrate (State Mock) where
     exec      = mock_exec
 
 mock_readFile :: FilePath -> State Mock String
-mock_readFile ".vault/name" = return (V.name mockVaultInfo)
-mock_readFile ".vault/local" = return (V.localname mockVaultInfo)
-mock_readFile ".vault/remotes" = return (unlines $ V.remotes mockVaultInfo)
-mock_readFile ".vault/remoteStore" = return (V.remoteStore mockVaultInfo)
+mock_readFile ".vault/name" = return (Base.name mockVaultInfo)
+mock_readFile ".vault/local" = return (Base.localname mockVaultInfo)
+mock_readFile ".vault/remotes" = return (unlines $ Base.remotes mockVaultInfo)
+mock_readFile ".vault/remoteStore" = return (Base.remoteStore mockVaultInfo)
 
 mock_writeFile :: FilePath -> String -> State Mock ()
 mock_writeFile fpath contents =
@@ -153,22 +153,22 @@ mock_exec executable params _ = do
     modify dropHeadMockExecResult
     return er
 
-mockVaultInfo = V.VaultInfo {
-    V.name = "mockVault",
-    V.localname = "local",
-    V.remotes = ["remoteA", "remoteB"],
-    V.remoteStore = "ssh://remoteStore"
+mockVaultInfo = Base.VaultInfo {
+    Base.name = "mockVault",
+    Base.localname = "local",
+    Base.remotes = ["remoteA", "remoteB"],
+    Base.remoteStore = "ssh://remoteStore"
 }
 
-mockVaultRuntimeInfo = V.VaultRuntimeInfo {
-    V.srcDir = "/home/user/vaults/mockVault",
-    V.loopDev = "/dev/loop9",
-    V.mapperDev = "/dev/dm-2",
-    V.mountpoint = "/run/media/user/localhostname/mockVault",
-    V.repositoryDir = "/run/media/user/localhostname/mockVault/repo",
-    V.partition = "local.vault",
-    V.partitionName = "local",
-    V.partitionLocation = V.LocalPartition
+mockVaultRuntimeInfo = Base.VaultRuntimeInfo {
+    Base.srcDir = "/home/user/vaults/mockVault",
+    Base.loopDev = "/dev/loop9",
+    Base.mapperDev = "/dev/dm-2",
+    Base.mountpoint = "/run/media/user/localhostname/mockVault",
+    Base.repositoryDir = "/run/media/user/localhostname/mockVault/repo",
+    Base.partition = "local.vault",
+    Base.partitionName = "local",
+    Base.partitionLocation = Base.LocalPartition
 }
 
 emptyMock :: Mock
@@ -197,7 +197,7 @@ mockWithVaultAndRepoDir = emptyMock {
 
 mockWithActiveVault :: Mock
 mockWithActiveVault = mockWithVaultAndRepoDir {
-    envVars = [(V.activeVaultEnvName, show mockVaultRuntimeInfo)]
+    envVars = [(Base.activeVaultEnvName, show mockVaultRuntimeInfo)]
 }
 
 mockWithEnvVar :: (String, String) -> Mock
