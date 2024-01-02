@@ -17,10 +17,11 @@ closeVault = runExceptT $ do
     let commitLog = Substrate.output result
 
     lift $ Substrate.changeDir (Base.srcDir vri)
+    let logFilename = (Base.partitionName vri) ++ ".log"
+    lift $ Substrate.writeFile logFilename commitLog
+
     U.unmountDevice (Base.mapperDev vri)
     U.lockDevice (Base.mapperDev vri)
     U.deleteLoopDevice (Base.loopDev vri)
-    let logFilename = (Base.partitionName vri) ++ ".log"
-    lift $ Substrate.writeFile logFilename commitLog
+
     lift $ Substrate.unsetEnv Base.activeVaultEnvName
-    return ()
