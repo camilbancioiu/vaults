@@ -3,85 +3,76 @@ module Vaults.Udisksctl where
 import System.Exit
 import Control.Monad.Except
 
-import Vaults.Substrate
+import qualified Vaults.Substrate as Substrate
 
 -- TODO validate parameter fname
-createLoopDevice :: Substrate m => FilePath -> ExceptT String m FilePath
+createLoopDevice :: Substrate.Substrate m => FilePath -> ExceptT String m FilePath
 createLoopDevice fname = do
-    let params = ["loop-setup", "-f", fname]
-    result <- runUdisksctlCommand params
-
-    let parsedDevFile = parseOutputLoopSetup (output result)
+    result <- runUdisksctlCommand ["loop-setup", "-f", fname]
+    let parsedDevFile = parseOutputLoopSetup (Substrate.output result)
     case parsedDevFile of
          Left _ -> throwError "loop-setup failed"
          Right devFile -> return devFile
 
 -- TODO validate parameter devFile
-unlockDevice :: Substrate m => FilePath -> ExceptT String m FilePath
+unlockDevice :: Substrate.Substrate m => FilePath -> ExceptT String m FilePath
 unlockDevice devFile = do
-    let params = ["unlock", "-b", devFile]
-    result <- runUdisksctlCommand params
-
-    let parsedMapperDev = parseOutputUnlock (output result)
+    result <- runUdisksctlCommand ["unlock", "-b", devFile]
+    let parsedMapperDev = parseOutputUnlock (Substrate.output result)
     case parsedMapperDev of
          Left _ -> throwError "unlock failed"
          Right mapperDev -> return mapperDev
 
 -- TODO mount as readonly
-mountDevice :: Substrate m => FilePath -> ExceptT String m FilePath
+mountDevice :: Substrate.Substrate m => FilePath -> ExceptT String m FilePath
 mountDevice mapperDev = do
-    let params = ["mount", "-b", mapperDev]
-    result <- runUdisksctlCommand params
-
-    let parsedMountpoint = parseOutputMount (output result)
+    result <- runUdisksctlCommand ["mount", "-b", mapperDev]
+    let parsedMountpoint = parseOutputMount (Substrate.output result)
     case parsedMountpoint of
          Left _ -> throwError "mount failed"
          Right mountpoint -> return mountpoint
 
 -- TODO validate parameter mapperDev
-unmountDevice :: Substrate m => FilePath -> ExceptT String m ()
+unmountDevice :: Substrate.Substrate m => FilePath -> ExceptT String m ()
 unmountDevice mapperDev = do
-    let params = ["unmount", "-b", mapperDev]
-    _ <- runUdisksctlCommand params
+    _ <- runUdisksctlCommand ["unmount", "-b", mapperDev]
     return ()
 
 -- TODO validate parameter mapperDev
-lockDevice :: Substrate m => FilePath -> ExceptT String m ()
+lockDevice :: Substrate.Substrate m => FilePath -> ExceptT String m ()
 lockDevice mapperDev = do
-    let params = ["lock", "-b", mapperDev]
-    _ <- runUdisksctlCommand params
+    _ <- runUdisksctlCommand ["lock", "-b", mapperDev]
     return ()
 
 -- TODO validate parameter devFile
-deleteLoopDevice :: Substrate m => FilePath -> ExceptT String m ()
+deleteLoopDevice :: Substrate.Substrate m => FilePath -> ExceptT String m ()
 deleteLoopDevice devFile = do
-    let params = ["loop-delete", "-b", devFile]
-    _ <- runUdisksctlCommand params
+    _ <- runUdisksctlCommand ["loop-delete", "-b", devFile]
     return ()
 
-runUdisksctlCommand :: Substrate m => [String] -> ExceptT String m ExecResult
+runUdisksctlCommand :: Substrate.Substrate m => [String] -> ExceptT String m Substrate.ExecResult
 runUdisksctlCommand params =
     do
-        result <- lift $ execSub "udisksctl" params ""
-        when (exitCode result /= ExitSuccess)
+        result <- lift $ Substrate.exec "udisksctl" params ""
+        when (Substrate.exitCode result /= ExitSuccess)
              (throwError (makeErrorMsg params result))
         return result
 
-makeErrorMsg :: [String] -> ExecResult -> String
+makeErrorMsg :: [String] -> Substrate.ExecResult -> String
 makeErrorMsg params result =
-    if exitCode result == ExitSuccess
+    if Substrate.exitCode result == ExitSuccess
        then "success"
        else op ++ " failed: " ++ stdErr ++ "\ncommand: " ++ (show params)
             where op = head (params)
-                  stdErr = errorOutput result
+                  stdErr = Substrate.errorOutput result
 
 parseOutputLoopSetup = parseUdisksctlOutput True 5
 parseOutputUnlock = parseUdisksctlOutput True 4
 parseOutputMount = parseUdisksctlOutput False 4
 
 parseUdisksctlOutput :: Bool -> Int -> String -> Either String FilePath
-parseUdisksctlOutput endDot nElements output = do
-    let elements = words output
+parseUdisksctlOutput endDot nElements outputString = do
+    let elements = words outputString
     when (length elements /= nElements) invalidOutput
 
     let lastElement = last elements
