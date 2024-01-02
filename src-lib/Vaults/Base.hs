@@ -5,7 +5,8 @@ import Debug.Trace
 import Data.Maybe
 import Data.List.Extra
 import Control.Monad.Except
-import Vaults.Substrate
+
+import qualified Vaults.Substrate as Substrate
 
 activeVaultEnvName :: String
 activeVaultEnvName = "ACTIVE_VAULT"
@@ -35,12 +36,12 @@ data VaultRuntimeInfo = VaultRuntimeInfo {
     partitionLocation :: PartitionLocation
 } deriving (Eq, Show, Read)
 
-loadVaultInfo :: Substrate m => m VaultInfo
+loadVaultInfo :: Substrate.Substrate m => m VaultInfo
 loadVaultInfo = do
-    vname <- readFileSub ".vault/name"
-    vlocalname <- readFileSub ".vault/local"
-    vremotes <- readFileSub ".vault/remotes"
-    vremoteStore <- readFileSub ".vault/remoteStore"
+    vname <- Substrate.readFile ".vault/name"
+    vlocalname <- Substrate.readFile ".vault/local"
+    vremotes <- Substrate.readFile ".vault/remotes"
+    vremoteStore <- Substrate.readFile ".vault/remoteStore"
 
     return VaultInfo {
         name = stripTrailingNewline vname,
@@ -52,43 +53,43 @@ loadVaultInfo = do
 stripTrailingNewline :: String -> String
 stripTrailingNewline s = takeWhile (/='\n') s
 
-isVaultDir :: Substrate m => m Bool
-isVaultDir = dirExistsSub ".vault"
+isVaultDir :: Substrate.Substrate m => m Bool
+isVaultDir = Substrate.dirExists ".vault"
 
-ensureIsVaultDir :: Substrate m => ExceptT String m ()
+ensureIsVaultDir :: Substrate.Substrate m => ExceptT String m ()
 ensureIsVaultDir = do
     isV <- lift $ isVaultDir
     unless isV (throwError "non-vault folder")
 
-getActiveVault :: Substrate m => m (Maybe VaultRuntimeInfo)
+getActiveVault :: Substrate.Substrate m => m (Maybe VaultRuntimeInfo)
 getActiveVault = do
-    descriptor <- lookupEnvSub activeVaultEnvName
+    descriptor <- Substrate.lookupEnv activeVaultEnvName
     return (fmap read descriptor)
 
-setActiveVault :: Substrate m => VaultRuntimeInfo -> m ()
+setActiveVault :: Substrate.Substrate m => VaultRuntimeInfo -> m ()
 setActiveVault vri = do
     let descriptor = show vri
-    setEnvSub activeVaultEnvName descriptor
+    Substrate.setEnv activeVaultEnvName descriptor
     return ()
 
-unsetActiveVault :: Substrate m => m ()
+unsetActiveVault :: Substrate.Substrate m => m ()
 unsetActiveVault = do
-    unsetEnvSub activeVaultEnvName
+    Substrate.unsetEnv activeVaultEnvName
     return ()
 
-isAnyVaultActive :: Substrate m  => m Bool
+isAnyVaultActive :: Substrate.Substrate m  => m Bool
 isAnyVaultActive = do
-    maybeEnv <- lookupEnvSub activeVaultEnvName
+    maybeEnv <- Substrate.lookupEnv activeVaultEnvName
     return (isJust maybeEnv)
 
-ensureIsVaultActive :: Substrate m => ExceptT String m VaultRuntimeInfo
+ensureIsVaultActive :: Substrate.Substrate m => ExceptT String m VaultRuntimeInfo
 ensureIsVaultActive = do
     mvri <- lift $ getActiveVault
     case mvri of
          Nothing -> (throwError "cannot read vault runtime info")
          Just vri -> return vri
 
-ensureNoVaultActive :: Substrate m => ExceptT String m ()
+ensureNoVaultActive :: Substrate.Substrate m => ExceptT String m ()
 ensureNoVaultActive = do
     isVA <- lift $ isAnyVaultActive
     when isVA (throwError "vault already open")
