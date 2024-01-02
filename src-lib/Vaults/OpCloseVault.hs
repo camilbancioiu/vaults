@@ -12,7 +12,7 @@ closeVault :: Substrate.Substrate m => m (Either String ())
 closeVault = runExceptT $ do
     vri <- Base.ensureIsVaultActive
 
-    result <- lift $ Substrate.execSub "git" ["log", "--format=%H"] ""
+    result <- lift $ Substrate.exec "git" ["log", "--format=%H"] ""
     when (Substrate.exitCode result /= ExitSuccess) (throwError "git log failed")
     let commitLog = Substrate.output result
 

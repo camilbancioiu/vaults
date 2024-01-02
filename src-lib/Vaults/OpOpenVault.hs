@@ -6,7 +6,7 @@ import Control.Monad.Except
 import Data.Maybe
 
 import qualified Vaults.Base as Base
-import Vaults.Substrate
+import qualified Vaults.Substrate as Substrate
 import qualified Vaults.Udisksctl as U
 
 data ParamsOpenVault = ParamsOpenVault {
@@ -17,7 +17,7 @@ data ParamsOpenVault = ParamsOpenVault {
 -- TODO validate loaded VaultInfo
 -- e.g. for empty name, empty localname etc
 -- TODO handle isForcedOpening
-openVault :: Substrate m => ParamsOpenVault -> m (Either String ())
+openVault :: Substrate.Substrate m => ParamsOpenVault -> m (Either String ())
 openVault params = runExceptT $ do
     Base.ensureIsVaultDir
     Base.ensureNoVaultActive
@@ -29,7 +29,7 @@ openVault params = runExceptT $ do
     let partLoc = Base.getPartitionLocation vi fname
     when (partLoc == Base.UnknownPartition) (throwError $ "unknown vault partition " ++ fname)
 
-    dirBeforeOpening <- lift $ getDirSub
+    dirBeforeOpening <- lift $ Substrate.getDir
 
     devFile <- U.createLoopDevice fname
 
@@ -46,11 +46,11 @@ openVault params = runExceptT $ do
                  U.deleteLoopDevice devFile
                  throwError e)
 
-    lift $ changeDirSub mountpoint
+    lift $ Substrate.changeDir mountpoint
 
     -- TODO if ensureIsVaultDir, then the folder repo/.git must exist
-    hasRepoDir <- lift $ dirExistsSub "repo"
-    when hasRepoDir (lift $ changeDirSub "repo")
+    hasRepoDir <- lift $ Substrate.dirExists "repo"
+    when hasRepoDir (lift $ Substrate.changeDir "repo")
 
     let repoDir = if hasRepoDir then mountpoint ++ "/repo"
                                 else ""
@@ -66,4 +66,4 @@ openVault params = runExceptT $ do
             , Base.partitionLocation = partLoc
         }
 
-    lift $ setEnvSub Base.activeVaultEnvName (show vri)
+    lift $ Substrate.setEnv Base.activeVaultEnvName (show vri)
