@@ -3,8 +3,8 @@ module CLI where
 import System.FilePath.Posix
 import Options.Applicative
 
-data Operation = OpenVault FilePath Bool
-               | CloseVault
+data Operation = OpenVault FilePath Bool -- NOT IMPLEMENTED YET
+               | CloseVault              -- NOT IMPLEMENTED YET
                deriving Show
 
 operationsParser :: ParserInfo Operation
