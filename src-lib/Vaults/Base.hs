@@ -92,7 +92,6 @@ ensureNoVaultActive = do
     isVA <- lift $ isAnyVaultActive
     when isVA (throwError "vault already open")
 
--- TODO refactor this
 getPartitionLocation :: VaultInfo -> FilePath -> PartitionLocation
 getPartitionLocation vi fname =
     case stripSuffix ".vault" fname of
