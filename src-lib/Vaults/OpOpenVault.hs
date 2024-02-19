@@ -19,7 +19,7 @@ data ParamsOpenVault = ParamsOpenVault {
 -- TODO handle isForcedOpening
 -- TODO create separate flow for non-repo vaults
 -- TODO return the VRI for closeVault
-openVault :: Substrate.Substrate m => ParamsOpenVault -> m (Either String ())
+openVault :: Substrate.Substrate m => ParamsOpenVault -> m (Either String Base.VaultRuntimeInfo)
 openVault params = runExceptT $ do
     Base.ensureIsVaultDir
     Base.ensureNoVaultActive
@@ -52,6 +52,8 @@ openVault params = runExceptT $ do
         }
     lift $ Substrate.setEnv Base.activeVaultEnvName (show vri)
 
+    return vri
+
 guardedUnlockDevice :: Substrate.Substrate m => FilePath -> ExceptT String m FilePath
 guardedUnlockDevice loopDev = do
     catchError
@@ -67,6 +69,8 @@ guardedMountDevice loopDev mapperDev = do
                   U.deleteLoopDevice loopDev
                   throwError e)
 
+-- resolveRepoDir returns the path `mountpoint/repo` if it exists, otherwise
+-- it returns the path `mountpoint`.
 resolveRepoDir :: Substrate.Substrate m => FilePath -> ExceptT String m FilePath
 resolveRepoDir mountpoint = do
     -- TODO if ensureIsVaultDir, then the folder repo/.git must exist
@@ -75,4 +79,3 @@ resolveRepoDir mountpoint = do
     let repoDir = if hasRepoDir then mountpoint ++ "/repo"
                                 else mountpoint
     return repoDir
-

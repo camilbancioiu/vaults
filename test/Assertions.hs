@@ -21,8 +21,8 @@ assertOpParamsError assertMsg params failedExec (opResult, _) =
                        ++ "\ncommand: "
                        ++ (show params)
 
-assertNoExecCalls :: (Base.OpResult, Mock) -> IO ()
-assertNoExecCalls (_, mock) =
+assertNoExecCalls :: Mock -> IO ()
+assertNoExecCalls mock =
     assertEqual "no exec calls" 0 (nExecs mock)
 
 assertNoVaultEnvVar :: Mock -> IO ()
