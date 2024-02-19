@@ -3,23 +3,35 @@ module Vaults.OpCloseVault where
 import Control.Monad.Except
 import System.Exit
 
-import Vaults.Substrate
-import Vaults.Base
-import Vaults.Udisksctl
+import qualified Vaults.Base as Base
+import qualified Vaults.Substrate as Substrate
+import qualified Vaults.Udisksctl as U
 
-closeVault :: Substrate m => m (Either String ())
+-- TODO take the VRI as parameter; don't read from ENV
+closeVault :: Substrate.Substrate m => m (Either String ())
 closeVault = runExceptT $ do
-    vri <- ensureIsVaultActive
+    vri <- Base.ensureIsVaultActive
 
-    result <- lift $ execSub "git" ["log", "--format=%H"] ""
-    when (exitCode result /= ExitSuccess) (throwError "git log failed")
-    let commitLog = output result
+    -- TODO if this is not a real vault with a git repo, do not extract the
+    -- commit log
+    commitLog <- extractCommitLog
 
-    lift $ changeDirSub (srcDir vri)
-    unmountDevice (mapperDev vri)
-    lockDevice (mapperDev vri)
-    deleteLoopDevice (loopDev vri)
-    let logfile = (partitionName vri) ++ ".log"
-    lift $ writeFileSub logfile commitLog
-    lift $ unsetEnvSub activeVaultEnvName
-    return ()
+    lift $ Substrate.changeDir (Base.srcDir vri)
+    U.unmountDevice (Base.mapperDev vri)
+    U.lockDevice (Base.mapperDev vri)
+    U.deleteLoopDevice (Base.loopDev vri)
+    lift $ Substrate.unsetEnv Base.activeVaultEnvName
+
+    saveCommitLog vri commitLog
+
+extractCommitLog :: Substrate.Substrate m => ExceptT String m String
+extractCommitLog = do
+    result <- lift $ Substrate.exec "git" ["log", "--format=%H"] ""
+    when (Substrate.exitCode result /= ExitSuccess) (throwError "git log failed")
+    let commitLog = Substrate.output result
+    return commitLog
+
+saveCommitLog :: Substrate.Substrate m => Base.VaultRuntimeInfo -> String -> ExceptT String m ()
+saveCommitLog vri commitLog = do
+    let logFilename = (Base.partitionName vri) ++ ".log"
+    lift $ Substrate.writeFile logFilename commitLog

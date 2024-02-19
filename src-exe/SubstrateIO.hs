@@ -5,26 +5,26 @@ import System.Environment
 import System.Process
 import System.Exit
 
-import Vaults.Substrate
+import qualified Vaults.Substrate as Substrate
 
-instance Substrate IO where
-    readFileSub  = Prelude.readFile
-    writeFileSub = Prelude.writeFile
-    dirExistsSub = System.Directory.doesDirectoryExist
-    lookupEnvSub = System.Environment.lookupEnv
-    setEnvSub    = System.Environment.setEnv
-    unsetEnvSub  = System.Environment.unsetEnv
-    getDirSub    = System.Directory.getCurrentDirectory
-    changeDirSub = System.Directory.setCurrentDirectory
-    execSub      = execIOProcess
+instance Substrate.Substrate IO where
+    readFile  = Prelude.readFile
+    writeFile = Prelude.writeFile
+    dirExists = System.Directory.doesDirectoryExist
+    lookupEnv = System.Environment.lookupEnv
+    setEnv    = System.Environment.setEnv
+    unsetEnv  = System.Environment.unsetEnv
+    getDir    = System.Directory.getCurrentDirectory
+    changeDir = System.Directory.setCurrentDirectory
+    exec      = execIOProcess
 
-execIOProcess :: String -> [String] -> String -> IO ExecResult
+execIOProcess :: String -> [String] -> String -> IO Substrate.ExecResult
 execIOProcess cmd args sin = do
     let pcmd = (proc cmd args)
     result <- readCreateProcessWithExitCode pcmd sin
     let (exc, sout, serr) = result
-    return ExecResult {
-        exitCode = exc,
-        output = sout,
-        errorOutput = serr
+    return Substrate.ExecResult {
+        Substrate.exitCode = exc,
+        Substrate.output = sout,
+        Substrate.errorOutput = serr
     }

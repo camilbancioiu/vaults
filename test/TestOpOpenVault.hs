@@ -1,15 +1,16 @@
 module TestOpOpenVault where
 
-import Test.HUnit
 import Control.Monad.State
 import Control.Monad.Except
 import System.Exit
 
-import MockSubstrate
-import Assertions
+import qualified Vaults.Base as Base
+import qualified Vaults.Substrate as Substrate
 
-import qualified Vaults.Base as V
-import qualified Vaults.Substrate as Sub
+import Test.HUnit
+import Assertions
+import MockSubstrate
+
 import Vaults.OpOpenVault
 
 -- TODO test scenarios:
@@ -61,11 +62,12 @@ test_openVault = TestList [
     TestCase $ do
         let mock = addMockExecResult loopSetupFail mockWithVaultDir
         let params = mkParamsOpenVault "local.vault"
+        let failParams = ["loop-setup", "-f", "local.vault"]
         let result = runState (openVault params) mock
-        assertOpError "loop-setup failed" result
         let mockAfterExec = snd result
+        assertOpParamsError "loop-setup failed" failParams loopSetupFail result
         assertEqual "only loop-setup was called"
-            [("udisksctl", ["loop-setup", "-f", "local.vault"])]
+            [("udisksctl", failParams)]
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
             "/home/user"
@@ -77,12 +79,13 @@ test_openVault = TestList [
         let mock = addMockExecResults results mockWithVaultDir
                    where results = [loopSetupOk, unlockFail, loopDeleteOk]
         let params = mkParamsOpenVault "local.vault"
+        let failParams = ["unlock", "-b", "/dev/loop42"]
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
-        assertOpError "unlock failed" result
+        assertOpParamsError "unlock failed" failParams unlockFail result
         assertEqual "loop-setup, unlock, loop-delete were called"
             [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
-            , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
+            , ("udisksctl", failParams)
             , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
             ]
             (execRecorded mockAfterExec)
@@ -96,13 +99,14 @@ test_openVault = TestList [
         let mock = addMockExecResults results mockWithVaultDir
                    where results = [loopSetupOk, unlockOk, mountFail, lockOk, loopDeleteOk]
         let params = mkParamsOpenVault "local.vault"
+        let failParams = ["mount", "-b", "/dev/dm-4"]
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
-        assertOpError "mount failed" result
+        assertOpParamsError "mount failed" failParams mountFail result
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
             , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
-            , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
+            , ("udisksctl", failParams)
             , ("udisksctl", ["lock", "-b", "/dev/dm-4"])
             , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
             ]
@@ -130,14 +134,15 @@ test_openVault = TestList [
             "/mnt/point"
             (currentDir mockAfterExec)
 
-        let vri = V.VaultRuntimeInfo {
-                  V.srcDir = "/home/user",
-                  V.loopDev = "/dev/loop42",
-                  V.mapperDev = "/dev/dm-4",
-                  V.mountedRepo = "/mnt/point",
-                  V.partition = "local.vault",
-                  V.partitionName = "local",
-                  V.partitionLocation = V.LocalPartition
+        let vri = Base.VaultRuntimeInfo {
+                  Base.srcDir = "/home/user",
+                  Base.loopDev = "/dev/loop42",
+                  Base.mapperDev = "/dev/dm-4",
+                  Base.mountpoint = "/mnt/point",
+                  Base.repositoryDir = "/mnt/point",
+                  Base.partition = "local.vault",
+                  Base.partitionName = "local",
+                  Base.partitionLocation = Base.LocalPartition
               }
         assertActiveVaultEnvVarSet vri mockAfterExec,
 
@@ -159,17 +164,18 @@ test_openVault = TestList [
             "/mnt/point"
             (prevDir mockAfterExec)
         assertEqual "current directory changed to repo within mountpoint"
-            "repo"
+            "/mnt/point/repo"
             (currentDir mockAfterExec)
 
-        let vri = V.VaultRuntimeInfo {
-                  V.srcDir = "/home/user",
-                  V.loopDev = "/dev/loop42",
-                  V.mapperDev = "/dev/dm-4",
-                  V.mountedRepo = "/mnt/point/repo",
-                  V.partition = "local.vault",
-                  V.partitionName = "local",
-                  V.partitionLocation = V.LocalPartition
+        let vri = Base.VaultRuntimeInfo {
+                  Base.srcDir = "/home/user",
+                  Base.loopDev = "/dev/loop42",
+                  Base.mapperDev = "/dev/dm-4",
+                  Base.mountpoint = "/mnt/point",
+                  Base.repositoryDir = "/mnt/point/repo",
+                  Base.partition = "local.vault",
+                  Base.partitionName = "local",
+                  Base.partitionLocation = Base.LocalPartition
               }
         assertActiveVaultEnvVarSet vri mockAfterExec
 

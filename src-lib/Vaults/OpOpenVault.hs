@@ -5,9 +5,9 @@ import System.FilePath.Posix
 import Control.Monad.Except
 import Data.Maybe
 
-import Vaults.Base
-import Vaults.Substrate
-import Vaults.Udisksctl
+import qualified Vaults.Base as Base
+import qualified Vaults.Substrate as Substrate
+import qualified Vaults.Udisksctl as U
 
 data ParamsOpenVault = ParamsOpenVault {
     partitionFilename :: FilePath,
@@ -16,51 +16,63 @@ data ParamsOpenVault = ParamsOpenVault {
 
 -- TODO validate loaded VaultInfo
 -- e.g. for empty name, empty localname etc
-openVault :: Substrate m => ParamsOpenVault -> m (Either String ())
+-- TODO handle isForcedOpening
+-- TODO create separate flow for non-repo vaults
+-- TODO return the VRI for closeVault
+openVault :: Substrate.Substrate m => ParamsOpenVault -> m (Either String ())
 openVault params = runExceptT $ do
-    ensureIsVaultDir
-    ensureNoVaultActive -- TODO remove
+    Base.ensureIsVaultDir
+    Base.ensureNoVaultActive
 
     let fname = partitionFilename params
     when (length fname == 0) (throwError "partition filename is required")
 
-    vi <- lift $ loadVaultInfo
-    let partLoc = getPartitionLocation vi fname
-    when (partLoc == UnknownPartition) (throwError $ "unknown vault partition " ++ fname)
+    vi <- lift $ Base.loadVaultInfo
+    let partLoc = Base.getPartitionLocation vi fname
+    when (partLoc == Base.UnknownPartition) (throwError $ "unknown vault partition " ++ fname)
 
-    dirBeforeOpening <- lift $ getDirSub
-    devFile <- createLoopDevice fname
+    srcDir <- lift $ Substrate.getDir
+    loopDev <- U.createLoopDevice fname
+    mapperDev <- guardedUnlockDevice loopDev
+    mountpoint <- guardedMountDevice loopDev mapperDev
+    lift $ Substrate.changeDir mountpoint
 
-    mapperDev <- catchError
-        (unlockDevice devFile)
-        (\e -> do
-                 deleteLoopDevice devFile
-                 throwError e)
+    repoDir <- resolveRepoDir mountpoint
+    lift $ Substrate.changeDir repoDir
 
-    mountPoint <- catchError
-        (mountDevice mapperDev)
-        (\e -> do
-                 lockDevice mapperDev
-                 deleteLoopDevice devFile
-                 throwError e)
-
-    lift $ changeDirSub mountPoint
-
-    -- TODO if ensureIsVaultDir, then the folder repo/.git must exist
-    hasRepoDir <- lift $ dirExistsSub "repo"
-    when hasRepoDir (lift $ changeDirSub "repo")
-
-    let repoDir = if hasRepoDir then mountPoint ++ "/repo"
-                                else mountPoint
-
-    let vri = VaultRuntimeInfo {
-              srcDir = dirBeforeOpening
-            , loopDev = devFile
-            , mapperDev = mapperDev
-            , mountedRepo = repoDir
-            , partition = fname
-            , partitionName = takeBaseName fname
-            , partitionLocation = partLoc
+    let vri = Base.VaultRuntimeInfo {
+              Base.srcDir = srcDir
+            , Base.loopDev = loopDev
+            , Base.mountpoint = mountpoint
+            , Base.repositoryDir = repoDir
+            , Base.mapperDev = mapperDev
+            , Base.partition = fname
+            , Base.partitionName = takeBaseName fname
+            , Base.partitionLocation = partLoc
         }
+    lift $ Substrate.setEnv Base.activeVaultEnvName (show vri)
 
-    lift $ setEnvSub activeVaultEnvName (show vri)
+guardedUnlockDevice :: Substrate.Substrate m => FilePath -> ExceptT String m FilePath
+guardedUnlockDevice loopDev = do
+    catchError
+        (U.unlockDevice loopDev)
+        (\e -> do U.deleteLoopDevice loopDev
+                  throwError e)
+
+guardedMountDevice :: Substrate.Substrate m => FilePath -> FilePath -> ExceptT String m FilePath
+guardedMountDevice loopDev mapperDev = do
+    catchError
+        (U.mountDevice mapperDev)
+        (\e -> do U.lockDevice mapperDev
+                  U.deleteLoopDevice loopDev
+                  throwError e)
+
+resolveRepoDir :: Substrate.Substrate m => FilePath -> ExceptT String m FilePath
+resolveRepoDir mountpoint = do
+    -- TODO if ensureIsVaultDir, then the folder repo/.git must exist
+    -- TODO ensure correct behavior for the missing repo folder
+    hasRepoDir <- lift $ Substrate.dirExists "repo"
+    let repoDir = if hasRepoDir then mountpoint ++ "/repo"
+                                else mountpoint
+    return repoDir
+

@@ -58,7 +58,7 @@ test_closeVault = TestList [
             "/home/user/vaults/mockVault"
             (currentDir mockAfterExec)
         assertEqual "git log saved"
-            ("/home/user/vaults/mockVault", "local.log", gitLogOut)
+            ("/home/user/vaults/mockVault", "local.log", gitLogOutput)
             (writtenFile mockAfterExec)
 
     ]

@@ -4,8 +4,9 @@ module MockSubstrate where
 
 import System.Exit
 import Control.Monad.State
-import Vaults.Substrate
-import qualified Vaults.Base as V
+
+import qualified Vaults.Base as Base
+import qualified Vaults.Substrate as Substrate
 
 import Debug.Trace
 
@@ -17,7 +18,7 @@ data Mock = Mock {
     envVars :: [(String, String)],
     nExecs :: Int,
     execRecorded :: [(String, [String])],
-    execResults :: [ExecResult],
+    execResults :: [Substrate.ExecResult],
     writtenFile :: (FilePath, FilePath, String)
 } deriving Show
 
@@ -63,11 +64,11 @@ recordExec execCom mock =
     }
     where newExecRecorded = (execRecorded mock) ++ [execCom]
 
-addMockExecResult :: ExecResult -> Mock -> Mock
+addMockExecResult :: Substrate.ExecResult -> Mock -> Mock
 addMockExecResult er mock =
     addMockExecResults [er] mock
 
-addMockExecResults :: [ExecResult] -> Mock -> Mock
+addMockExecResults :: [Substrate.ExecResult] -> Mock -> Mock
 addMockExecResults ers mock =
     mock {
         execResults = newExecResults
@@ -80,87 +81,94 @@ dropHeadMockExecResult mock =
         execResults = tail (execResults mock)
     }
 
-loopSetupOk   = ExecResult ExitSuccess loopSetupOut ""
-loopSetupFail = ExecResult (ExitFailure 16) "" "didnt work"
-loopDeleteOk  = ExecResult ExitSuccess "" ""
-unlockOk      = ExecResult ExitSuccess unlockOut ""
-unlockFail    = ExecResult (ExitFailure 16) "" "didnt work"
-mountOk       = ExecResult ExitSuccess mountOut ""
-unmountOk     = ExecResult ExitSuccess "" ""
-mountFail     = ExecResult (ExitFailure 16) "" "didnt work"
-lockOk        = ExecResult ExitSuccess "Locked /dev/dm-4." ""
-gitLogOk      = ExecResult ExitSuccess gitLogOut ""
-loopSetupOut  = "Mapped file local.vault as /dev/loop42."
-unlockOut     = "Unlocked /dev/loop42 as /dev/dm-4."
-mountOut      = "Mounted /dev/dm-4 at /mnt/point"
-gitLogOut     = "38a3\nfb22\n8c2a\n02ad\n"
+dummyPartition = "local.vault"
+dummyLoopDev = "/dev/loop42"
+dummyMapperDev = "/dev/dm-4"
+dummyMountpoint = "/mnt/point"
 
-instance Substrate (State Mock) where
-    readFileSub  = mock_readFileSub
-    writeFileSub = mock_writeFileSub
-    dirExistsSub = mock_dirExistsSub
-    lookupEnvSub = mock_lookupEnvSub
-    setEnvSub    = mock_setEnvSub
-    unsetEnvSub  = mock_unsetEnvSub
-    getDirSub    = mock_getDirSub
-    changeDirSub = mock_changeDirSub
-    execSub      = mock_execSub
+loopSetupOk   = Substrate.ExecResult ExitSuccess loopSetupOutput ""
+loopSetupFail = Substrate.ExecResult (ExitFailure 16) "" "didnt work"
+loopDeleteOk  = Substrate.ExecResult ExitSuccess "" ""
+unlockOk      = Substrate.ExecResult ExitSuccess unlockOutput ""
+unlockFail    = Substrate.ExecResult (ExitFailure 16) "" "didnt work"
+mountOk       = Substrate.ExecResult ExitSuccess mountOutput ""
+unmountOk     = Substrate.ExecResult ExitSuccess "" ""
+mountFail     = Substrate.ExecResult (ExitFailure 16) "" "didnt work"
+lockOk        = Substrate.ExecResult ExitSuccess lockOutput ""
+gitLogOk      = Substrate.ExecResult ExitSuccess gitLogOutput ""
+loopSetupOutput  = "Mapped file " ++ dummyPartition ++ " as " ++ dummyLoopDev ++ "."
+unlockOutput     = "Unlocked " ++ dummyLoopDev ++ " as " ++ dummyMapperDev ++ "."
+mountOutput      = "Mounted " ++ dummyMapperDev ++ " at " ++ dummyMountpoint
+lockOutput       = "Locked " ++ dummyMapperDev ++ "."
+gitLogOutput     = "38a3\nfb22\n8c2a\n02ad\n"
 
-mock_readFileSub :: FilePath -> State Mock String
-mock_readFileSub ".vault/name" = return (V.name mockVaultInfo)
-mock_readFileSub ".vault/local" = return (V.localname mockVaultInfo)
-mock_readFileSub ".vault/remotes" = return (unlines $ V.remotes mockVaultInfo)
-mock_readFileSub ".vault/remoteStore" = return (V.remoteStore mockVaultInfo)
+instance Substrate.Substrate (State Mock) where
+    readFile  = mock_readFile
+    writeFile = mock_writeFile
+    dirExists = mock_dirExists
+    lookupEnv = mock_lookupEnv
+    setEnv    = mock_setEnv
+    unsetEnv  = mock_unsetEnv
+    getDir    = mock_getDir
+    changeDir = mock_changeDir
+    exec      = mock_exec
 
-mock_writeFileSub :: FilePath -> String -> State Mock ()
-mock_writeFileSub fpath contents =
+mock_readFile :: FilePath -> State Mock String
+mock_readFile ".vault/name" = return (Base.name mockVaultInfo)
+mock_readFile ".vault/local" = return (Base.localname mockVaultInfo)
+mock_readFile ".vault/remotes" = return (unlines $ Base.remotes mockVaultInfo)
+mock_readFile ".vault/remoteStore" = return (Base.remoteStore mockVaultInfo)
+
+mock_writeFile :: FilePath -> String -> State Mock ()
+mock_writeFile fpath contents =
     modify (addWrittenFile fpath contents)
 
-mock_dirExistsSub :: FilePath -> State Mock Bool
-mock_dirExistsSub ".vault" = gets hasVaultDir
-mock_dirExistsSub "repo" = gets hasRepoDir
-mock_dirExistsSub _ = return False
+mock_dirExists :: FilePath -> State Mock Bool
+mock_dirExists ".vault" = gets hasVaultDir
+mock_dirExists "repo" = gets hasRepoDir
+mock_dirExists _ = return False
 
-mock_lookupEnvSub :: String -> State Mock (Maybe String)
-mock_lookupEnvSub key = do
+mock_lookupEnv :: String -> State Mock (Maybe String)
+mock_lookupEnv key = do
     mock <- get
     return (lookup key $ envVars mock)
 
-mock_setEnvSub :: String -> String -> State Mock ()
-mock_setEnvSub key val = modify (addMockEnvVar key val)
+mock_setEnv :: String -> String -> State Mock ()
+mock_setEnv key val = modify (addMockEnvVar key val)
 
-mock_unsetEnvSub :: String -> State Mock ()
-mock_unsetEnvSub key = modify (removeMockEnvVar key)
+mock_unsetEnv :: String -> State Mock ()
+mock_unsetEnv key = modify (removeMockEnvVar key)
 
-mock_getDirSub :: State Mock String
-mock_getDirSub = gets currentDir
+mock_getDir :: State Mock String
+mock_getDir = gets currentDir
 
-mock_changeDirSub :: String -> State Mock ()
-mock_changeDirSub dir = modify (setCurrentDir dir)
+mock_changeDir :: String -> State Mock ()
+mock_changeDir dir = modify (setCurrentDir dir)
 
-mock_execSub :: String -> [String] -> String -> State Mock ExecResult
-mock_execSub executable params _ = do
+mock_exec :: String -> [String] -> String -> State Mock Substrate.ExecResult
+mock_exec executable params _ = do
     modify $ recordExec (executable, params)
     modify incExecs
     er <- gets $ head . execResults
     modify dropHeadMockExecResult
     return er
 
-mockVaultInfo = V.VaultInfo {
-    V.name = "mockVault",
-    V.localname = "local",
-    V.remotes = ["remoteA", "remoteB"],
-    V.remoteStore = "ssh://remoteStore"
+mockVaultInfo = Base.VaultInfo {
+    Base.name = "mockVault",
+    Base.localname = "local",
+    Base.remotes = ["remoteA", "remoteB"],
+    Base.remoteStore = "ssh://remoteStore"
 }
 
-mockVaultRuntimeInfo = V.VaultRuntimeInfo {
-    V.srcDir = "/home/user/vaults/mockVault",
-    V.loopDev = "/dev/loop9",
-    V.mapperDev = "/dev/dm-2",
-    V.mountedRepo = "/run/media/user/localhostname/mockVault",
-    V.partition = "local.vault",
-    V.partitionName = "local",
-    V.partitionLocation = V.LocalPartition
+mockVaultRuntimeInfo = Base.VaultRuntimeInfo {
+    Base.srcDir = "/home/user/vaults/mockVault",
+    Base.loopDev = "/dev/loop9",
+    Base.mapperDev = "/dev/dm-2",
+    Base.mountpoint = "/run/media/user/localhostname/mockVault",
+    Base.repositoryDir = "/run/media/user/localhostname/mockVault/repo",
+    Base.partition = "local.vault",
+    Base.partitionName = "local",
+    Base.partitionLocation = Base.LocalPartition
 }
 
 emptyMock :: Mock
@@ -189,7 +197,7 @@ mockWithVaultAndRepoDir = emptyMock {
 
 mockWithActiveVault :: Mock
 mockWithActiveVault = mockWithVaultAndRepoDir {
-    envVars = [(V.activeVaultEnvName, show mockVaultRuntimeInfo)]
+    envVars = [(Base.activeVaultEnvName, show mockVaultRuntimeInfo)]
 }
 
 mockWithEnvVar :: (String, String) -> Mock

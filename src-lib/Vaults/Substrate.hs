@@ -9,15 +9,15 @@ data ExecResult = ExecResult {
     exitCode    :: ExitCode,
     output      :: String,
     errorOutput :: String
-} deriving Show
+} deriving (Eq, Show)
 
 class Monad m => Substrate m where
-    readFileSub      :: FilePath -> m String
-    writeFileSub     :: FilePath -> String -> m ()
-    dirExistsSub     :: FilePath -> m Bool
-    lookupEnvSub     :: String -> m (Maybe String)
-    setEnvSub        :: String -> String -> m ()
-    unsetEnvSub      :: String -> m ()
-    getDirSub        :: m String
-    changeDirSub     :: String -> m ()
-    execSub          :: String -> [String] -> String -> m ExecResult
+    readFile      :: FilePath -> m String
+    writeFile     :: FilePath -> String -> m ()
+    dirExists     :: FilePath -> m Bool
+    lookupEnv     :: String -> m (Maybe String)
+    setEnv        :: String -> String -> m ()
+    unsetEnv      :: String -> m ()
+    getDir        :: m String
+    changeDir     :: String -> m ()
+    exec          :: String -> [String] -> String -> m ExecResult
