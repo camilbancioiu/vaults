@@ -33,16 +33,18 @@ test_prerequisites = TestList [
         let mock = emptyMock
         let params = mkParamsOpenVault "local.vault"
         let result = runState (openVault params) mock
+        let mockAfterExec = snd result
         assertOpError "non-vault folder" result
-        assertNoExecCalls result,
+        assertNoExecCalls mockAfterExec,
 
     TestLabel "open when vault already open fails" $
     TestCase $ do
         let mock = mockWithActiveVault
         let params = mkParamsOpenVault "local.vault"
         let result = runState (openVault params) mock
+        let mockAfterExec = snd result
         assertOpError "vault already open" result
-        assertNoExecCalls result,
+        assertNoExecCalls mockAfterExec,
 
     TestLabel "open without a partition filename fails" $
     TestCase $ do
@@ -52,8 +54,9 @@ test_prerequisites = TestList [
                 isForcedOpening = False
             }
         let result = runState (openVault params) mock
+        let mockAfterExec = snd result
         assertOpError "partition filename is required" result
-        assertNoExecCalls result
+        assertNoExecCalls mockAfterExec
     ]
 
 test_openVault :: Test
@@ -123,7 +126,8 @@ test_openVault = TestList [
         let params = mkParamsOpenVault "local.vault"
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
-        assertEqual "mount succeeds" (Right ()) (fst result)
+        let vri = makeDummyVRI ""
+        assertEqual "mount succeeds" (Right vri) (fst result)
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
             , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
@@ -134,16 +138,6 @@ test_openVault = TestList [
             "/mnt/point"
             (currentDir mockAfterExec)
 
-        let vri = Base.VaultRuntimeInfo {
-                  Base.srcDir = "/home/user",
-                  Base.loopDev = "/dev/loop42",
-                  Base.mapperDev = "/dev/dm-4",
-                  Base.mountpoint = "/mnt/point",
-                  Base.repositoryDir = "/mnt/point",
-                  Base.partition = "local.vault",
-                  Base.partitionName = "local",
-                  Base.partitionLocation = Base.LocalPartition
-              }
         assertActiveVaultEnvVarSet vri mockAfterExec,
 
     TestLabel "mount succeeds, vault has inner repo" $
@@ -153,7 +147,8 @@ test_openVault = TestList [
         let params = mkParamsOpenVault "local.vault"
         let result = runState (openVault params) mock
         let mockAfterExec = snd result
-        assertEqual "mount succeeds" (Right ()) (fst result)
+        let vri = makeDummyVRI "/repo"
+        assertEqual "mount succeeds" (Right vri) (fst result)
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
             , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
@@ -167,16 +162,6 @@ test_openVault = TestList [
             "/mnt/point/repo"
             (currentDir mockAfterExec)
 
-        let vri = Base.VaultRuntimeInfo {
-                  Base.srcDir = "/home/user",
-                  Base.loopDev = "/dev/loop42",
-                  Base.mapperDev = "/dev/dm-4",
-                  Base.mountpoint = "/mnt/point",
-                  Base.repositoryDir = "/mnt/point/repo",
-                  Base.partition = "local.vault",
-                  Base.partitionName = "local",
-                  Base.partitionLocation = Base.LocalPartition
-              }
         assertActiveVaultEnvVarSet vri mockAfterExec
 
     ]
@@ -186,3 +171,15 @@ mkParamsOpenVault fname = ParamsOpenVault {
     partitionFilename = fname,
     isForcedOpening = False
 }
+
+makeDummyVRI :: FilePath -> Base.VaultRuntimeInfo
+makeDummyVRI repoDir = Base.VaultRuntimeInfo {
+                  Base.srcDir = "/home/user",
+                  Base.loopDev = "/dev/loop42",
+                  Base.mapperDev = "/dev/dm-4",
+                  Base.mountpoint = "/mnt/point",
+                  Base.repositoryDir = "/mnt/point" ++ repoDir,
+                  Base.partition = "local.vault",
+                  Base.partitionName = "local",
+                  Base.partitionLocation = Base.LocalPartition
+              }

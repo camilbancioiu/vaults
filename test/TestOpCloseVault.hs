@@ -20,8 +20,9 @@ test_prerequisites = TestList [
     TestCase $ do
         let mock = emptyMock
         let result = runState closeVault mock
+        let mockAfterExec = snd result
         assertOpError "cannot read vault runtime info" result
-        assertNoExecCalls result
+        assertNoExecCalls mockAfterExec
 
     -- TODO TestLabel "closing active vault works regardless of current dir" $
 
