@@ -52,6 +52,8 @@ openVault params = runExceptT $ do
         }
     lift $ Substrate.setEnv Base.activeVaultEnvName (show vri)
 
+    return vri
+
 guardedUnlockDevice :: Substrate.Substrate m => FilePath -> ExceptT String m FilePath
 guardedUnlockDevice loopDev = do
     catchError
