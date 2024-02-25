@@ -28,7 +28,7 @@ executable vaults
   main-is:             Main.hs
   -- other-extensions:
   build-depends:       base, vaults, filepath, optparse-applicative,
-                       process, directory
+                       process, directory, mtl
   hs-source-dirs:      src-exe
   other-modules:       SubstrateIO, CLI
   default-language:    Haskell2010

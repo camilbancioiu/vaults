@@ -1,7 +1,9 @@
 module Main where
 
+import Control.Monad.Except
 import System.Process
 import Options.Applicative
+
 import CLI
 import SubstrateIO
 
@@ -14,13 +16,13 @@ main = do
     vi <- loadVaultInfo
     let fname = (localname vi) ++ ".vault"
     let forced = False
-    result <- openVault (ParamsOpenVault fname forced)
+    result <- runExceptT $ openVault (ParamsOpenVault fname forced)
     putStrLn (show result)
     case result of
          Left errMsg -> return ()
          Right vri   -> do
              callProcess "nvim" ["."]
-             result <- closeVault
+             result <- runExceptT $ closeVault
              case result of
                 Left errMsg -> putStrLn errMsg
                 Right ()    -> return ()

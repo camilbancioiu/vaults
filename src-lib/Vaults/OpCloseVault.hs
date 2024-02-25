@@ -8,8 +8,8 @@ import qualified Vaults.Substrate as Substrate
 import qualified Vaults.Udisksctl as U
 
 -- TODO take the VRI as parameter; don't read from ENV
-closeVault :: Substrate.Substrate m => m (Either String ())
-closeVault = runExceptT $ do
+closeVault :: Substrate.Substrate m => ExceptT String m ()
+closeVault = do
     vri <- Base.ensureIsVaultActive
 
     -- TODO if this is not a real vault with a git repo, do not extract the

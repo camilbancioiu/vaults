@@ -1,6 +1,7 @@
 module TestOpCloseVault where
 
 import Control.Monad.State
+import Control.Monad.Except
 
 import Test.HUnit
 import Assertions
@@ -19,7 +20,7 @@ test_prerequisites = TestList [
     TestLabel "closing fails when no active vault" $
     TestCase $ do
         let mock = emptyMock
-        let result = runState closeVault mock
+        let result = runState (runExceptT $ closeVault) mock
         let mockAfterExec = snd result
         assertOpError "cannot read vault runtime info" result
         assertNoExecCalls mockAfterExec
@@ -45,7 +46,7 @@ test_closeVault = TestList [
     TestCase $ do
         let mock = addMockExecResults results mockWithActiveVault
                    where results = [gitLogOk, unmountOk, lockOk, loopDeleteOk]
-        let result = runState closeVault mock
+        let result = runState (runExceptT $ closeVault) mock
         let mockAfterExec = snd result
         assertNoVaultEnvVar mockAfterExec
         assertEqual "unmounted, locked, deleted loop"
