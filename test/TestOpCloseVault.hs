@@ -17,14 +17,6 @@ allTests = TestList [
 
 test_prerequisites :: Test
 test_prerequisites = TestList [
-    TestLabel "closing fails when no active vault" $
-    TestCase $ do
-        let mock = emptyMock
-        let result = runState (runExceptT $ closeVault) mock
-        let mockAfterExec = snd result
-        assertOpError "cannot read vault runtime info" result
-        assertNoExecCalls mockAfterExec
-
     -- TODO TestLabel "closing active vault works regardless of current dir" $
 
     ]
@@ -46,7 +38,7 @@ test_closeVault = TestList [
     TestCase $ do
         let mock = addMockExecResults results mockWithActiveVault
                    where results = [gitLogOk, unmountOk, lockOk, loopDeleteOk]
-        let result = runState (runExceptT $ closeVault) mock
+        let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
         let mockAfterExec = snd result
         assertNoVaultEnvVar mockAfterExec
         assertEqual "unmounted, locked, deleted loop"

@@ -8,6 +8,7 @@ import CLI
 import SubstrateIO
 
 import Vaults.Base
+import qualified Vaults.Substrate as Substrate
 import Vaults.OpOpenVault
 import Vaults.OpCloseVault
 
@@ -16,13 +17,16 @@ main = do
     vi <- loadVaultInfo
     let fname = (localname vi) ++ ".vault"
     let forced = False
-    result <- runExceptT $ openVault (ParamsOpenVault fname forced)
-    putStrLn (show result)
+    let params = ParamsOpenVault fname forced
+
+    result <- runExceptT $ doVaultOp params
     case result of
-         Left errMsg -> return ()
-         Right vri   -> do
-             callProcess "nvim" ["."]
-             result <- runExceptT $ closeVault
-             case result of
-                Left errMsg -> putStrLn errMsg
-                Right ()    -> return ()
+         Left errMsg -> putStrLn errMsg
+         Right ()    -> return ()
+
+doVaultOp :: Substrate.Substrate m => ParamsOpenVault -> ExceptT String m ()
+doVaultOp params = do
+    vri <- openVault params
+    lift $ Substrate.exec "nvim" ["."] ""
+    closeVault vri
+    throwError "wtf"

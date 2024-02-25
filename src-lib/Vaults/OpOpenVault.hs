@@ -18,7 +18,6 @@ data ParamsOpenVault = ParamsOpenVault {
 -- e.g. for empty name, empty localname etc
 -- TODO handle isForcedOpening
 -- TODO create separate flow for non-repo vaults
--- TODO return the VRI for closeVault
 openVault :: Substrate.Substrate m => ParamsOpenVault -> ExceptT String m Base.VaultRuntimeInfo
 openVault params = do
     Base.ensureIsVaultDir
