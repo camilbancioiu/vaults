@@ -25,9 +25,8 @@ closeVault vri = do
 extractCommitLog :: Substrate.Substrate m => ExceptT String m String
 extractCommitLog = do
     result <- lift $ Substrate.exec "git" ["log", "--format=%H"] ""
-    when
-        (Substrate.exitCode result /= ExitSuccess)
-        (throwError $ "git log failed: " ++ (Substrate.errorOutput result))
+    when (Substrate.exitCode result /= ExitSuccess)
+         (throwError $ "git log failed: " ++ (Substrate.errorOutput result))
     let commitLog = Substrate.output result
     return commitLog
 

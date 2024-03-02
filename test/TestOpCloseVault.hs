@@ -34,6 +34,27 @@ test_closeVault = TestList [
 
     -- TODO closing fails
 
+    TestLabel "exporting commit log fails; closing vault succeeds" $
+    TestCase $ do
+        let mock = addMockExecResults results mockWithActiveVault
+                   where results = [gitLogFail, unmountOk, lockOk, loopDeleteOk]
+        let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
+        let mockAfterExec = snd result
+        assertNoVaultEnvVar mockAfterExec
+        assertEqual "unmounted, locked, deleted loop"
+            [ ("git", ["log", "--format=%H"])
+            , ("udisksctl", ["unmount", "-b", "/dev/dm-2"])
+            , ("udisksctl", ["lock", "-b", "/dev/dm-2"])
+            , ("udisksctl", ["loop-delete", "-b", "/dev/loop9"])
+            ]
+            (execRecorded mockAfterExec)
+        assertEqual "dir changed to srcDir"
+            "/home/user/vaults/mockVault"
+            (currentDir mockAfterExec)
+        assertEqual "git log not saved"
+            ("", "", "")
+            (writtenFile mockAfterExec),
+
     TestLabel "closing vault succeeds" $
     TestCase $ do
         let mock = addMockExecResults results mockWithActiveVault

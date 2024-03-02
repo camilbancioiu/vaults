@@ -96,6 +96,7 @@ unmountOk     = Substrate.ExecResult ExitSuccess "" ""
 mountFail     = Substrate.ExecResult (ExitFailure 16) "" "didnt work"
 lockOk        = Substrate.ExecResult ExitSuccess lockOutput ""
 gitLogOk      = Substrate.ExecResult ExitSuccess gitLogOutput ""
+gitLogFail     = Substrate.ExecResult (ExitFailure 16) "" "didnt work"
 loopSetupOutput  = "Mapped file " ++ dummyPartition ++ " as " ++ dummyLoopDev ++ "."
 unlockOutput     = "Unlocked " ++ dummyLoopDev ++ " as " ++ dummyMapperDev ++ "."
 mountOutput      = "Mounted " ++ dummyMapperDev ++ " at " ++ dummyMountpoint
