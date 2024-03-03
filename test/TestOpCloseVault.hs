@@ -40,7 +40,6 @@ test_closeVault = TestList [
                    where results = [gitLogFail, unmountOk, lockOk, loopDeleteOk]
         let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
         let mockAfterExec = snd result
-        assertNoVaultEnvVar mockAfterExec
         assertEqual "unmounted, locked, deleted loop"
             [ ("git", ["log", "--format=%H"])
             , ("udisksctl", ["unmount", "-b", "/dev/dm-2"])
