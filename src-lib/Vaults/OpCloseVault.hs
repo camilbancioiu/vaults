@@ -12,15 +12,26 @@ closeVault :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT String m
 closeVault vri = do
     -- TODO if this is not a real vault with a git repo, do not extract the
     -- commit log
-    commitLog <- extractCommitLog
+    -- TODO refactor
+    commitLog <- catchError
+                    extractCommitLog
+                    (\e -> do lift $ Substrate.changeDir (Base.srcDir vri)
+                              closeVaultDevice vri
+                              throwError e)
 
     lift $ Substrate.changeDir (Base.srcDir vri)
-    U.unmountDevice (Base.mapperDev vri)
-    U.lockDevice (Base.mapperDev vri)
-    U.deleteLoopDevice (Base.loopDev vri)
+    closeVaultDevice vri
     lift $ Substrate.unsetEnv Base.activeVaultEnvName
 
     saveCommitLog vri commitLog
+
+
+closeVaultDevice :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT String m ()
+closeVaultDevice vri = do
+    U.unmountDevice (Base.mapperDev vri)
+    U.lockDevice (Base.mapperDev vri)
+    U.deleteLoopDevice (Base.loopDev vri)
+
 
 extractCommitLog :: Substrate.Substrate m => ExceptT String m String
 extractCommitLog = do
