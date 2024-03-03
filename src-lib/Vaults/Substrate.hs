@@ -18,6 +18,7 @@ class Monad m => Substrate m where
     lookupEnv     :: String -> m (Maybe String)
     setEnv        :: String -> String -> m ()
     unsetEnv      :: String -> m ()
-    getDir        :: m String
-    changeDir     :: String -> m ()
-    exec          :: String -> [String] -> String -> m ExecResult
+    getDir        :: m FilePath
+    changeDir     :: FilePath -> m ()
+    exec          :: FilePath -> [String] -> String -> m ExecResult
+    call          :: FilePath -> [String] -> m ()

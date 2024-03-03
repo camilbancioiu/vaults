@@ -2,6 +2,7 @@ module Vaults.OpCloseVault where
 
 import Control.Monad.Except
 import System.Exit
+import Debug.Trace
 
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
@@ -15,7 +16,8 @@ closeVault vri = do
     -- commit log
     commitLog <- catchError
                     extractCommitLog
-                    (\e -> do closeVaultDevice vri
+                    (\e -> do (trace "git log error" (return ()))
+                              closeVaultDevice vri
                               throwError e)
 
     closeVaultDevice vri
@@ -27,9 +29,10 @@ closeVaultDevice :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT St
 closeVaultDevice vri = do
     lift $ Substrate.changeDir (Base.srcDir vri)
     U.unmountDevice (Base.mapperDev vri)
-    U.lockDevice (Base.mapperDev vri)
+    U.lockDevice (Base.loopDev vri)
     U.deleteLoopDevice (Base.loopDev vri)
     lift $ Substrate.unsetEnv Base.activeVaultEnvName
+    trace "vault closed" (return ())
 
 
 extractCommitLog :: Substrate.Substrate m => ExceptT String m String

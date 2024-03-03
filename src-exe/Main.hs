@@ -4,6 +4,7 @@ import Control.Monad.Except
 import System.Process
 import Options.Applicative
 
+import Debug.Trace
 import CLI
 import SubstrateIO
 
@@ -27,6 +28,7 @@ main = do
 doVaultOp :: Substrate.Substrate m => ParamsOpenVault -> ExceptT String m ()
 doVaultOp params = do
     vri <- openVault params
-    lift $ Substrate.exec "nvim" ["."] ""
+    trace "running nvim" (return ())
+    lift $ Substrate.call "nvim" ["."]
+    trace "closed nvim" (return ())
     closeVault vri
-    throwError "wtf"

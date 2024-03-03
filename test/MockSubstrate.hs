@@ -113,6 +113,7 @@ instance Substrate.Substrate (State Mock) where
     getDir    = mock_getDir
     changeDir = mock_changeDir
     exec      = mock_exec
+    call      = mock_call
 
 mock_readFile :: FilePath -> State Mock String
 mock_readFile ".vault/name" = return (Base.name mockVaultInfo)
@@ -153,6 +154,11 @@ mock_exec executable params _ = do
     er <- gets $ head . execResults
     modify dropHeadMockExecResult
     return er
+
+mock_call :: FilePath -> [String] -> State Mock ()
+mock_call executable params = do
+    modify $ recordExec (executable, params)
+    modify incExecs
 
 mockVaultInfo = Base.VaultInfo {
     Base.name = "mockVault",

@@ -17,6 +17,7 @@ instance Substrate.Substrate IO where
     getDir    = System.Directory.getCurrentDirectory
     changeDir = System.Directory.setCurrentDirectory
     exec      = execIOProcess
+    call      = System.Process.callProcess
 
 execIOProcess :: String -> [String] -> String -> IO Substrate.ExecResult
 execIOProcess cmd args sin = do

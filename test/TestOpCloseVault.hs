@@ -43,7 +43,7 @@ test_closeVault = TestList [
         assertEqual "unmounted, locked, deleted loop"
             [ ("git", ["log", "--format=%H"])
             , ("udisksctl", ["unmount", "-b", "/dev/dm-2"])
-            , ("udisksctl", ["lock", "-b", "/dev/dm-2"])
+            , ("udisksctl", ["lock", "-b", "/dev/loop9"])
             , ("udisksctl", ["loop-delete", "-b", "/dev/loop9"])
             ]
             (execRecorded mockAfterExec)
@@ -64,7 +64,7 @@ test_closeVault = TestList [
         assertEqual "unmounted, locked, deleted loop"
             [ ("git", ["log", "--format=%H"])
             , ("udisksctl", ["unmount", "-b", "/dev/dm-2"])
-            , ("udisksctl", ["lock", "-b", "/dev/dm-2"])
+            , ("udisksctl", ["lock", "-b", "/dev/loop9"])
             , ("udisksctl", ["loop-delete", "-b", "/dev/loop9"])
             ]
             (execRecorded mockAfterExec)

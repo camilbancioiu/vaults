@@ -5,6 +5,8 @@ import System.FilePath.Posix
 import Control.Monad.Except
 import Data.Maybe
 
+import Debug.Trace
+
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 import qualified Vaults.Udisksctl as U
@@ -30,10 +32,14 @@ openVault params = do
     let partLoc = Base.getPartitionLocation vi fname
     when (partLoc == Base.UnknownPartition) (throwError $ "unknown vault partition " ++ fname)
 
+    trace "begin mounting device" (return ())
     srcDir <- lift $ Substrate.getDir
     loopDev <- U.createLoopDevice fname
+    trace "loop dev created" (return ())
     mapperDev <- guardedUnlockDevice loopDev
+    trace "dev unlocked" (return ())
     mountpoint <- guardedMountDevice loopDev mapperDev
+    trace "dev mounted" (return ())
     lift $ Substrate.changeDir mountpoint
 
     repoDir <- resolveRepoDir mountpoint
