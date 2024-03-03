@@ -10,27 +10,26 @@ import qualified Vaults.Udisksctl as U
 -- TODO take the VRI as parameter; don't read from ENV
 closeVault :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT String m ()
 closeVault vri = do
+    -- TODO refactor
     -- TODO if this is not a real vault with a git repo, do not extract the
     -- commit log
-    -- TODO refactor
     commitLog <- catchError
                     extractCommitLog
-                    (\e -> do lift $ Substrate.changeDir (Base.srcDir vri)
-                              closeVaultDevice vri
+                    (\e -> do closeVaultDevice vri
                               throwError e)
 
-    lift $ Substrate.changeDir (Base.srcDir vri)
     closeVaultDevice vri
-    lift $ Substrate.unsetEnv Base.activeVaultEnvName
 
     saveCommitLog vri commitLog
 
 
 closeVaultDevice :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT String m ()
 closeVaultDevice vri = do
+    lift $ Substrate.changeDir (Base.srcDir vri)
     U.unmountDevice (Base.mapperDev vri)
     U.lockDevice (Base.mapperDev vri)
     U.deleteLoopDevice (Base.loopDev vri)
+    lift $ Substrate.unsetEnv Base.activeVaultEnvName
 
 
 extractCommitLog :: Substrate.Substrate m => ExceptT String m String
