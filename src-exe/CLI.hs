@@ -3,18 +3,28 @@ module CLI where
 import System.FilePath.Posix
 import Options.Applicative
 
-data Operation = OpenVault FilePath Bool -- NOT IMPLEMENTED YET
-               | CloseVault              -- NOT IMPLEMENTED YET
+data Operation = EditVault
+               | UploadVault
+               | DownloadVault
+               | SyncVault String
                deriving Show
 
 operationsParser :: ParserInfo Operation
 operationsParser = info operations (progDesc "operation")
 
-operations = subparser $ opOpenVault <> opCloseVault
+operations = subparser $  opEditVault
+                       <> opUploadVault
+                       <> opDownloadVault
+                       <> opSyncVault
 
-opOpenVault = command "open" (info opOpenVaultParser (progDesc "open vault"))
-opOpenVaultParser = OpenVault <$> argument str (metavar "FILE")
-                              <*> switch (long "force" <> short 'f' <> help "forced opening")
+opEditVault = command "edit" (info opEditVaultParser (progDesc "edit vault"))
+opEditVaultParser = pure EditVault
 
-opCloseVault = command "close" (info opCloseVaultParser (progDesc "close vault"))
-opCloseVaultParser = pure CloseVault
+opUploadVault = command "upload" (info opUploadVaultParser (progDesc "upload vault"))
+opUploadVaultParser = pure UploadVault
+
+opDownloadVault = command "download" (info opDownloadVaultParser (progDesc "download vault"))
+opDownloadVaultParser = pure DownloadVault
+
+opSyncVault = command "sync" (info opSyncVaultParser (progDesc "sync vault"))
+opSyncVaultParser = SyncVault <$> argument str (metavar "PARTITION")
