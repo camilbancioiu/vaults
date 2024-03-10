@@ -43,17 +43,21 @@ doEditVault vi = do
     let fname = (localname vi) ++ ".vault"
     let forced = False
     let params = ParamsOpenVault fname forced
-
     vri <- openVault params
     lift $ Substrate.call "nvim" ["."]
     closeVault vri
 
 doUploadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doUploadVault vi = do
-    let local = (localname vi) ++ ".vault"
-    let remotePath = concat $ intersperse "/" [(remoteStore vi), (name vi), local]
+    let mkpath = concat . (intersperse "/")
 
-    lift $ Substrate.call "rsync" ["-ivz", local, remotePath]
+    let partition = (localname vi) ++ ".vault"
+    let remotePathPartition = mkpath [(remoteStore vi), (name vi), partition]
+    lift $ Substrate.call "rsync" ["-ivz", partition, remotePathPartition]
+
+    let logfile = (localname vi) ++ ".log"
+    let remotePathLogfile = mkpath [(remoteStore vi), (name vi), logfile]
+    lift $ Substrate.call "rsync" ["-ivz", logfile, remotePathLogfile]
 
 doError :: Substrate.Substrate m => String -> VaultInfo -> ExceptT String m ()
 doError msg _ = throwError msg
