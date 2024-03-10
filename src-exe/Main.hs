@@ -30,7 +30,7 @@ main = do
     let doOperation = case operation of
                         EditVault -> doEditVault
                         UploadVault -> doUploadVault
-                        DownloadVault -> doError "not implemented"
+                        DownloadVault -> doDownloadVault
                         SyncVault _ -> doError "not implemented"
 
     result <- runExceptT $ doOperation vi
@@ -49,15 +49,37 @@ doEditVault vi = do
 
 doUploadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doUploadVault vi = do
-    let mkpath = concat . (intersperse "/")
+    uploadVaultPartition vi (localname vi)
 
-    let partition = (localname vi) ++ ".vault"
-    let remotePathPartition = mkpath [(remoteStore vi), (name vi), partition]
-    lift $ Substrate.call "rsync" ["-ivz", partition, remotePathPartition]
-
-    let logfile = (localname vi) ++ ".log"
-    let remotePathLogfile = mkpath [(remoteStore vi), (name vi), logfile]
-    lift $ Substrate.call "rsync" ["-ivz", logfile, remotePathLogfile]
+doDownloadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
+doDownloadVault vi = mapM_ (downloadVaultPartition vi) (remotes vi)
 
 doError :: Substrate.Substrate m => String -> VaultInfo -> ExceptT String m ()
 doError msg _ = throwError msg
+
+uploadVaultPartition :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
+uploadVaultPartition vi partition = do
+    let partitionFile = partition ++ ".vault"
+    let logfile = partition ++ ".log"
+    uploadToRemoteStore vi partitionFile
+    uploadToRemoteStore vi logfile
+
+downloadVaultPartition :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
+downloadVaultPartition vi partition = do
+    let partitionFile = partition ++ ".vault"
+    let logfile = partition ++ ".log"
+    downloadFromRemoteStore vi partitionFile
+    downloadFromRemoteStore vi logfile
+
+uploadToRemoteStore :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
+uploadToRemoteStore vi filename = do
+    let remoteFilename = mkpath [(remoteStore vi), (name vi), filename]
+    lift $ Substrate.call "rsync" ["-ivz", filename, remoteFilename]
+
+downloadFromRemoteStore :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
+downloadFromRemoteStore vi filename = do
+    let remoteFilename = mkpath [(remoteStore vi), (name vi), filename]
+    lift $ Substrate.call "rsync" ["-ivz", remoteFilename, filename]
+
+mkpath :: [String] -> String
+mkpath = concat . (intersperse "/")
