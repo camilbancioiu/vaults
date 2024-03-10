@@ -20,10 +20,10 @@ operations = subparser $  opEditVault
 opEditVault = command "edit" (info opEditVaultParser (progDesc "edit vault"))
 opEditVaultParser = pure EditVault
 
-opUploadVault = command "upload" (info opUploadVaultParser (progDesc "upload vault"))
+opUploadVault = command "up" (info opUploadVaultParser (progDesc "upload vault"))
 opUploadVaultParser = pure UploadVault
 
-opDownloadVault = command "download" (info opDownloadVaultParser (progDesc "download vault"))
+opDownloadVault = command "down" (info opDownloadVaultParser (progDesc "download vault"))
 opDownloadVaultParser = pure DownloadVault
 
 opSyncVault = command "sync" (info opSyncVaultParser (progDesc "sync vault"))
