@@ -31,7 +31,6 @@ openVault partition = do
     lift $ Substrate.changeDir mountpoint
 
     repoDir <- resolveRepoDir mountpoint
-    lift $ Substrate.changeDir repoDir
 
     let vri = Base.VaultRuntimeInfo {
               Base.srcDir = srcDir
