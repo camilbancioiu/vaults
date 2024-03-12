@@ -1,6 +1,7 @@
 module Main where
 
 import Control.Monad.Except
+import Control.Exception
 import System.Process
 import Options.Applicative
 import Data.List
@@ -54,24 +55,18 @@ doUploadVault vi = do
 doDownloadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doDownloadVault vi = mapM_ (downloadVaultPartition vi) (remotes vi)
 
+
 doSyncVault :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
 doSyncVault vi remote = do
-    remoteVRI <- openVault $ remote ++ ".vault"
-    let closeRemote = \e -> closeVault remoteVRI >> throwError e
-
-    localVRI <- (openVault $ (localname vi) ++ ".vault")
-                `catchError` closeRemote
-
-    catchError
-        (do lift $ Substrate.changeDir (repositoryDir localVRI)
-            lift $ Substrate.call "git" ["fetch", remote])
-        (\e -> do closeVault localVRI
-                  closeVault remoteVRI
-                  throwError e)
-
-    closeVault localVRI `catchError` closeRemote
-    closeVault remoteVRI
-
+    bracket
+        (runExceptT $ openVault $ remote ++ ".vault")
+        (runExceptT $ closeVault)
+        (\remoteVRI -> bracket
+                            (runExceptT $ openVault $ (localname vi) ++ ".vault")
+                            (runExceptT $ closeVault)
+                            (\localVRI -> runExceptT $ do
+                                            lift $ Substrate.changeDir (repositoryDir localVRI)
+                                            lift $ Substrate.call "git" ["fetch", remote]))
 
 doError :: Substrate.Substrate m => String -> VaultInfo -> ExceptT String m ()
 doError msg _ = throwError msg
