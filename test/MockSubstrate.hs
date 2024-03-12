@@ -8,8 +8,6 @@ import Control.Monad.State
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 
-import Debug.Trace
-
 data Mock = Mock {
     currentDir :: FilePath,
     prevDir :: FilePath,
@@ -102,6 +100,8 @@ unlockOutput     = "Unlocked " ++ dummyLoopDev ++ " as " ++ dummyMapperDev ++ ".
 mountOutput      = "Mounted " ++ dummyMapperDev ++ " at " ++ dummyMountpoint
 lockOutput       = "Locked " ++ dummyMapperDev ++ "."
 gitLogOutput     = "38a3\nfb22\n8c2a\n02ad\n"
+openVaultOk      = [loopSetupOk, unlockOk, mountOk]
+closeVaultOk     = [gitLogOk, unmountOk, lockOk, loopDeleteOk]
 
 instance Substrate.Substrate (State Mock) where
     readFile  = mock_readFile

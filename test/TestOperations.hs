@@ -13,16 +13,36 @@ import MockSubstrate
 
 allTests :: Test
 allTests = TestList [
-    test_editSuccessful
+      test_editSuccessful
+    , test_syncSuccessful
     ]
 
 test_editSuccessful :: Test
 test_editSuccessful =
-    TestLabel "vault opened, edited, closed" $
+    TestLabel "edit successful" $
     TestCase $ do
+        let operation = Operations.doEditVault mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
-                   where results = [loopSetupOk, unlockOk, mountOk,
-                                    unmountOk, lockOk, loopDeleteOk]
-        let result = runState (runExceptT $ Operations.doEditVault mockVaultInfo) mock
-        assertEqual "edit successful" (Right()) (fst result)
-        assertFailure "test fail"
+                   where results = openVaultOk ++ closeVaultOk
+        let result = runState (runExceptT $ operation) mock
+        let mockAfterExec = snd result
+        assertEqual "vault opened, edited, closed" (Right()) (fst result)
+        assertEqual "currentDir returns to srcDir"
+            "/home/user"
+            (currentDir mockAfterExec)
+
+test_syncSuccessful :: Test
+test_syncSuccessful =
+    TestLabel "sync successful" $
+    TestCase $ do
+        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let mock = addMockExecResults results mockWithVaultAndRepoDir
+                   where results =  openVaultOk
+                                 ++ openVaultOk
+                                 ++ closeVaultOk
+                                 ++ closeVaultOk
+        let result = runState (runExceptT $ operation) mock
+        let mockAfterExec = snd result
+        assertEqual "vaults opened, local fetched remoteA, vaults closed" (Right()) (fst result)
+        return ()
+        -- assertFailure "not implemented"
