@@ -44,13 +44,13 @@ main = do
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doEditVault vi = do
     vri <- openVault $ (localname vi) ++ ".vault"
-    lift $ Substrate.changeDir (repositoryDir vri)
-    lift $ Substrate.call "nvim" ["."]
+    (do lift $ Substrate.changeDir (repositoryDir vri)
+        lift $ Substrate.call "nvim" ["."])
+        `catchError` (\e -> closeVault vri >> throwError e)
     closeVault vri
 
 doUploadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
-doUploadVault vi = do
-    uploadVaultPartition vi (localname vi)
+doUploadVault vi = uploadVaultPartition vi (localname vi)
 
 doDownloadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doDownloadVault vi = mapM_ (downloadVaultPartition vi) (remotes vi)
