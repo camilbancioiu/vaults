@@ -1,4 +1,4 @@
-module TestOpOpenVault where
+module TestOpen where
 
 import Control.Monad.State
 import Control.Monad.Except

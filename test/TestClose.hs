@@ -1,4 +1,4 @@
-module TestOpCloseVault where
+module TestClose where
 
 import Control.Monad.State
 import Control.Monad.Except

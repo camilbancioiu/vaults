@@ -5,8 +5,9 @@ import Test.HUnit
 
 import qualified TestBase (allTests)
 import qualified TestUdisksctl (allTests)
-import qualified TestOpOpenVault (allTests)
-import qualified TestOpCloseVault (allTests)
+import qualified TestOpen (allTests)
+import qualified TestClose (allTests)
+import qualified TestOperations (allTests)
 
 main :: IO ()
 main = do
@@ -19,6 +20,7 @@ allTests :: Test
 allTests = TestList [
       TestBase.allTests
     , TestUdisksctl.allTests
-    , TestOpOpenVault.allTests
-    , TestOpCloseVault.allTests
+    , TestOpen.allTests
+    , TestClose.allTests
+    , TestOperations.allTests
     ]
