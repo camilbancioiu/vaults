@@ -9,29 +9,23 @@ import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 import qualified Vaults.Udisksctl as U
 
-data ParamsOpenVault = ParamsOpenVault {
-    partitionFilename :: FilePath,
-    isForcedOpening :: Bool
-} deriving (Eq, Show)
-
 -- TODO validate loaded VaultInfo
 -- e.g. for empty name, empty localname etc
 -- TODO handle isForcedOpening
 -- TODO create separate flow for non-repo vaults
-openVault :: Substrate.Substrate m => ParamsOpenVault -> ExceptT String m Base.VaultRuntimeInfo
-openVault params = do
+openVault :: Substrate.Substrate m => FilePath -> ExceptT String m Base.VaultRuntimeInfo
+openVault partition = do
     Base.ensureIsVaultDir
     Base.ensureNoVaultActive
 
-    let fname = partitionFilename params
-    when (length fname == 0) (throwError "partition filename is required")
+    when (length partition == 0) (throwError "partition filename is required")
 
     vi <- lift $ Base.loadVaultInfo
-    let partLoc = Base.getPartitionLocation vi fname
-    when (partLoc == Base.UnknownPartition) (throwError $ "unknown vault partition " ++ fname)
+    let partLoc = Base.getPartitionLocation vi partition
+    when (partLoc == Base.UnknownPartition) (throwError $ "unknown vault partition " ++ partition)
 
     srcDir <- lift $ Substrate.getDir
-    loopDev <- U.createLoopDevice fname
+    loopDev <- U.createLoopDevice partition
     mapperDev <- guardedUnlockDevice loopDev
     mountpoint <- guardedMountDevice loopDev mapperDev
     lift $ Substrate.changeDir mountpoint
@@ -45,8 +39,8 @@ openVault params = do
             , Base.mountpoint = mountpoint
             , Base.repositoryDir = repoDir
             , Base.mapperDev = mapperDev
-            , Base.partition = fname
-            , Base.partitionName = takeBaseName fname
+            , Base.partition = partition
+            , Base.partitionName = takeBaseName partition
             , Base.partitionLocation = partLoc
         }
     lift $ Substrate.setEnv Base.activeVaultEnvName (show vri)

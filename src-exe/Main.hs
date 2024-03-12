@@ -42,10 +42,7 @@ main = do
 
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doEditVault vi = do
-    let fname = (localname vi) ++ ".vault"
-    let forced = False
-    let params = ParamsOpenVault fname forced
-    vri <- openVault params
+    vri <- openVault $ (localname vi) ++ ".vault"
     lift $ Substrate.call "nvim" ["."]
     closeVault vri
 
