@@ -33,7 +33,7 @@ main = do
                         UploadVault -> doUploadVault
                         DownloadVault -> doDownloadVault
                         SyncVault _ -> doError "not implemented"
-                        DiffLog -> doError "not implemented"
+                        DiffLog _ -> doError "not implemented"
 
     result <- runExceptT $ doOperation vi
     case result of

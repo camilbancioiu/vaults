@@ -35,6 +35,6 @@ opSyncVault = command "sync" (info opSyncVaultParser (progDesc "sync vault"))
 
 opSyncVaultParser = SyncVault <$> argument str (metavar "PARTITION")
 
-opDiffVault = command "diff" (info opDiffVaultParser (progDesc "diff vault log"))
+opDiffLog = command "diff" (info opDiffLogParser (progDesc "diff vault log"))
 
-opDiffVaultParser = DiffVault <$> argument str (metavar "PARTITION")
+opDiffLogParser = DiffLog <$> argument str (metavar "PARTITION")
