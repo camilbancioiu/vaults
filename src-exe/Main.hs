@@ -61,23 +61,23 @@ uploadVaultPartition :: Substrate.Substrate m => VaultInfo -> FilePath -> Except
 uploadVaultPartition vi partition = do
     let partitionFile = partition ++ ".vault"
     let logfile = partition ++ ".log"
-    uploadToRemoteStore vi partitionFile
-    uploadToRemoteStore vi logfile
+    upload vi partitionFile
+    upload vi logfile
 
 downloadVaultPartition :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
 downloadVaultPartition vi partition = do
     let partitionFile = partition ++ ".vault"
     let logfile = partition ++ ".log"
-    downloadFromRemoteStore vi partitionFile
-    downloadFromRemoteStore vi logfile
+    download vi partitionFile
+    download vi logfile
 
-uploadToRemoteStore :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
-uploadToRemoteStore vi filename = do
+upload :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
+upload vi filename = do
     let remoteFilename = mkpath [(remoteStore vi), (name vi), filename]
     lift $ Substrate.call "rsync" ["-ivz", filename, remoteFilename]
 
-downloadFromRemoteStore :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
-downloadFromRemoteStore vi filename = do
+download :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
+download vi filename = do
     let remoteFilename = mkpath [(remoteStore vi), (name vi), filename]
     lift $ Substrate.call "rsync" ["-ivz", remoteFilename, filename]
 
