@@ -3,6 +3,8 @@ module Vaults.Operations where
 import Control.Monad.Except
 import Data.List
 
+import Debug.Trace
+
 import Vaults.Base
 import qualified Vaults.Substrate as Substrate
 
@@ -13,10 +15,12 @@ import Vaults.Close
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doEditVault vi = do
     vri <- openVault $ (localname vi) ++ ".vault"
-    (do lift $ Substrate.changeDir (repositoryDir vri)
+    (do lift $ Substrate.changeDir (trace "\n\ncd\n\n" (repositoryDir vri))
         lift $ Substrate.call "nvim" ["."])
         `catchError` (\e -> closeVault vri >> throwError e)
+    trace "\n\nmark 1\n\n" (return ())
     closeVault vri
+    trace "\n\nmark 2\n\n" (return ())
 
 -- TODO write tests
 doUploadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
