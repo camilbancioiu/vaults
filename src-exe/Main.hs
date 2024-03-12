@@ -13,7 +13,7 @@ import SubstrateIO
 import Vaults.Base
 import qualified Vaults.Substrate as Substrate
 import Vaults.Open
-import Vaults.OpCloseVault
+import Vaults.Close
 
 -- TODO operations to implement
 -- InitVault, parameter "name" and "local", sets up the .vault folder and files

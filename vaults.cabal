@@ -17,7 +17,7 @@ extra-source-files:  CHANGELOG.md
 
 library
   exposed-modules:     Vaults.Base, Vaults.Substrate, Vaults.Udisksctl,
-                       Vaults.Open, Vaults.OpCloseVault
+                       Vaults.Open, Vaults.Close
   -- other-modules:
   -- other-extensions:
   hs-source-dirs:      src-lib

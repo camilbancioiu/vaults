@@ -1,4 +1,4 @@
-module Vaults.OpCloseVault where
+module Vaults.Close where
 
 import Control.Monad.Except
 import System.Exit

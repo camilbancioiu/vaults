@@ -7,7 +7,7 @@ import Test.HUnit
 import Assertions
 import MockSubstrate
 
-import Vaults.OpCloseVault
+import Vaults.Close
 
 allTests :: Test
 allTests = TestList [
