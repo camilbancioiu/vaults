@@ -21,6 +21,7 @@ import Vaults.OpCloseVault
 -- DownloadVault, no params, downloads all the remote partitions from remoteStore
 -- SyncVault, parameter "remote", mounts local parition and named remote and
 --  runs `git fetch` in the local
+-- DiffLog, parameter "remote", prints the log diff between local.log and remote.log
 
 main :: IO ()
 main = do
@@ -32,6 +33,7 @@ main = do
                         UploadVault -> doUploadVault
                         DownloadVault -> doDownloadVault
                         SyncVault _ -> doError "not implemented"
+                        DiffLog -> doError "not implemented"
 
     result <- runExceptT $ doOperation vi
     case result of
@@ -58,18 +60,12 @@ doError :: Substrate.Substrate m => String -> VaultInfo -> ExceptT String m ()
 doError msg _ = throwError msg
 
 uploadVaultPartition :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
-uploadVaultPartition vi partition = do
-    let partitionFile = partition ++ ".vault"
-    let logfile = partition ++ ".log"
-    upload vi partitionFile
-    upload vi logfile
+uploadVaultPartition vi partition =
+    mapM_ (upload vi) [partition ++ ".vault", partition ++ ".log"]
 
 downloadVaultPartition :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
 downloadVaultPartition vi partition = do
-    let partitionFile = partition ++ ".vault"
-    let logfile = partition ++ ".log"
-    download vi partitionFile
-    download vi logfile
+    mapM_ (download vi) [partition ++ ".vault", partition ++ ".log"]
 
 upload :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
 upload vi filename = do
