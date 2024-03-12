@@ -55,18 +55,24 @@ doUploadVault vi = do
 doDownloadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doDownloadVault vi = mapM_ (downloadVaultPartition vi) (remotes vi)
 
-
 doSyncVault :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
 doSyncVault vi remote = do
-    bracket
-        (runExceptT $ openVault $ remote ++ ".vault")
-        (runExceptT $ closeVault)
-        (\remoteVRI -> bracket
-                            (runExceptT $ openVault $ (localname vi) ++ ".vault")
-                            (runExceptT $ closeVault)
-                            (\localVRI -> runExceptT $ do
-                                            lift $ Substrate.changeDir (repositoryDir localVRI)
-                                            lift $ Substrate.call "git" ["fetch", remote]))
+    remoteVRI <- openVault $ remote ++ ".vault"
+    (syncLocalPartition vi remoteVRI remote)
+        `catchError` (\e -> closeVault remoteVRI >> throwError e)
+    closeVault remoteVRI
+
+syncLocalPartition :: Substrate.Substrate m => VaultInfo -> VaultRuntimeInfo -> FilePath -> ExceptT String m ()
+syncLocalPartition vi remoteVRI remote = do
+    localVRI <- openVault $ (localname vi) ++ ".vault"
+    (performSync localVRI remote)
+        `catchError` (\e -> closeVault localVRI >> throwError e)
+    closeVault localVRI
+
+performSync :: Substrate.Substrate m => VaultRuntimeInfo -> FilePath -> ExceptT String m ()
+performSync localVRI remote = do
+    lift $ Substrate.changeDir (repositoryDir localVRI)
+    lift $ Substrate.call "git" ["fetch", remote]
 
 doError :: Substrate.Substrate m => String -> VaultInfo -> ExceptT String m ()
 doError msg _ = throwError msg
