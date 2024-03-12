@@ -12,7 +12,7 @@ import SubstrateIO
 
 import Vaults.Base
 import qualified Vaults.Substrate as Substrate
-import Vaults.OpOpenVault
+import Vaults.Open
 import Vaults.OpCloseVault
 
 -- TODO operations to implement

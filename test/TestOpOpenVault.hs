@@ -11,7 +11,7 @@ import Test.HUnit
 import Assertions
 import MockSubstrate
 
-import Vaults.OpOpenVault
+import Vaults.Open
 
 -- TODO test scenarios:
 -- succeed opening with partition name only

@@ -1,4 +1,4 @@
-module Vaults.OpOpenVault where
+module Vaults.Open where
 
 import System.Directory
 import System.FilePath.Posix
