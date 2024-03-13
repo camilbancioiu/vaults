@@ -17,6 +17,7 @@ allTests = TestList [
     , test_syncSuccessful
     ]
 
+-- TODO test where the editor crashes
 test_editSuccessful :: Test
 test_editSuccessful =
     TestLabel "edit successful" $
@@ -27,10 +28,19 @@ test_editSuccessful =
         let result = runState (runExceptT $ operation) mock
         let mockAfterExec = snd result
         assertEqual "vault opened, edited, closed" (Right()) (fst result)
-        assertEqual "currentDir returns to srcDir"
-            "/home/user"
-            (currentDir mockAfterExec)
+        assertEqual "all commands executed"
+            [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
+            , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
+            , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
+            -- no need for cd; working dir is changed via Substrate.changeDir
+            , ("nvim", ["."]
+            , ("udisksctl", ["unmount", "-b", "/dev/dm-4"])
+            , ("udisksctl", ["lock", "-b", "/dev/loop42"])
+            , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
+            ]
+            (execRecorded mockAfterExec)
 
+-- TODO test where git crashes
 test_syncSuccessful :: Test
 test_syncSuccessful =
     TestLabel "sync successful" $
