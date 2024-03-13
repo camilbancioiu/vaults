@@ -43,19 +43,19 @@ test_editSuccessful =
             expectedCommands
             (execRecorded mockAfterExec)
 
--- -- TODO test where git crashes
--- test_syncSuccessful :: Test
--- test_syncSuccessful =
---     TestLabel "sync successful" $
---     TestCase $ do
---         let operation = Operations.doSyncVault mockVaultInfo "remoteA"
---         let mock = addMockExecResults results mockWithVaultAndRepoDir
---                    where results =  openVaultOkRemote
---                                  ++ openVaultOk
---                                  ++ closeVaultOk
---                                  ++ closeVaultOkRemote
---         let result = runState (runExceptT $ operation) mock
---         let mockAfterExec = snd result
---         assertEqual "vaults opened, local fetched remoteA, vaults closed" (Right()) (fst result)
---         return ()
---         -- assertFailure "not implemented"
+-- TODO test where git crashes
+test_syncSuccessful :: Test
+test_syncSuccessful =
+    TestLabel "sync successful" $
+    TestCase $ do
+        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let mock = addMockExecResults results mockWithVaultAndRepoDir
+                   where results =  openVaultOkRemote
+                                 ++ openVaultOk
+                                 ++ closeVaultOk
+                                 ++ closeVaultOkRemote
+        let result = runState (runExceptT $ operation) mock
+        let mockAfterExec = snd result
+        assertEqual "vaults opened, local fetched remoteA, vaults closed" (Right()) (fst result)
+        return ()
+        -- assertFailure "not implemented"
