@@ -7,6 +7,7 @@ import Test.HUnit
 import Assertions
 import MockSubstrate
 
+import Vaults.Base
 import Vaults.Close
 
 allTests :: Test
@@ -64,7 +65,26 @@ test_closeVault = TestList [
             (currentDir mockAfterExec)
         assertEqual "git log saved"
             ("/home/user/vaults/mockVault", "local.log", gitLogOutput)
-            (writtenFile mockAfterExec)
+            (writtenFile mockAfterExec),
+
+    TestLabel "closing remote vault succeeds" $
+    TestCase $ do
+        let mock = addMockExecResults results mockWithVaultAndRepoDir
+                   where results = [unmountOk, lockOk, loopDeleteOk]
+        let mockRemoteVRI = mockVaultRuntimeInfo {
+            partitionLocation = RemotePartition
+            }
+        let result = runState (runExceptT $ closeVault mockRemoteVRI) mock
+        let mockAfterExec = snd result
+        assertEqual "unmounted, locked, deleted loop"
+            [ ("udisksctl", ["unmount", "-b", "/dev/dm-2"])
+            , ("udisksctl", ["lock", "-b", "/dev/loop9"])
+            , ("udisksctl", ["loop-delete", "-b", "/dev/loop9"])
+            ]
+            (execRecorded mockAfterExec)
+        assertEqual "dir changed to srcDir"
+            "/home/user/vaults/mockVault"
+            (currentDir mockAfterExec)
 
     ]
 

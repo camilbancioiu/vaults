@@ -13,12 +13,21 @@ closeVault vri = do
     -- TODO refactor
     -- TODO if this is not a real vault with a git repo, do not extract the
     -- commit log
+    let needCommitLog = (Base.partitionLocation vri) == Base.LocalPartition
+
     commitLog <- catchError
-                    extractCommitLog
-                    (\e -> do closeVaultDevice vri
-                              throwError e)
+                    (do
+                        if needCommitLog
+                        then extractCommitLog
+                        else return ""
+                    )
+                    (\e -> closeVaultDevice vri >> throwError e)
+
     closeVaultDevice vri
-    saveCommitLog vri commitLog
+
+    if needCommitLog
+        then saveCommitLog vri commitLog
+        else return ()
 
 closeVaultDevice :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT String m ()
 closeVaultDevice vri = do
