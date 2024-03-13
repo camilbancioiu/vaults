@@ -17,11 +17,8 @@ closeVault vri = do
                     extractCommitLog
                     (\e -> do closeVaultDevice vri
                               throwError e)
-
     closeVaultDevice vri
-
     saveCommitLog vri commitLog
-
 
 closeVaultDevice :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT String m ()
 closeVaultDevice vri = do
@@ -29,8 +26,6 @@ closeVaultDevice vri = do
     U.unmountDevice (Base.mapperDev vri)
     U.lockDevice (Base.loopDev vri)
     U.deleteLoopDevice (Base.loopDev vri)
-    lift $ Substrate.unsetEnv Base.activeVaultEnvName
-
 
 extractCommitLog :: Substrate.Substrate m => ExceptT String m String
 extractCommitLog = do

@@ -36,14 +36,6 @@ test_prerequisites = TestList [
         assertOpError "non-vault folder" result
         assertNoExecCalls mockAfterExec,
 
-    TestLabel "open when vault already open fails" $
-    TestCase $ do
-        let mock = mockWithActiveVault
-        let result = runState (runExceptT $ openVault "local.vault") mock
-        let mockAfterExec = snd result
-        assertOpError "vault already open" result
-        assertNoExecCalls mockAfterExec,
-
     TestLabel "open without a partition filename fails" $
     TestCase $ do
         let mock = mockWithVaultDir
@@ -67,8 +59,7 @@ test_openVault = TestList [
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
             "/home/user"
-            (currentDir mockAfterExec)
-        assertNoVaultEnvVar mockAfterExec,
+            (currentDir mockAfterExec),
 
     TestLabel "unlock error prevents opening and deletes loop device" $
     TestCase $ do
@@ -86,8 +77,7 @@ test_openVault = TestList [
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
             "/home/user"
-            (currentDir mockAfterExec)
-        assertNoVaultEnvVar mockAfterExec,
+            (currentDir mockAfterExec),
 
     TestLabel "mount error prevents opening and undoes unlock and loop-setup" $
     TestCase $ do
@@ -107,8 +97,7 @@ test_openVault = TestList [
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
             "/home/user"
-            (currentDir mockAfterExec)
-        assertNoVaultEnvVar mockAfterExec,
+            (currentDir mockAfterExec),
 
     TestLabel "mount succeeds, no inner repo" $
     TestCase $ do
@@ -123,12 +112,7 @@ test_openVault = TestList [
             , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
             , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
             ]
-            (execRecorded mockAfterExec)
-
-        case (fst result) of
-             Left _ -> assertFailure "mounting failed"
-             Right vri -> do
-                assertActiveVaultEnvVarSet vri mockAfterExec,
+            (execRecorded mockAfterExec),
 
     TestLabel "mount succeeds, vault has inner repo" $
     TestCase $ do
@@ -144,11 +128,6 @@ test_openVault = TestList [
             , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
             ]
             (execRecorded mockAfterExec)
-
-        case (fst result) of
-             Left _ -> assertFailure "mounting failed"
-             Right vri -> do
-                assertActiveVaultEnvVarSet vri mockAfterExec
 
     ]
 

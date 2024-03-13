@@ -6,9 +6,6 @@ import Control.Monad.Except
 
 import qualified Vaults.Substrate as Substrate
 
-activeVaultEnvName :: String
-activeVaultEnvName = "ACTIVE_VAULT"
-
 data PartitionLocation = LocalPartition
                        | RemotePartition
                        | UnknownPartition
@@ -58,39 +55,6 @@ ensureIsVaultDir :: Substrate.Substrate m => ExceptT String m ()
 ensureIsVaultDir = do
     isV <- lift $ isVaultDir
     unless isV (throwError "non-vault folder")
-
-getActiveVault :: Substrate.Substrate m => m (Maybe VaultRuntimeInfo)
-getActiveVault = do
-    descriptor <- Substrate.lookupEnv activeVaultEnvName
-    return (fmap read descriptor)
-
-setActiveVault :: Substrate.Substrate m => VaultRuntimeInfo -> m ()
-setActiveVault vri = do
-    let descriptor = show vri
-    Substrate.setEnv activeVaultEnvName descriptor
-    return ()
-
-unsetActiveVault :: Substrate.Substrate m => m ()
-unsetActiveVault = do
-    Substrate.unsetEnv activeVaultEnvName
-    return ()
-
-isAnyVaultActive :: Substrate.Substrate m  => m Bool
-isAnyVaultActive = do
-    maybeEnv <- Substrate.lookupEnv activeVaultEnvName
-    return (isJust maybeEnv)
-
-ensureIsVaultActive :: Substrate.Substrate m => ExceptT String m VaultRuntimeInfo
-ensureIsVaultActive = do
-    mvri <- lift $ getActiveVault
-    case mvri of
-         Nothing -> (throwError "cannot read vault runtime info")
-         Just vri -> return vri
-
-ensureNoVaultActive :: Substrate.Substrate m => ExceptT String m ()
-ensureNoVaultActive = do
-    isVA <- lift $ isAnyVaultActive
-    when isVA (throwError "vault already open")
 
 getPartitionLocation :: VaultInfo -> FilePath -> PartitionLocation
 getPartitionLocation vi fname =

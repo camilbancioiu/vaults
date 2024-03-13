@@ -24,24 +24,3 @@ assertOpParamsError assertMsg params failedExec (opResult, _) =
 assertNoExecCalls :: Mock -> IO ()
 assertNoExecCalls mock =
     assertEqual "no exec calls" 0 (nExecs mock)
-
-assertNoVaultEnvVar :: Mock -> IO ()
-assertNoVaultEnvVar mock =
-    assertEqual "no vault env var"
-        Nothing
-        (lookup key $ envVars mock)
-    where key = Base.activeVaultEnvName
-
-assertVaultEnvVarSet :: Mock -> IO ()
-assertVaultEnvVarSet mock =
-    assertBool "vault env var set" (isJust mEnvVar)
-    where mEnvVar = (lookup key $ envVars mock)
-          key = Base.activeVaultEnvName
-
-assertActiveVaultEnvVarSet :: Base.VaultRuntimeInfo -> Mock -> IO ()
-assertActiveVaultEnvVarSet vri mock = do
-    let key = Base.activeVaultEnvName
-    let mEnvVar = (lookup key $ envVars mock)
-    case mEnvVar of
-         Nothing -> assertFailure "no vault env var"
-         Just envVar -> assertEqual "active vault as expected" vri (read envVar)
