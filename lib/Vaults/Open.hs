@@ -16,7 +16,6 @@ import qualified Vaults.Udisksctl as U
 openVault :: Substrate.Substrate m => FilePath -> ExceptT String m Base.VaultRuntimeInfo
 openVault partition = do
     Base.ensureIsVaultDir
-    Base.ensureNoVaultActive
 
     when (length partition == 0) (throwError "partition filename is required")
 
@@ -42,7 +41,6 @@ openVault partition = do
             , Base.partitionName = takeBaseName partition
             , Base.partitionLocation = partLoc
         }
-    lift $ Substrate.setEnv Base.activeVaultEnvName (show vri)
 
     return vri
 

@@ -11,14 +11,7 @@ import Vaults.Close
 
 allTests :: Test
 allTests = TestList [
-      test_prerequisites
-    , test_closeVault
-    ]
-
-test_prerequisites :: Test
-test_prerequisites = TestList [
-    -- TODO TestLabel "closing active vault works regardless of current dir" $
-
+    test_closeVault
     ]
 
 test_closeVault :: Test
@@ -29,14 +22,13 @@ test_closeVault = TestList [
     -- TODO closing *remote* vault succeeds
     --  assert cwd becomes srcDir
     --  assert loopDev, mappedDev, repoDir are unreadable
-    --  assert no active vault
     --  assert git log *not* updated
 
     -- TODO closing fails
 
     TestLabel "exporting commit log fails; closing vault succeeds" $
     TestCase $ do
-        let mock = addMockExecResults results mockWithActiveVault
+        let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [gitLogFail, unmountOk, lockOk, loopDeleteOk]
         let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
         let mockAfterExec = snd result
@@ -56,11 +48,10 @@ test_closeVault = TestList [
 
     TestLabel "closing vault succeeds" $
     TestCase $ do
-        let mock = addMockExecResults results mockWithActiveVault
+        let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [gitLogOk, unmountOk, lockOk, loopDeleteOk]
         let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
         let mockAfterExec = snd result
-        assertNoVaultEnvVar mockAfterExec
         assertEqual "unmounted, locked, deleted loop"
             [ ("git", ["log", "--format=%H"])
             , ("udisksctl", ["unmount", "-b", "/dev/dm-2"])

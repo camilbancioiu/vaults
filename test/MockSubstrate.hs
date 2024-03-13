@@ -107,9 +107,6 @@ instance Substrate.Substrate (State Mock) where
     readFile  = mock_readFile
     writeFile = mock_writeFile
     dirExists = mock_dirExists
-    lookupEnv = mock_lookupEnv
-    setEnv    = mock_setEnv
-    unsetEnv  = mock_unsetEnv
     getDir    = mock_getDir
     changeDir = mock_changeDir
     exec      = mock_exec
@@ -129,17 +126,6 @@ mock_dirExists :: FilePath -> State Mock Bool
 mock_dirExists ".vault" = gets hasVaultDir
 mock_dirExists "repo" = gets hasRepoDir
 mock_dirExists _ = return False
-
-mock_lookupEnv :: String -> State Mock (Maybe String)
-mock_lookupEnv key = do
-    mock <- get
-    return (lookup key $ envVars mock)
-
-mock_setEnv :: String -> String -> State Mock ()
-mock_setEnv key val = modify (addMockEnvVar key val)
-
-mock_unsetEnv :: String -> State Mock ()
-mock_unsetEnv key = modify (removeMockEnvVar key)
 
 mock_getDir :: State Mock String
 mock_getDir = gets currentDir
@@ -200,11 +186,6 @@ mockWithVaultAndRepoDir :: Mock
 mockWithVaultAndRepoDir = emptyMock {
       hasVaultDir = True
     , hasRepoDir = True
-}
-
-mockWithActiveVault :: Mock
-mockWithActiveVault = mockWithVaultAndRepoDir {
-    envVars = [(Base.activeVaultEnvName, show mockVaultRuntimeInfo)]
 }
 
 mockWithEnvVar :: (String, String) -> Mock
