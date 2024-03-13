@@ -28,16 +28,19 @@ test_editSuccessful =
         let result = runState (runExceptT $ operation) mock
         let mockAfterExec = snd result
         assertEqual "vault opened, edited, closed" (Right()) (fst result)
+
+        -- no need for cd; working dir is changed via Substrate.changeDir
+        let expectedCommands = [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
+                               , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
+                               , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
+                               , ("nvim", ["."])
+                               , ("git", ["log", "--format=%H"])
+                               , ("udisksctl", ["unmount", "-b", "/dev/dm-4"])
+                               , ("udisksctl", ["lock", "-b", "/dev/loop42"])
+                               , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
+                               ]
         assertEqual "all commands executed"
-            [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
-            , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
-            , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
-            -- no need for cd; working dir is changed via Substrate.changeDir
-            , ("nvim", ["."]
-            , ("udisksctl", ["unmount", "-b", "/dev/dm-4"])
-            , ("udisksctl", ["lock", "-b", "/dev/loop42"])
-            , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
-            ]
+            expectedCommands
             (execRecorded mockAfterExec)
 
 -- TODO test where git crashes
