@@ -57,5 +57,4 @@ test_syncSuccessful =
         let result = runState (runExceptT $ operation) mock
         let mockAfterExec = snd result
         assertEqual "vaults opened, local fetched remoteA, vaults closed" (Right()) (fst result)
-        return ()
-        -- assertFailure "not implemented"
+        -- TODO add assertion on expected commands
