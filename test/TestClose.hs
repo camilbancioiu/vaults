@@ -1,4 +1,4 @@
-module TestOpCloseVault where
+module TestClose where
 
 import Control.Monad.State
 import Control.Monad.Except
@@ -7,7 +7,7 @@ import Test.HUnit
 import Assertions
 import MockSubstrate
 
-import Vaults.OpCloseVault
+import Vaults.Close
 
 allTests :: Test
 allTests = TestList [

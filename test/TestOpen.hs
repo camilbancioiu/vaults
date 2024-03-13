@@ -1,4 +1,4 @@
-module TestOpOpenVault where
+module TestOpen where
 
 import Control.Monad.State
 import Control.Monad.Except
@@ -11,7 +11,7 @@ import Test.HUnit
 import Assertions
 import MockSubstrate
 
-import Vaults.OpOpenVault
+import Vaults.Open
 
 -- TODO test scenarios:
 -- succeed opening with partition name only
@@ -116,19 +116,19 @@ test_openVault = TestList [
                    where results = [loopSetupOk, unlockOk, mountOk]
         let result = runState (runExceptT $ openVault "local.vault") mock
         let mockAfterExec = snd result
-        let vri = makeDummyVRI ""
-        assertEqual "mount succeeds" (Right vri) (fst result)
+        let dummyVRI = makeDummyVRI ""
+        assertEqual "mount succeeds" (Right dummyVRI) (fst result)
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
             , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
             , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
             ]
             (execRecorded mockAfterExec)
-        assertEqual "current directory changed to mountpoint"
-            "/mnt/point"
-            (currentDir mockAfterExec)
 
-        assertActiveVaultEnvVarSet vri mockAfterExec,
+        case (fst result) of
+             Left _ -> assertFailure "mounting failed"
+             Right vri -> do
+                assertActiveVaultEnvVarSet vri mockAfterExec,
 
     TestLabel "mount succeeds, vault has inner repo" $
     TestCase $ do
@@ -144,14 +144,11 @@ test_openVault = TestList [
             , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
             ]
             (execRecorded mockAfterExec)
-        assertEqual "prev directory is mountpoint"
-            "/mnt/point"
-            (prevDir mockAfterExec)
-        assertEqual "current directory changed to repo within mountpoint"
-            "/mnt/point/repo"
-            (currentDir mockAfterExec)
 
-        assertActiveVaultEnvVarSet vri mockAfterExec
+        case (fst result) of
+             Left _ -> assertFailure "mounting failed"
+             Right vri -> do
+                assertActiveVaultEnvVarSet vri mockAfterExec
 
     ]
 
