@@ -2,8 +2,6 @@
 
 module MockSubstrate where
 
-import Debug.Trace
-
 import System.Exit
 import Control.Monad.State
 
@@ -158,7 +156,6 @@ mock_exec :: String -> [String] -> String -> State Mock Substrate.ExecResult
 mock_exec executable params _ = do
     modify $ recordExec (executable, params)
     modify incExecs
-    trace (show ("\n", executable, params, "\n")) (return ())
     er <- gets $ head . execResults
     modify dropHeadMockExecResult
     return er

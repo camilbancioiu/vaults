@@ -32,15 +32,12 @@ test_editSuccessful =
 
         -- no need to assert on a call to cd (cd needs a shell anyway); working
         -- dir is changed via Substrate.changeDir
-        let expectedCommands = [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
-                               , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
-                               , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
-                               , ("nvim", ["."])
-                               , ("git", ["log", "--format=%H"])
-                               , ("udisksctl", ["unmount", "-b", "/dev/dm-4"])
-                               , ("udisksctl", ["lock", "-b", "/dev/loop42"])
-                               , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
-                               ]
+        let expectedCmdsAppl = D.openPartitionCmds
+                               ++ [ D.editCmd, D.gitLogCmd ]
+                               ++ D.closePartitionCmds
+
+        let expectedCommands = expectedCmdsAppl <*> (pure D.localOp)
+
         assertEqual "all commands executed"
             expectedCommands
             (execRecorded mockAfterExec)

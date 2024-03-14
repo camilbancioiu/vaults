@@ -33,7 +33,7 @@ closeVaultDevice :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT St
 closeVaultDevice vri = do
     lift $ Substrate.changeDir (Base.srcDir vri)
     U.unmountDevice (Base.mapperDev vri)
-    U.lockDevice (Base.loopDev vri)
+    U.lockDevice (Base.mapperDev vri)
     U.deleteLoopDevice (Base.loopDev vri)
 
 extractCommitLog :: Substrate.Substrate m => ExceptT String m String

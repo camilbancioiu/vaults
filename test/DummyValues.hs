@@ -19,6 +19,14 @@ localOp = DummyOp {
     , commitLog     = "38a3\nfb22\n8c2a\n02ad\n"
 }
 
+localOp2 = DummyOp {
+      partitionName = "local.vault"
+    , loopDev       = "/dev/loop9"
+    , mapperDev     = "/dev/dm-2"
+    , mountpoint    = "/run/media/user/localhostname/mockVault"
+    , commitLog     = "38a3\nab22\n8f2a\n03ac\n"
+}
+
 remoteOp = DummyOp {
       partitionName = "remote.vault"
     , loopDev       = "/dev/loop84"
@@ -26,6 +34,16 @@ remoteOp = DummyOp {
     , mountpoint    = "/mnt/point2"
     , commitLog     = "38a3\nfb22\n8c2a\n02ad\n"
 }
+
+openPartitionCmds = [ loopSetupCmd, unlockCmd, mountCmd ]
+closePartitionCmds = [ unmountCmd, lockCmd, loopDeleteCmd ]
+closePartitionWithLogCmds = gitLogCmd : closePartitionCmds
+
+editCmd :: DummyOp -> (FilePath, [String])
+editCmd _ = ("nvim", ["."])
+
+gitLogCmd :: DummyOp -> (FilePath, [String])
+gitLogCmd _ = ("git", ["log", "--format=%H"])
 
 loopSetupCmd :: DummyOp -> (FilePath, [String])
 loopSetupCmd op = ("udisksctl", ["loop-setup", "-f", partitionName op])
@@ -40,7 +58,7 @@ unmountCmd :: DummyOp -> (FilePath, [String])
 unmountCmd op = ("udisksctl", ["unmount", "-b", mapperDev op])
 
 lockCmd :: DummyOp -> (FilePath, [String])
-lockCmd op = ("udisksctl", ["lock", "-b", loopDev op])
+lockCmd op = ("udisksctl", ["lock", "-b", mapperDev op])
 
 loopDeleteCmd :: DummyOp -> (FilePath, [String])
 loopDeleteCmd op = ("udisksctl", ["loop-delete", "-b", loopDev op])
@@ -93,7 +111,7 @@ lockExec success op =
        }
 
 gitLogExec :: Bool -> DummyOp -> Sub.ExecResult
-gitLogExec success op = 
+gitLogExec success op =
     if not success
        then failedExecResult
        else successfulExecResult {

@@ -6,6 +6,7 @@ import Control.Monad.Except
 import Test.HUnit
 import Assertions
 import MockSubstrate
+import qualified DummyValues as D
 
 import Vaults.Base
 import Vaults.Close
@@ -22,7 +23,7 @@ test_closeVault = TestList [
 
     -- TODO closing *remote* vault succeeds
     --  assert cwd becomes srcDir
-    --  assert loopDev, mappedDev, repoDir are unreadable
+    --  assert loopDev, mapperDev, repoDir are unreadable
     --  assert git log *not* updated
 
     -- TODO closing fails
@@ -33,12 +34,10 @@ test_closeVault = TestList [
                    where results = [gitLogFail, unmountOk, lockOk, loopDeleteOk]
         let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
         let mockAfterExec = snd result
+
+        let expectedCommands = D.closePartitionWithLogCmds <*> (pure D.localOp2)
         assertEqual "unmounted, locked, deleted loop"
-            [ ("git", ["log", "--format=%H"])
-            , ("udisksctl", ["unmount", "-b", "/dev/dm-2"])
-            , ("udisksctl", ["lock", "-b", "/dev/loop9"])
-            , ("udisksctl", ["loop-delete", "-b", "/dev/loop9"])
-            ]
+            expectedCommands
             (execRecorded mockAfterExec)
         assertEqual "dir changed to srcDir"
             "/home/user/vaults/mockVault"
@@ -53,12 +52,10 @@ test_closeVault = TestList [
                    where results = [gitLogOk, unmountOk, lockOk, loopDeleteOk]
         let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
         let mockAfterExec = snd result
+
+        let expectedCommands = D.closePartitionWithLogCmds <*> (pure D.localOp2)
         assertEqual "unmounted, locked, deleted loop"
-            [ ("git", ["log", "--format=%H"])
-            , ("udisksctl", ["unmount", "-b", "/dev/dm-2"])
-            , ("udisksctl", ["lock", "-b", "/dev/loop9"])
-            , ("udisksctl", ["loop-delete", "-b", "/dev/loop9"])
-            ]
+            expectedCommands
             (execRecorded mockAfterExec)
         assertEqual "dir changed to srcDir"
             "/home/user/vaults/mockVault"
@@ -76,11 +73,10 @@ test_closeVault = TestList [
             }
         let result = runState (runExceptT $ closeVault mockRemoteVRI) mock
         let mockAfterExec = snd result
+
+        let expectedCommands = D.closePartitionCmds <*> (pure D.localOp2)
         assertEqual "unmounted, locked, deleted loop"
-            [ ("udisksctl", ["unmount", "-b", "/dev/dm-2"])
-            , ("udisksctl", ["lock", "-b", "/dev/loop9"])
-            , ("udisksctl", ["loop-delete", "-b", "/dev/loop9"])
-            ]
+            expectedCommands
             (execRecorded mockAfterExec)
         assertEqual "dir changed to srcDir"
             "/home/user/vaults/mockVault"
