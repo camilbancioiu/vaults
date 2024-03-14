@@ -1,4 +1,4 @@
-module TestOperations where
+module TestOperations_Sync where
 
 import Control.Monad.State
 import Control.Monad.Except
@@ -14,35 +14,8 @@ import qualified DummyValues as D
 
 allTests :: Test
 allTests = TestList [
-      test_editSuccessful
-    , test_syncSuccessful
+    test_syncSuccessful
     ]
-
--- TODO test where the editor crashes
-test_editSuccessful :: Test
-test_editSuccessful =
-    TestLabel "edit successful" $
-    TestCase $ do
-        let operation = Operations.doEditVault mockVaultInfo
-        let mock = addMockExecResults results mockWithVaultAndRepoDir
-                   where results = (  D.openPartitionExecOk
-                                   ++ [ D.gitLogExec True ]
-                                   ++ D.closePartitionExecOk
-                                   ) <*> (pure D.localOp)
-        let result = runState (runExceptT $ operation) mock
-        let mockAfterExec = snd result
-        assertEqual "vault opened, edited, closed" (Right()) (fst result)
-
-        -- No need to assert on a call to cd (cd needs a shell anyway); working
-        -- dir is changed via Substrate.changeDir.
-        let expectedCommands = (  D.openPartitionCmds
-                               ++ [ D.editCmd, D.gitLogCmd ]
-                               ++ D.closePartitionCmds
-                               ) <*> (pure D.localOp)
-
-        assertEqual "all commands executed"
-            expectedCommands
-            (execRecorded mockAfterExec)
 
 test_syncSuccessful :: Test
 test_syncSuccessful =
