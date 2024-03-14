@@ -24,3 +24,9 @@ assertOpParamsError assertMsg params failedExec (opResult, _) =
 assertNoExecCalls :: Mock -> IO ()
 assertNoExecCalls mock =
     assertEqual "no exec calls" 0 (nExecs mock)
+
+assertAllExecsConsumed :: Mock -> IO ()
+assertAllExecsConsumed mock =
+    assertEqual "all execs consumed"
+        0
+        (length $ execResults mock)

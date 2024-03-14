@@ -42,3 +42,4 @@ test_editSuccessful =
         assertEqual "all commands executed"
             expectedCommands
             (execRecorded mockAfterExec)
+        assertAllExecsConsumed mockAfterExec

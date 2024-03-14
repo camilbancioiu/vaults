@@ -44,7 +44,8 @@ test_closeVault = TestList [
             (currentDir mockAfterExec)
         assertEqual "git log not saved"
             ("", "", "")
-            (writtenFile mockAfterExec),
+            (writtenFile mockAfterExec)
+        assertAllExecsConsumed mockAfterExec,
 
     TestLabel "closing vault succeeds" $
     TestCase $ do
@@ -62,7 +63,8 @@ test_closeVault = TestList [
             (currentDir mockAfterExec)
         assertEqual "git log saved"
             ("/home/user/vaults/mockVault", "local.log", gitLogOutput)
-            (writtenFile mockAfterExec),
+            (writtenFile mockAfterExec)
+        assertAllExecsConsumed mockAfterExec,
 
     TestLabel "closing remote vault succeeds" $
     TestCase $ do
@@ -81,6 +83,6 @@ test_closeVault = TestList [
         assertEqual "dir changed to srcDir"
             "/home/user/vaults/mockVault"
             (currentDir mockAfterExec)
+        assertAllExecsConsumed mockAfterExec
 
     ]
-

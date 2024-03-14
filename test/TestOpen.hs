@@ -63,7 +63,8 @@ test_openVault = TestList [
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
             "/home/user"
-            (currentDir mockAfterExec),
+            (currentDir mockAfterExec)
+        assertAllExecsConsumed mockAfterExec,
 
     TestLabel "unlock error prevents opening and deletes loop device" $
     TestCase $ do
@@ -84,7 +85,8 @@ test_openVault = TestList [
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
             "/home/user"
-            (currentDir mockAfterExec),
+            (currentDir mockAfterExec)
+        assertAllExecsConsumed mockAfterExec,
 
     TestLabel "mount error prevents opening and undoes unlock and loop-setup" $
     TestCase $ do
@@ -107,7 +109,8 @@ test_openVault = TestList [
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
             "/home/user"
-            (currentDir mockAfterExec),
+            (currentDir mockAfterExec)
+        assertAllExecsConsumed mockAfterExec,
 
     TestLabel "mount succeeds, no inner repo" $
     TestCase $ do
@@ -122,7 +125,8 @@ test_openVault = TestList [
         let expectedCommands = (D.openPartitionCmds <*> (pure D.localOp))
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             expectedCommands
-            (execRecorded mockAfterExec),
+            (execRecorded mockAfterExec)
+        assertAllExecsConsumed mockAfterExec,
 
     TestLabel "mount succeeds, vault has inner repo" $
     TestCase $ do
@@ -138,6 +142,7 @@ test_openVault = TestList [
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             expectedCommands
             (execRecorded mockAfterExec)
+        assertAllExecsConsumed mockAfterExec
 
     ]
 
