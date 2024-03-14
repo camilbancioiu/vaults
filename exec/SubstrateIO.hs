@@ -11,9 +11,6 @@ instance Substrate.Substrate IO where
     readFile  = Prelude.readFile
     writeFile = Prelude.writeFile
     dirExists = System.Directory.doesDirectoryExist
-    lookupEnv = System.Environment.lookupEnv
-    setEnv    = System.Environment.setEnv
-    unsetEnv  = System.Environment.unsetEnv
     getDir    = System.Directory.getCurrentDirectory
     changeDir = System.Directory.setCurrentDirectory
     exec      = execIOProcess
