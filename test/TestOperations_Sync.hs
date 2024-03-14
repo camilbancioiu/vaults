@@ -14,7 +14,9 @@ import qualified DummyValues as D
 
 allTests :: Test
 allTests = TestList [
-    test_syncSuccessful
+      test_syncSuccessful
+    -- , test_sync_UnlockRemoteFailed
+    -- , test_sync_UnlockLocalFailed
     ]
 
 test_syncSuccessful :: Test
@@ -58,3 +60,31 @@ test_syncSuccessful =
         assertEqual "vaults opened, local fetched remoteA, vaults closed"
             expectedCommands
             (execRecorded mockAfterExec)
+
+        assertAllExecsConsumed mockAfterExec
+
+test_sync_UnlockRemoteFailed :: Test
+test_sync_UnlockRemoteFailed =
+    TestLabel "unlock remote failure handled" $
+    TestCase $ do
+        assertFailure "not implemented"
+
+test_sync_UnlockLocalFailed :: Test
+test_sync_UnlockLocalFailed =
+    TestLabel "unlock local failure handled" $
+    TestCase $ do
+        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let mock = addMockExecResults results mockWithVaultAndRepoDir
+                   where results =  openRemote
+                                 ++ failedOpenLocal
+                                 ++ closeRemote
+                         openRemote      = D.openPartitionExecOk <*> (pure D.remoteOp)
+                         failedOpenLocal = [ D.loopSetupExec  True
+                                           , D.unlockExec     False
+                                           , D.loopDeleteExec True
+                                           ] <*> (pure D.localOp)
+                         closeRemote     = D.closePartitionExecOk <*> (pure D.remoteOp)
+        let result = runState (runExceptT $ operation) mock
+        let mockAfterExec = snd result
+
+        assertFailure "not implemented"
