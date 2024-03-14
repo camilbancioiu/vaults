@@ -15,7 +15,7 @@ import qualified DummyValues as D
 allTests :: Test
 allTests = TestList [
       test_editSuccessful
-    -- , test_syncSuccessful
+    , test_syncSuccessful
     ]
 
 -- TODO test where the editor crashes
@@ -25,35 +25,63 @@ test_editSuccessful =
     TestCase $ do
         let operation = Operations.doEditVault mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
-                   where results = openVaultOk ++ closeVaultOk
+                   where results = (  D.openPartitionExecOk
+                                   ++ [ D.gitLogExec True ]
+                                   ++ D.closePartitionExecOk
+                                   ) <*> (pure D.localOp)
         let result = runState (runExceptT $ operation) mock
         let mockAfterExec = snd result
         assertEqual "vault opened, edited, closed" (Right()) (fst result)
 
-        -- no need to assert on a call to cd (cd needs a shell anyway); working
-        -- dir is changed via Substrate.changeDir
-        let expectedCmdsAppl = D.openPartitionCmds
+        -- No need to assert on a call to cd (cd needs a shell anyway); working
+        -- dir is changed via Substrate.changeDir.
+        let expectedCommands = (  D.openPartitionCmds
                                ++ [ D.editCmd, D.gitLogCmd ]
                                ++ D.closePartitionCmds
-
-        let expectedCommands = expectedCmdsAppl <*> (pure D.localOp)
+                               ) <*> (pure D.localOp)
 
         assertEqual "all commands executed"
             expectedCommands
             (execRecorded mockAfterExec)
 
--- TODO test where git crashes
 test_syncSuccessful :: Test
 test_syncSuccessful =
     TestLabel "sync successful" $
     TestCase $ do
         let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        -- TODO There is no `git fetch` in the execResults below because `git
+        -- fetch` is called with Substrate.call, not Substrate.exec. A
+        -- different test is requried to assert on errors with `git fetch`.
         let mock = addMockExecResults results mockWithVaultAndRepoDir
-                   where results =  openVaultOkRemote
-                                 ++ openVaultOk
-                                 ++ closeVaultOk
-                                 ++ closeVaultOkRemote
+                   where results =  openRemote
+                                 ++ openLocal
+                                 ++ gitLog
+                                 ++ closeLocal
+                                 ++ closeRemote
+                         openRemote  = D.openPartitionExecOk <*> (pure D.remoteOp)
+                         openLocal   = D.openPartitionExecOk <*> (pure D.localOp)
+                         gitLog      = [ D.gitLogExec True D.localOp ]
+                         closeLocal  = D.closePartitionExecOk <*> (pure D.localOp)
+                         closeRemote = D.closePartitionExecOk <*> (pure D.remoteOp)
         let result = runState (runExceptT $ operation) mock
         let mockAfterExec = snd result
-        assertEqual "vaults opened, local fetched remoteA, vaults closed" (Right()) (fst result)
-        -- TODO add assertion on expected commands
+
+        assertEqual "sync result successful" (Right()) (fst result)
+
+        let expectedCommands = ( openRemote
+                              ++ openLocal
+                              ++ gitFetch
+                              ++ gitLog
+                              ++ closeLocal
+                              ++ closeRemote
+                               )
+                               where openRemote  = D.openPartitionCmds <*> (pure D.remoteOp)
+                                     openLocal   = D.openPartitionCmds <*> (pure D.localOp)
+                                     gitFetch    = [ D.gitFetchCmd "remoteA" D.localOp ]
+                                     gitLog      = [ D.gitLogCmd D.localOp ]
+                                     closeLocal  = D.closePartitionCmds <*> (pure D.localOp)
+                                     closeRemote = D.closePartitionCmds <*> (pure D.remoteOp)
+
+        assertEqual "vaults opened, local fetched remoteA, vaults closed"
+            expectedCommands
+            (execRecorded mockAfterExec)

@@ -28,22 +28,28 @@ localOp2 = DummyOp {
 }
 
 remoteOp = DummyOp {
-      partitionName = "remote.vault"
+      partitionName = "remoteA.vault"
     , loopDev       = "/dev/loop84"
     , mapperDev     = "/dev/dm-8"
     , mountpoint    = "/mnt/point2"
     , commitLog     = "38a3\nfb22\n8c2a\n02ad\n"
 }
 
+editCmd :: DummyOp -> (FilePath, [String])
+editCmd _ = ("nvim", ["."])
+
+gitFetchCmd :: String -> DummyOp -> (FilePath, [String])
+gitFetchCmd remote _ = ("git", ["fetch", remote])
+
+gitLogCmd :: DummyOp -> (FilePath, [String])
+gitLogCmd _ = ("git", ["log", "--format=%H"])
+
 openPartitionCmds = [ loopSetupCmd, unlockCmd, mountCmd ]
 closePartitionCmds = [ unmountCmd, lockCmd, loopDeleteCmd ]
 closePartitionWithLogCmds = gitLogCmd : closePartitionCmds
 
-editCmd :: DummyOp -> (FilePath, [String])
-editCmd _ = ("nvim", ["."])
-
-gitLogCmd :: DummyOp -> (FilePath, [String])
-gitLogCmd _ = ("git", ["log", "--format=%H"])
+openPartitionExecOk = [ loopSetupExec True, unlockExec True, mountExec True ]
+closePartitionExecOk = [ unmountExec True, lockExec True, loopDeleteExec True ]
 
 loopSetupCmd :: DummyOp -> (FilePath, [String])
 loopSetupCmd op = ("udisksctl", ["loop-setup", "-f", partitionName op])
@@ -62,6 +68,14 @@ lockCmd op = ("udisksctl", ["lock", "-b", mapperDev op])
 
 loopDeleteCmd :: DummyOp -> (FilePath, [String])
 loopDeleteCmd op = ("udisksctl", ["loop-delete", "-b", loopDev op])
+
+gitLogExec :: Bool -> DummyOp -> Sub.ExecResult
+gitLogExec success op =
+    if not success
+       then failedExecResult
+       else successfulExecResult {
+                Sub.output = commitLog op
+       }
 
 loopSetupExec :: Bool -> DummyOp -> Sub.ExecResult
 loopSetupExec success op =
@@ -108,14 +122,6 @@ lockExec success op =
        then failedExecResult
        else successfulExecResult {
                 Sub.output = "Locked " ++ (mapperDev op) ++ "."
-       }
-
-gitLogExec :: Bool -> DummyOp -> Sub.ExecResult
-gitLogExec success op =
-    if not success
-       then failedExecResult
-       else successfulExecResult {
-                Sub.output = commitLog op
        }
 
 successfulExecResult :: Sub.ExecResult
