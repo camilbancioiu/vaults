@@ -40,8 +40,8 @@ unmountDevice mapperDev = do
 
 -- TODO validate parameter mapperDev
 lockDevice :: Substrate.Substrate m => FilePath -> ExceptT String m ()
-lockDevice mapperDev = do
-    _ <- runUdisksctlCommand ["lock", "-b", mapperDev]
+lockDevice loopDev = do
+    _ <- runUdisksctlCommand ["lock", "-b", loopDev]
     return ()
 
 -- TODO validate parameter devFile

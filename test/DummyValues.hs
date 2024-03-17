@@ -35,7 +35,6 @@ remoteOp = DummyOp {
     , commitLog     = "38a3\nfb22\n8c2a\n02ad\n"
 }
 
---  Left "loop-setup failed: \ncommand: [\"loop-setup\",\"-f\",\"remoteA.vault\"]"
 showFailedCmd :: (FilePath, [String]) -> String
 showFailedCmd ("git", "log":_) =
     "git log failed: "
@@ -71,7 +70,7 @@ unmountCmd :: DummyOp -> (FilePath, [String])
 unmountCmd op = ("udisksctl", ["unmount", "-b", mapperDev op])
 
 lockCmd :: DummyOp -> (FilePath, [String])
-lockCmd op = ("udisksctl", ["lock", "-b", mapperDev op])
+lockCmd op = ("udisksctl", ["lock", "-b", loopDev op])
 
 loopDeleteCmd :: DummyOp -> (FilePath, [String])
 loopDeleteCmd op = ("udisksctl", ["loop-delete", "-b", loopDev op])
@@ -128,7 +127,7 @@ lockExec success op =
     if not success
        then failedExecResult
        else successfulExecResult {
-                Sub.output = "Locked " ++ (mapperDev op) ++ "."
+                Sub.output = "Locked " ++ (loopDev op) ++ "."
        }
 
 successfulExecResult :: Sub.ExecResult

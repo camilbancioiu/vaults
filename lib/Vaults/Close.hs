@@ -35,7 +35,7 @@ closeVaultDevice vri = do
     lift $ Substrate.delay 1000000
     U.unmountDevice (Base.mapperDev vri)
     lift $ Substrate.delay 500000
-    U.lockDevice (Base.mapperDev vri)
+    U.lockDevice (Base.loopDev vri)
     U.deleteLoopDevice (Base.loopDev vri)
 
 extractCommitLog :: Substrate.Substrate m => ExceptT String m String

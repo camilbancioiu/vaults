@@ -55,7 +55,7 @@ guardedMountDevice :: Substrate.Substrate m => FilePath -> FilePath -> ExceptT S
 guardedMountDevice loopDev mapperDev = do
     catchError
         (U.mountDevice mapperDev)
-        (\e -> do U.lockDevice mapperDev
+        (\e -> do U.lockDevice loopDev
                   U.deleteLoopDevice loopDev
                   throwError e)
 
