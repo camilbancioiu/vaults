@@ -15,8 +15,13 @@ import qualified DummyValues as D
 allTests :: Test
 allTests = TestList [
       test_syncSuccessful
-    -- , test_sync_UnlockRemoteFailed
-    -- , test_sync_UnlockLocalFailed
+    , test_sync_RemoteFailed_LoopSetup
+    , test_sync_RemoteFailed_Unlock
+    , test_sync_RemoteFailed_Mount
+    , test_sync_LocalFailed_LoopSetup
+    , test_sync_LocalFailed_Unlock
+    , test_sync_LocalFailed_Mount
+    , test_sync_LocalFailed_GitLog
     ]
 
 test_syncSuccessful :: Test
@@ -41,7 +46,7 @@ test_syncSuccessful =
         let result = runState (runExceptT $ operation) mock
         let mockAfterExec = snd result
 
-        assertEqual "sync result successful" (Right()) (fst result)
+        assertEqual "sync successful" (Right ()) (fst result)
 
         let expectedCommands = ( openRemote
                               ++ openLocal
@@ -60,31 +65,243 @@ test_syncSuccessful =
         assertEqual "vaults opened, local fetched remoteA, vaults closed"
             expectedCommands
             (execRecorded mockAfterExec)
-
         assertAllExecsConsumed mockAfterExec
 
-test_sync_UnlockRemoteFailed :: Test
-test_sync_UnlockRemoteFailed =
-    TestLabel "unlock remote failure handled" $
-    TestCase $ do
-        assertFailure "not implemented"
+-- TODO test_sync_LocalFailed_GitLog
+-- TODO test_sync_LocalFailed_Unmount
+-- TODO test_sync_LocalFailed_Lock
+-- TODO test_sync_LocalFailed_LoopDelete
+--
+-- TODO test_sync_RemoteFailed_Unmount
+-- TODO test_sync_RemoteFailed_Lock
+-- TODO test_sync_RemoteFailed_LoopDelete
 
-test_sync_UnlockLocalFailed :: Test
-test_sync_UnlockLocalFailed =
+test_sync_RemoteFailed_LoopSetup :: Test
+test_sync_RemoteFailed_LoopSetup =
+    TestLabel "remote loop-setup failure handled" $
+    TestCase $ do
+        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let mock = addMockExecResults results mockWithVaultAndRepoDir
+                   where results = [ D.loopSetupExec False D.remoteOp ]
+        let result = runState (runExceptT $ operation) mock
+        let mockAfterExec = snd result
+
+        let expectedError = Left $ D.showFailedCmd (D.loopSetupCmd D.remoteOp)
+        assertEqual "sync failed" expectedError (fst result)
+
+        let expectedCommands = [ D.loopSetupCmd D.remoteOp ]
+        assertEqual "commands"
+            expectedCommands
+            (execRecorded mockAfterExec)
+        assertAllExecsConsumed mockAfterExec
+
+test_sync_RemoteFailed_Unlock :: Test
+test_sync_RemoteFailed_Unlock =
+    TestLabel "remote unlock failure handled" $
+    TestCase $ do
+        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let mock = addMockExecResults results mockWithVaultAndRepoDir
+                   where results = [ D.loopSetupExec  True  D.remoteOp
+                                   , D.unlockExec     False D.remoteOp
+                                   , D.loopDeleteExec True  D.remoteOp
+                                   ]
+        let result = runState (runExceptT $ operation) mock
+        let mockAfterExec = snd result
+
+        let expectedError = Left $ D.showFailedCmd (D.unlockCmd D.remoteOp)
+        assertEqual "sync failed" expectedError (fst result)
+
+        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+                               , D.unlockCmd     D.remoteOp
+                               , D.loopDeleteCmd D.remoteOp
+                               ]
+        assertEqual "commands"
+            expectedCommands
+            (execRecorded mockAfterExec)
+        assertAllExecsConsumed mockAfterExec
+
+test_sync_RemoteFailed_Mount :: Test
+test_sync_RemoteFailed_Mount =
+    TestLabel "remote mount failure handled" $
+    TestCase $ do
+        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let mock = addMockExecResults results mockWithVaultAndRepoDir
+                   where results = [ D.loopSetupExec  True  D.remoteOp
+                                   , D.unlockExec     True  D.remoteOp
+                                   , D.mountExec      False D.remoteOp
+                                   , D.lockExec       True  D.remoteOp
+                                   , D.loopDeleteExec True  D.remoteOp
+                                   ]
+        let result = runState (runExceptT $ operation) mock
+        let mockAfterExec = snd result
+
+        let expectedError = Left $ D.showFailedCmd (D.mountCmd D.remoteOp)
+        assertEqual "sync failed" expectedError (fst result)
+
+        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+                               , D.unlockCmd     D.remoteOp
+                               , D.mountCmd      D.remoteOp
+                               , D.lockCmd       D.remoteOp
+                               , D.loopDeleteCmd D.remoteOp
+                               ]
+        assertEqual "commands"
+            expectedCommands
+            (execRecorded mockAfterExec)
+        assertAllExecsConsumed mockAfterExec
+
+test_sync_LocalFailed_LoopSetup :: Test
+test_sync_LocalFailed_LoopSetup =
+    TestLabel "local loop-setup failure handled" $
+    TestCase $ do
+        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let mock = addMockExecResults results mockWithVaultAndRepoDir
+                   where results = [ D.loopSetupExec  True  D.remoteOp
+                                   , D.unlockExec     True  D.remoteOp
+                                   , D.mountExec      True  D.remoteOp
+                                   , D.loopSetupExec  False D.localOp
+                                   , D.unmountExec    True  D.remoteOp
+                                   , D.lockExec       True  D.remoteOp
+                                   , D.loopDeleteExec True  D.remoteOp
+                                   ]
+        let result = runState (runExceptT $ operation) mock
+        let mockAfterExec = snd result
+
+        let expectedError = Left $ D.showFailedCmd (D.loopSetupCmd D.localOp)
+        assertEqual "sync failed" expectedError (fst result)
+
+        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+                               , D.unlockCmd     D.remoteOp
+                               , D.mountCmd      D.remoteOp
+                               , D.loopSetupCmd  D.localOp
+                               , D.unmountCmd    D.remoteOp
+                               , D.lockCmd       D.remoteOp
+                               , D.loopDeleteCmd D.remoteOp
+                               ]
+        assertEqual "commands"
+            expectedCommands
+            (execRecorded mockAfterExec)
+        assertAllExecsConsumed mockAfterExec
+
+test_sync_LocalFailed_Unlock :: Test
+test_sync_LocalFailed_Unlock =
     TestLabel "unlock local failure handled" $
     TestCase $ do
         let operation = Operations.doSyncVault mockVaultInfo "remoteA"
         let mock = addMockExecResults results mockWithVaultAndRepoDir
-                   where results =  openRemote
-                                 ++ failedOpenLocal
-                                 ++ closeRemote
-                         openRemote      = D.openPartitionExecOk <*> (pure D.remoteOp)
-                         failedOpenLocal = [ D.loopSetupExec  True
-                                           , D.unlockExec     False
-                                           , D.loopDeleteExec True
-                                           ] <*> (pure D.localOp)
-                         closeRemote     = D.closePartitionExecOk <*> (pure D.remoteOp)
+                   where results = [ D.loopSetupExec  True  D.remoteOp
+                                   , D.unlockExec     True  D.remoteOp
+                                   , D.mountExec      True  D.remoteOp
+                                   , D.loopSetupExec  True  D.localOp
+                                   , D.unlockExec     False D.localOp
+                                   , D.loopDeleteExec True  D.localOp
+                                   , D.unmountExec    True  D.remoteOp
+                                   , D.lockExec       True  D.remoteOp
+                                   , D.loopDeleteExec True  D.remoteOp
+                                   ]
         let result = runState (runExceptT $ operation) mock
         let mockAfterExec = snd result
 
-        assertFailure "not implemented"
+        let expectedError = Left $ D.showFailedCmd (D.unlockCmd D.localOp)
+        assertEqual "sync failed" expectedError (fst result)
+
+        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+                               , D.unlockCmd     D.remoteOp
+                               , D.mountCmd      D.remoteOp
+                               , D.loopSetupCmd  D.localOp
+                               , D.unlockCmd     D.localOp
+                               , D.loopDeleteCmd D.localOp
+                               , D.unmountCmd    D.remoteOp
+                               , D.lockCmd       D.remoteOp
+                               , D.loopDeleteCmd D.remoteOp
+                               ]
+        assertEqual "commands"
+            expectedCommands
+            (execRecorded mockAfterExec)
+        assertAllExecsConsumed mockAfterExec
+
+test_sync_LocalFailed_Mount :: Test
+test_sync_LocalFailed_Mount =
+    TestLabel "unlock local failure handled" $
+    TestCase $ do
+        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let mock = addMockExecResults results mockWithVaultAndRepoDir
+                   where results = [ D.loopSetupExec  True  D.remoteOp
+                                   , D.unlockExec     True  D.remoteOp
+                                   , D.mountExec      True  D.remoteOp
+                                   , D.loopSetupExec  True  D.localOp
+                                   , D.unlockExec     True  D.localOp
+                                   , D.mountExec      False D.localOp
+                                   , D.lockExec       True  D.localOp
+                                   , D.loopDeleteExec True  D.localOp
+                                   , D.unmountExec    True  D.remoteOp
+                                   , D.lockExec       True  D.remoteOp
+                                   , D.loopDeleteExec True  D.remoteOp
+                                   ]
+        let result = runState (runExceptT $ operation) mock
+        let mockAfterExec = snd result
+
+        let expectedError = Left $ D.showFailedCmd (D.mountCmd D.localOp)
+        assertEqual "sync failed" expectedError (fst result)
+
+        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+                               , D.unlockCmd     D.remoteOp
+                               , D.mountCmd      D.remoteOp
+                               , D.loopSetupCmd  D.localOp
+                               , D.unlockCmd     D.localOp
+                               , D.mountCmd      D.localOp
+                               , D.lockCmd       D.localOp
+                               , D.loopDeleteCmd D.localOp
+                               , D.unmountCmd    D.remoteOp
+                               , D.lockCmd       D.remoteOp
+                               , D.loopDeleteCmd D.remoteOp
+                               ]
+        assertEqual "commands"
+            expectedCommands
+            (execRecorded mockAfterExec)
+        assertAllExecsConsumed mockAfterExec
+
+test_sync_LocalFailed_GitLog :: Test
+test_sync_LocalFailed_GitLog =
+    TestLabel "git-log local failure handled" $
+    TestCase $ do
+        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let mock = addMockExecResults results mockWithVaultAndRepoDir
+                   where results = [ D.loopSetupExec  True  D.remoteOp
+                                   , D.unlockExec     True  D.remoteOp
+                                   , D.mountExec      True  D.remoteOp
+                                   , D.loopSetupExec  True  D.localOp
+                                   , D.unlockExec     True  D.localOp
+                                   , D.mountExec      True  D.localOp
+                                   , D.gitLogExec     False D.localOp
+                                   , D.unmountExec    True  D.localOp
+                                   , D.lockExec       True  D.localOp
+                                   , D.loopDeleteExec True  D.localOp
+                                   , D.unmountExec    True  D.remoteOp
+                                   , D.lockExec       True  D.remoteOp
+                                   , D.loopDeleteExec True  D.remoteOp
+                                   ]
+        let result = runState (runExceptT $ operation) mock
+        let mockAfterExec = snd result
+
+        let expectedError = Left $ D.showFailedCmd (D.gitLogCmd D.localOp)
+        assertEqual "sync failed" expectedError (fst result)
+
+        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+                               , D.unlockCmd     D.remoteOp
+                               , D.mountCmd      D.remoteOp
+                               , D.loopSetupCmd  D.localOp
+                               , D.unlockCmd     D.localOp
+                               , D.mountCmd      D.localOp
+                               , D.gitFetchCmd   "remoteA" D.localOp
+                               , D.gitLogCmd     D.localOp
+                               , D.unmountCmd    D.localOp
+                               , D.lockCmd       D.localOp
+                               , D.loopDeleteCmd D.localOp
+                               , D.unmountCmd    D.remoteOp
+                               , D.lockCmd       D.remoteOp
+                               , D.loopDeleteCmd D.remoteOp
+                               ]
+        assertEqual "commands"
+            expectedCommands
+            (execRecorded mockAfterExec)
+        assertAllExecsConsumed mockAfterExec

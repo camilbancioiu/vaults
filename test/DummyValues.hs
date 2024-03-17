@@ -35,6 +35,13 @@ remoteOp = DummyOp {
     , commitLog     = "38a3\nfb22\n8c2a\n02ad\n"
 }
 
+--  Left "loop-setup failed: \ncommand: [\"loop-setup\",\"-f\",\"remoteA.vault\"]"
+showFailedCmd :: (FilePath, [String]) -> String
+showFailedCmd ("git", "log":_) =
+    "git log failed: "
+showFailedCmd (_, cmd@(subcmd:params)) =
+    subcmd ++ " failed: \ncommand: " ++ (show cmd)
+
 editCmd :: DummyOp -> (FilePath, [String])
 editCmd _ = ("nvim", ["."])
 
