@@ -51,6 +51,7 @@ doSyncVault remote vi = do
 -- 7. remote loop-delete
 syncLocalPartition :: Substrate.Substrate m => VaultInfo -> VaultRuntimeInfo -> FilePath -> ExceptT String m ()
 syncLocalPartition vi remoteVRI remote = do
+    lift $ Substrate.changeDir (srcDir remoteVRI)
     localVRI <- openVault $ (localname vi) ++ ".vault"
     (performSync localVRI remote)
         `catchError` (\e -> closeVault localVRI >> throwError e)
