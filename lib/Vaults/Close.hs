@@ -32,7 +32,9 @@ closeVault vri = do
 closeVaultDevice :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT String m ()
 closeVaultDevice vri = do
     lift $ Substrate.changeDir (Base.srcDir vri)
+    lift $ Substrate.delay 1000000
     U.unmountDevice (Base.mapperDev vri)
+    lift $ Substrate.delay 500000
     U.lockDevice (Base.mapperDev vri)
     U.deleteLoopDevice (Base.loopDev vri)
 

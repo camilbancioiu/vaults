@@ -19,3 +19,4 @@ class Monad m => Substrate m where
     changeDir     :: FilePath -> m ()
     exec          :: FilePath -> [String] -> String -> m ExecResult
     call          :: FilePath -> [String] -> m ()
+    delay         :: Int -> m ()

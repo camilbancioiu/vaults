@@ -130,6 +130,7 @@ instance Substrate.Substrate (State Mock) where
     changeDir = mock_changeDir
     exec      = mock_exec
     call      = mock_call
+    delay     = mock_delay
 
 mock_readFile :: FilePath -> State Mock String
 mock_readFile ".vault/name" = return (Base.name mockVaultInfo)
@@ -164,6 +165,9 @@ mock_call :: FilePath -> [String] -> State Mock ()
 mock_call executable params = do
     modify $ recordExec (executable, params)
     modify incExecs
+
+mock_delay :: Int -> State Mock ()
+mock_delay _ = return ()
 
 mockVaultInfo = Base.VaultInfo {
     Base.name = "mockVault",
