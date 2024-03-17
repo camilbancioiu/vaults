@@ -27,8 +27,8 @@ doDownloadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doDownloadVault vi = mapM_ (downloadVaultPartition vi) (remotes vi)
 
 -- TODO write tests
-doSyncVault :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
-doSyncVault vi remote = do
+doSyncVault :: Substrate.Substrate m => FilePath -> VaultInfo -> ExceptT String m ()
+doSyncVault remote vi = do
     remoteVRI <- openVault $ remote ++ ".vault"
     (syncLocalPartition vi remoteVRI remote)
         `catchError` (\e -> closeVault remoteVRI >> throwError e)

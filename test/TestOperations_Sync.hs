@@ -34,7 +34,7 @@ test_syncSuccessful :: Test
 test_syncSuccessful =
     TestLabel "sync successful" $
     TestCase $ do
-        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         -- TODO There is no `git fetch` in the execResults below because `git
         -- fetch` is called with Substrate.call, not Substrate.exec. A
         -- different test is requried to assert on errors with `git fetch`.
@@ -85,7 +85,7 @@ test_sync_RemoteFailed_LoopSetup :: Test
 test_sync_RemoteFailed_LoopSetup =
     TestLabel "remote loop-setup failure handled" $
     TestCase $ do
-        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [ D.loopSetupExec False D.remoteOp ]
         let result = runState (runExceptT $ operation) mock
@@ -104,7 +104,7 @@ test_sync_RemoteFailed_Unlock :: Test
 test_sync_RemoteFailed_Unlock =
     TestLabel "remote unlock failure handled" $
     TestCase $ do
-        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [ D.loopSetupExec  True  D.remoteOp
                                    , D.unlockExec     False D.remoteOp
@@ -129,7 +129,7 @@ test_sync_RemoteFailed_Mount :: Test
 test_sync_RemoteFailed_Mount =
     TestLabel "remote mount failure handled" $
     TestCase $ do
-        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [ D.loopSetupExec  True  D.remoteOp
                                    , D.unlockExec     True  D.remoteOp
@@ -158,7 +158,7 @@ test_sync_LocalFailed_LoopSetup :: Test
 test_sync_LocalFailed_LoopSetup =
     TestLabel "local loop-setup failure handled" $
     TestCase $ do
-        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [ D.loopSetupExec  True  D.remoteOp
                                    , D.unlockExec     True  D.remoteOp
@@ -191,7 +191,7 @@ test_sync_LocalFailed_Unlock :: Test
 test_sync_LocalFailed_Unlock =
     TestLabel "unlock local failure handled" $
     TestCase $ do
-        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [ D.loopSetupExec  True  D.remoteOp
                                    , D.unlockExec     True  D.remoteOp
@@ -228,7 +228,7 @@ test_sync_LocalFailed_Mount :: Test
 test_sync_LocalFailed_Mount =
     TestLabel "unlock local failure handled" $
     TestCase $ do
-        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [ D.loopSetupExec  True  D.remoteOp
                                    , D.unlockExec     True  D.remoteOp
@@ -269,7 +269,7 @@ test_sync_LocalFailed_GitLog :: Test
 test_sync_LocalFailed_GitLog =
     TestLabel "git-log local failure handled" $
     TestCase $ do
-        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [ D.loopSetupExec  True  D.remoteOp
                                    , D.unlockExec     True  D.remoteOp
@@ -315,7 +315,7 @@ test_sync_LocalFailed_Unmount :: Test
 test_sync_LocalFailed_Unmount =
     TestLabel "local unmount failure handled" $
     TestCase $ do
-        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [ D.loopSetupExec  True  D.remoteOp
                                    , D.unlockExec     True  D.remoteOp
@@ -357,7 +357,7 @@ test_sync_LocalFailed_Lock :: Test
 test_sync_LocalFailed_Lock =
     TestLabel "local lock failure handled" $
     TestCase $ do
-        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [ D.loopSetupExec  True  D.remoteOp
                                    , D.unlockExec     True  D.remoteOp
@@ -402,7 +402,7 @@ test_sync_LocalFailed_LoopDelete :: Test
 test_sync_LocalFailed_LoopDelete =
     TestLabel "local lock failure handled" $
     TestCase $ do
-        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [ D.loopSetupExec  True  D.remoteOp
                                    , D.unlockExec     True  D.remoteOp
@@ -448,7 +448,7 @@ test_sync_RemoteFailed_Unmount :: Test
 test_sync_RemoteFailed_Unmount =
     TestLabel "local unmount failure handled" $
     TestCase $ do
-        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [ D.loopSetupExec  True  D.remoteOp
                                    , D.unlockExec     True  D.remoteOp
@@ -490,7 +490,7 @@ test_sync_RemoteFailed_Lock :: Test
 test_sync_RemoteFailed_Lock =
     TestLabel "local lock failure handled" $
     TestCase $ do
-        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [ D.loopSetupExec  True  D.remoteOp
                                    , D.unlockExec     True  D.remoteOp
@@ -535,7 +535,7 @@ test_sync_RemoteFailed_LoopDelete :: Test
 test_sync_RemoteFailed_LoopDelete =
     TestLabel "local lock failure handled" $
     TestCase $ do
-        let operation = Operations.doSyncVault mockVaultInfo "remoteA"
+        let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
                    where results = [ D.loopSetupExec  True  D.remoteOp
                                    , D.unlockExec     True  D.remoteOp
