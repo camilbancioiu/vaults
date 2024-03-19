@@ -23,7 +23,7 @@ doEditVault vi = do
 callNVIM :: Substrate.Substrate m => VaultRuntimeInfo -> ExceptT String m ()
 callNVIM vri = do
     let nvimInit = (repositoryDir vri) ++ "/.config/nvim/init.vim"
-    lift $ Substrate.echo $ "nvim config " ++ nvimInit
+    lift $ Substrate.echo $ "found nvim config at " ++ nvimInit
     lift $ Substrate.call "nvim" [ "--clean"
                                  , "-c source " ++ nvimInit
                                  , "."
