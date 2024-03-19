@@ -20,3 +20,4 @@ class Monad m => Substrate m where
     exec          :: FilePath -> [String] -> String -> m ExecResult
     call          :: FilePath -> [String] -> m ()
     delay         :: Int -> m ()
+    echo          :: String -> m ()

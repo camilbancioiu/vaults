@@ -17,6 +17,7 @@ instance Substrate.Substrate IO where
     exec      = execIOProcess
     call      = System.Process.callProcess
     delay     = Control.Concurrent.threadDelay
+    echo      = putStrLn
 
 execIOProcess :: String -> [String] -> String -> IO Substrate.ExecResult
 execIOProcess cmd args sin = do

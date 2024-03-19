@@ -13,10 +13,21 @@ import Vaults.Close
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doEditVault vi = do
     vri <- openVault $ (localname vi) ++ ".vault"
-    (do lift $ Substrate.changeDir (repositoryDir vri)
-        lift $ Substrate.call "nvim" ["."])
+    (do
+        lift $ Substrate.changeDir (repositoryDir vri)
+        callNVIM vri
+        )
         `catchError` (\e -> closeVault vri >> throwError e)
     closeVault vri
+
+callNVIM :: Substrate.Substrate m => VaultRuntimeInfo -> ExceptT String m ()
+callNVIM vri = do
+    let nvimInit = (repositoryDir vri) ++ "/.config/nvim/init.vim"
+    lift $ Substrate.echo $ "nvim config " ++ nvimInit
+    lift $ Substrate.call "nvim" [ "--clean"
+                                 , "-c source " ++ nvimInit
+                                 , "."
+                                 ]
 
 -- TODO write tests
 doUploadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
