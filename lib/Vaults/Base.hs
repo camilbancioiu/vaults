@@ -11,24 +11,22 @@ data PartitionLocation = LocalPartition
                        | UnknownPartition
                        deriving (Eq, Show, Read)
 
-type OpResult = Either String ()
-
 data VaultInfo = VaultInfo {
-    name :: String,
-    localname :: String,
-    remotes :: [String],
-    remoteStore :: String
+      name :: String
+    , localname :: String
+    , remotes :: [String]
+    , remoteStore :: String
 } deriving (Eq, Show)
 
 data VaultRuntimeInfo = VaultRuntimeInfo {
-    srcDir :: FilePath,
-    loopDev :: FilePath,
-    mapperDev :: FilePath,
-    repositoryDir :: FilePath,
-    mountpoint :: FilePath,
-    partition :: FilePath,
-    partitionName :: FilePath,
-    partitionLocation :: PartitionLocation
+      srcDir :: FilePath
+    , loopDev :: FilePath
+    , mapperDev :: FilePath
+    , repositoryDir :: FilePath
+    , mountpoint :: FilePath
+    , partition :: FilePath
+    , partitionName :: FilePath
+    , partitionLocation :: PartitionLocation
 } deriving (Eq, Show, Read)
 
 loadVaultInfo :: Substrate.Substrate m => m VaultInfo
