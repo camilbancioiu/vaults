@@ -9,19 +9,26 @@ import qualified Vaults.Substrate as Substrate
 import Vaults.Open
 import Vaults.Close
 
+data EditOpCfg = EditCfg {
+      editor :: FilePath
+    , editorCLIParams :: [String]
+    , autoCommitOnClose :: Bool
+    , autoExportCommitLogOnClose :: Bool
+}
+
 -- TODO write tests
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doEditVault vi = do
     vri <- openVault $ (localname vi) ++ ".vault"
     (do
         lift $ Substrate.changeDir (repositoryDir vri)
-        callNVIM vri
+        callEditor vri
         )
         `catchError` (\e -> closeVault vri >> throwError e)
     closeVault vri
 
-callNVIM :: Substrate.Substrate m => VaultRuntimeInfo -> ExceptT String m ()
-callNVIM vri = do
+callEditor :: Substrate.Substrate m => VaultRuntimeInfo -> ExceptT String m ()
+callEditor vri = do
     let nvimInit = (repositoryDir vri) ++ "/.config/nvim/init.vim"
     lift $ Substrate.echo $ "found nvim config at " ++ nvimInit
     lift $ Substrate.call "nvim" [ "--clean"
@@ -38,14 +45,6 @@ doDownloadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doDownloadVault vi = mapM_ (downloadVaultPartition vi) (remotes vi)
 
 -- TODO write tests
-doSyncVault :: Substrate.Substrate m => FilePath -> VaultInfo -> ExceptT String m ()
-doSyncVault remote vi = do
-    remoteVRI <- openVault $ remote ++ ".vault"
-    (syncLocalPartition vi remoteVRI remote)
-        `catchError` (\e -> closeVault remoteVRI >> throwError e)
-    closeVault remoteVRI
-
--- TODO write tests
 -- TODO consider alternate procedure (safer?)
 -- 1. remote loop-setup
 -- 1. local loop-setup
@@ -60,6 +59,13 @@ doSyncVault remote vi = do
 -- 6. remote lock
 -- 7. local loop-delete
 -- 7. remote loop-delete
+doSyncVault :: Substrate.Substrate m => FilePath -> VaultInfo -> ExceptT String m ()
+doSyncVault remote vi = do
+    remoteVRI <- openVault $ remote ++ ".vault"
+    (syncLocalPartition vi remoteVRI remote)
+        `catchError` (\e -> closeVault remoteVRI >> throwError e)
+    closeVault remoteVRI
+
 syncLocalPartition :: Substrate.Substrate m => VaultInfo -> VaultRuntimeInfo -> FilePath -> ExceptT String m ()
 syncLocalPartition vi remoteVRI remote = do
     lift $ Substrate.changeDir (srcDir remoteVRI)
@@ -68,7 +74,6 @@ syncLocalPartition vi remoteVRI remote = do
         `catchError` (\e -> closeVault localVRI >> throwError e)
     closeVault localVRI
 
--- TODO write tests
 performSync :: Substrate.Substrate m => VaultRuntimeInfo -> FilePath -> ExceptT String m ()
 performSync localVRI remote = do
     lift $ Substrate.changeDir (repositoryDir localVRI)
