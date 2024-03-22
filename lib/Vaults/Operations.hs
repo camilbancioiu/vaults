@@ -9,20 +9,6 @@ import qualified Vaults.Substrate as Substrate
 import Vaults.Open
 import Vaults.Close
 
-data EditOpCfg = EditCfg {
-      editor :: FilePath
-    , editorCLIParams :: [String]
-    , autoCommitOnClose :: Bool
-} deriving (Show, Read)
-
-defaultEditCfg = EditCfg {
-      editor = "nvim"
-    , editorCLIParams = [ "--clean"
-                        , "-c ./.config/nvim/init.vim"
-                        , "." ]
-    , autoCommitOnClose = True
-}
-
 -- TODO write tests
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doEditVault vi = do
