@@ -43,7 +43,6 @@ showFailedCmd (_, cmd@(subcmd:params)) =
 
 editCmd :: DummyOp -> (FilePath, [String])
 editCmd _ = ("nvim", [ "--clean"
-                     , "-c ./.config/nvim/init.vim"
                      , "."
                      ])
 

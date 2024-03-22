@@ -130,6 +130,9 @@ instance Substrate.Substrate (State Mock) where
     fileExists = mock_fileExists
     getDir     = mock_getDir
     changeDir  = mock_changeDir
+    lookupEnv = mock_lookupEnv
+    setEnv    = mock_setEnv
+    unsetEnv  = mock_unsetEnv
     exec       = mock_exec
     call       = mock_call
     delay      = mock_delay
@@ -159,6 +162,17 @@ mock_getDir = gets currentDir
 
 mock_changeDir :: String -> State Mock ()
 mock_changeDir dir = modify (setCurrentDir dir)
+
+mock_lookupEnv :: String -> State Mock (Maybe String)
+mock_lookupEnv key = do
+    mock <- get
+    return (lookup key $ envVars mock)
+
+mock_setEnv :: String -> String -> State Mock ()
+mock_setEnv key val = modify (addMockEnvVar key val)
+
+mock_unsetEnv :: String -> State Mock ()
+mock_unsetEnv key = modify (removeMockEnvVar key)
 
 mock_exec :: String -> [String] -> String -> State Mock Substrate.ExecResult
 mock_exec executable params _ = do

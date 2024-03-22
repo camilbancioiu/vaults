@@ -9,8 +9,6 @@ data EditOpCfg = EditCfg {
 defaultEditCfg = EditCfg {
       editor = "nvim"
     , editorCLIParams = [ "--clean"
-                        , "-c ./.config/nvim/init.vim"
                         , "." ]
     , autoCommitOnClose = True
 }
-

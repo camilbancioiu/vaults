@@ -8,6 +8,7 @@ import qualified Vaults.Substrate as Substrate
 
 import Vaults.Open
 import Vaults.Close
+import qualified Vaults.CustomCfg as Cfg
 
 -- TODO write tests
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
@@ -22,8 +23,8 @@ doEditVault vi = do
 
 callEditor :: Substrate.Substrate m => VaultRuntimeInfo -> ExceptT String m ()
 callEditor vri = do
-    let cfg = defaultEditCfg
-    lift $ Substrate.call (editor cfg) (editorCLIParams cfg)
+    let cfg = Cfg.defaultEditCfg
+    lift $ Substrate.call (Cfg.editor cfg) (Cfg.editorCLIParams cfg)
 
 -- TODO write tests
 doShellVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()

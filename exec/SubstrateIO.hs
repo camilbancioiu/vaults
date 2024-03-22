@@ -15,6 +15,9 @@ instance Substrate.Substrate IO where
     fileExists = System.Directory.doesFileExist
     getDir     = System.Directory.getCurrentDirectory
     changeDir  = System.Directory.setCurrentDirectory
+    lookupEnv  = System.Environment.lookupEnv
+    setEnv     = System.Environment.setEnv
+    unsetEnv   = System.Environment.unsetEnv
     exec       = execIOProcess
     call       = System.Process.callProcess
     delay      = Control.Concurrent.threadDelay
