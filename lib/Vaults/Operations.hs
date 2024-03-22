@@ -13,7 +13,14 @@ data EditOpCfg = EditCfg {
       editor :: FilePath
     , editorCLIParams :: [String]
     , autoCommitOnClose :: Bool
-    , autoExportCommitLogOnClose :: Bool
+} deriving (Show, Read)
+
+defaultEditCfg = EditCfg {
+      editor = "nvim"
+    , editorCLIParams = [ "--clean"
+                        , "-c ./.config/nvim/init.vim"
+                        , "." ]
+    , autoCommitOnClose = True
 }
 
 -- TODO write tests
@@ -31,10 +38,7 @@ callEditor :: Substrate.Substrate m => VaultRuntimeInfo -> ExceptT String m ()
 callEditor vri = do
     let nvimInit = (repositoryDir vri) ++ "/.config/nvim/init.vim"
     lift $ Substrate.echo $ "found nvim config at " ++ nvimInit
-    lift $ Substrate.call "nvim" [ "--clean"
-                                 , "-c source " ++ nvimInit
-                                 , "."
-                                 ]
+    lift $ Substrate.call "nvim" [ "." ]
 
 -- TODO write tests
 doUploadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()

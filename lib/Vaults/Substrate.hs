@@ -15,6 +15,7 @@ class Monad m => Substrate m where
     readFile      :: FilePath -> m String
     writeFile     :: FilePath -> String -> m ()
     dirExists     :: FilePath -> m Bool
+    fileExists    :: FilePath -> m Bool
     getDir        :: m FilePath
     changeDir     :: FilePath -> m ()
     exec          :: FilePath -> [String] -> String -> m ExecResult

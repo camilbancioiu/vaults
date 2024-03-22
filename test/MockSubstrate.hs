@@ -13,6 +13,7 @@ data Mock = Mock {
     prevDir :: FilePath,
     hasVaultDir :: Bool,
     hasRepoDir :: Bool,
+    hasNVIMConfig :: Bool,
     envVars :: [(String, String)],
     nExecs :: Int,
     execRecorded :: [(String, [String])],
@@ -123,15 +124,16 @@ openVaultOkRemote      = [loopSetupOk2, unlockOk2, mountOk2]
 closeVaultOkRemote     = [unmountOk, lockOk2, loopDeleteOk]
 
 instance Substrate.Substrate (State Mock) where
-    readFile  = mock_readFile
-    writeFile = mock_writeFile
-    dirExists = mock_dirExists
-    getDir    = mock_getDir
-    changeDir = mock_changeDir
-    exec      = mock_exec
-    call      = mock_call
-    delay     = mock_delay
-    echo      = mock_echo
+    readFile   = mock_readFile
+    writeFile  = mock_writeFile
+    dirExists  = mock_dirExists
+    fileExists = mock_fileExists
+    getDir     = mock_getDir
+    changeDir  = mock_changeDir
+    exec       = mock_exec
+    call       = mock_call
+    delay      = mock_delay
+    echo       = mock_echo
 
 mock_readFile :: FilePath -> State Mock String
 mock_readFile ".vault/name" = return (Base.name mockVaultInfo)
@@ -147,6 +149,10 @@ mock_dirExists :: FilePath -> State Mock Bool
 mock_dirExists ".vault" = gets hasVaultDir
 mock_dirExists "repo" = gets hasRepoDir
 mock_dirExists _ = return False
+
+mock_fileExists :: FilePath -> State Mock Bool
+mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig
+mock_fileExists _ = return False
 
 mock_getDir :: State Mock String
 mock_getDir = gets currentDir
@@ -197,6 +203,7 @@ emptyMock = Mock {
     , prevDir = "/"
     , hasVaultDir = False
     , hasRepoDir = False
+    , hasNVIMConfig = False
     , envVars = []
     , nExecs = 0
     , execRecorded = []
