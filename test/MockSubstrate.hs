@@ -138,6 +138,10 @@ instance Substrate.Substrate (State Mock) where
     delay      = mock_delay
     echo       = mock_echo
 
+mock_fileExists :: FilePath -> State Mock Bool
+mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig
+mock_fileExists _ = return False
+
 mock_readFile :: FilePath -> State Mock String
 mock_readFile ".vault/name" = return (Base.name mockVaultInfo)
 mock_readFile ".vault/local" = return (Base.localname mockVaultInfo)
@@ -152,10 +156,6 @@ mock_dirExists :: FilePath -> State Mock Bool
 mock_dirExists ".vault" = gets hasVaultDir
 mock_dirExists "repo" = gets hasRepoDir
 mock_dirExists _ = return False
-
-mock_fileExists :: FilePath -> State Mock Bool
-mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig
-mock_fileExists _ = return False
 
 mock_getDir :: State Mock String
 mock_getDir = gets currentDir

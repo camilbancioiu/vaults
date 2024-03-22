@@ -43,3 +43,11 @@ test_editSuccessful =
             expectedCommands
             (execRecorded mockAfterExec)
         assertAllExecsConsumed mockAfterExec
+
+test_callEditor :: Test
+test_callEditor = do
+    TestLabel "read editor config and call it" $
+    TestCase $ do
+        let operation = callEditor
+
+
