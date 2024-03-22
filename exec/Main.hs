@@ -30,11 +30,12 @@ main = do
     operation <- execParser operationsParser
 
     let doOperation = case operation of
-                        EditVault        -> Operations.doEditVault
-                        UploadVault      -> Operations.doUploadVault
-                        DownloadVault    -> Operations.doDownloadVault
-                        SyncVault remote -> Operations.doSyncVault remote
-                        DiffLog _        -> doError "not implemented"
+                        EditVault         -> Operations.doEditVault
+                        ShellVault        -> Operations.doShellVault
+                        UploadVault       -> Operations.doUploadVault
+                        DownloadVault     -> Operations.doDownloadVault
+                        SyncVault remote  -> Operations.doSyncVault remote
+                        DiffLog _         -> doError "not implemented"
 
     result <- runExceptT $ doOperation vi
     case result of

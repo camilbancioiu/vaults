@@ -42,7 +42,10 @@ showFailedCmd (_, cmd@(subcmd:params)) =
     subcmd ++ " failed: \ncommand: " ++ (show cmd)
 
 editCmd :: DummyOp -> (FilePath, [String])
-editCmd _ = ("nvim", ["."])
+editCmd _ = ("nvim", [ "--clean"
+                     , "-c ./.config/nvim/init.vim"
+                     , "."
+                     ])
 
 gitFetchCmd :: String -> DummyOp -> (FilePath, [String])
 gitFetchCmd remote _ = ("git", ["fetch", remote])
