@@ -24,6 +24,9 @@ doEditVault vi = do
 callEditor :: Substrate.Substrate m => VaultRuntimeInfo -> ExceptT String m ()
 callEditor vri = do
     let cfg = Cfg.defaultEditCfg
+    let envkey = fst $ Cfg.envVar cfg
+    let envvalue = snd $ Cfg.envVar cfg
+    lift $ Substrate.setEnv envkey envvalue
     lift $ Substrate.call (Cfg.editor cfg) (Cfg.editorCLIParams cfg)
 
 -- TODO write tests
