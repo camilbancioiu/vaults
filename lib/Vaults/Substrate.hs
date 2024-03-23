@@ -15,8 +15,12 @@ class Monad m => Substrate m where
     readFile      :: FilePath -> m String
     writeFile     :: FilePath -> String -> m ()
     dirExists     :: FilePath -> m Bool
+    fileExists    :: FilePath -> m Bool
     getDir        :: m FilePath
     changeDir     :: FilePath -> m ()
+    lookupEnv     :: String -> m (Maybe String)
+    setEnv        :: String -> String -> m ()
+    unsetEnv      :: String -> m ()
     exec          :: FilePath -> [String] -> String -> m ExecResult
     call          :: FilePath -> [String] -> m ()
     delay         :: Int -> m ()

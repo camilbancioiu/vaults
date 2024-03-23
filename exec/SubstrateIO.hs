@@ -9,15 +9,19 @@ import Control.Concurrent
 import qualified Vaults.Substrate as Substrate
 
 instance Substrate.Substrate IO where
-    readFile  = Prelude.readFile
-    writeFile = Prelude.writeFile
-    dirExists = System.Directory.doesDirectoryExist
-    getDir    = System.Directory.getCurrentDirectory
-    changeDir = System.Directory.setCurrentDirectory
-    exec      = execIOProcess
-    call      = System.Process.callProcess
-    delay     = Control.Concurrent.threadDelay
-    echo      = putStrLn
+    readFile   = Prelude.readFile
+    writeFile  = Prelude.writeFile
+    dirExists  = System.Directory.doesDirectoryExist
+    fileExists = System.Directory.doesFileExist
+    getDir     = System.Directory.getCurrentDirectory
+    changeDir  = System.Directory.setCurrentDirectory
+    lookupEnv  = System.Environment.lookupEnv
+    setEnv     = System.Environment.setEnv
+    unsetEnv   = System.Environment.unsetEnv
+    exec       = execIOProcess
+    call       = System.Process.callProcess
+    delay      = Control.Concurrent.threadDelay
+    echo       = putStrLn
 
 execIOProcess :: String -> [String] -> String -> IO Substrate.ExecResult
 execIOProcess cmd args sin = do

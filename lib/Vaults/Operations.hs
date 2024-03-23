@@ -8,13 +8,7 @@ import qualified Vaults.Substrate as Substrate
 
 import Vaults.Open
 import Vaults.Close
-
-data EditOpCfg = EditCfg {
-      editor :: FilePath
-    , editorCLIParams :: [String]
-    , autoCommitOnClose :: Bool
-    , autoExportCommitLogOnClose :: Bool
-}
+import qualified Vaults.CustomCfg as Cfg
 
 -- TODO write tests
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
@@ -29,12 +23,26 @@ doEditVault vi = do
 
 callEditor :: Substrate.Substrate m => VaultRuntimeInfo -> ExceptT String m ()
 callEditor vri = do
-    let nvimInit = (repositoryDir vri) ++ "/.config/nvim/init.vim"
-    lift $ Substrate.echo $ "found nvim config at " ++ nvimInit
-    lift $ Substrate.call "nvim" [ "--clean"
-                                 , "-c source " ++ nvimInit
-                                 , "."
-                                 ]
+    let cfg = Cfg.defaultEditCfg
+    let envkey = fst $ Cfg.envVar cfg
+    let envvalue = snd $ Cfg.envVar cfg
+    lift $ Substrate.setEnv envkey envvalue
+    lift $ Substrate.call (Cfg.editor cfg) (Cfg.editorCLIParams cfg)
+
+-- TODO write tests
+doShellVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
+doShellVault vi = do
+    vri <- openVault $ (localname vi) ++ ".vault"
+    (do
+        lift $ Substrate.changeDir (repositoryDir vri)
+        callShell vri
+        )
+        `catchError` (\e -> closeVault vri >> throwError e)
+    closeVault vri
+
+callShell :: Substrate.Substrate m => VaultRuntimeInfo -> ExceptT String m ()
+callShell vri = do
+    lift $ Substrate.call "/bin/sh" []
 
 -- TODO write tests
 doUploadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()

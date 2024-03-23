@@ -13,6 +13,7 @@ data Mock = Mock {
     prevDir :: FilePath,
     hasVaultDir :: Bool,
     hasRepoDir :: Bool,
+    hasNVIMConfig :: Bool,
     envVars :: [(String, String)],
     nExecs :: Int,
     execRecorded :: [(String, [String])],
@@ -123,15 +124,23 @@ openVaultOkRemote      = [loopSetupOk2, unlockOk2, mountOk2]
 closeVaultOkRemote     = [unmountOk, lockOk2, loopDeleteOk]
 
 instance Substrate.Substrate (State Mock) where
-    readFile  = mock_readFile
-    writeFile = mock_writeFile
-    dirExists = mock_dirExists
-    getDir    = mock_getDir
-    changeDir = mock_changeDir
-    exec      = mock_exec
-    call      = mock_call
-    delay     = mock_delay
-    echo      = mock_echo
+    readFile   = mock_readFile
+    writeFile  = mock_writeFile
+    dirExists  = mock_dirExists
+    fileExists = mock_fileExists
+    getDir     = mock_getDir
+    changeDir  = mock_changeDir
+    lookupEnv = mock_lookupEnv
+    setEnv    = mock_setEnv
+    unsetEnv  = mock_unsetEnv
+    exec       = mock_exec
+    call       = mock_call
+    delay      = mock_delay
+    echo       = mock_echo
+
+mock_fileExists :: FilePath -> State Mock Bool
+mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig
+mock_fileExists _ = return False
 
 mock_readFile :: FilePath -> State Mock String
 mock_readFile ".vault/name" = return (Base.name mockVaultInfo)
@@ -153,6 +162,17 @@ mock_getDir = gets currentDir
 
 mock_changeDir :: String -> State Mock ()
 mock_changeDir dir = modify (setCurrentDir dir)
+
+mock_lookupEnv :: String -> State Mock (Maybe String)
+mock_lookupEnv key = do
+    mock <- get
+    return (lookup key $ envVars mock)
+
+mock_setEnv :: String -> String -> State Mock ()
+mock_setEnv key val = modify (addMockEnvVar key val)
+
+mock_unsetEnv :: String -> State Mock ()
+mock_unsetEnv key = modify (removeMockEnvVar key)
 
 mock_exec :: String -> [String] -> String -> State Mock Substrate.ExecResult
 mock_exec executable params _ = do
@@ -197,6 +217,7 @@ emptyMock = Mock {
     , prevDir = "/"
     , hasVaultDir = False
     , hasRepoDir = False
+    , hasNVIMConfig = False
     , envVars = []
     , nExecs = 0
     , execRecorded = []
