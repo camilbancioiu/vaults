@@ -1,10 +1,11 @@
 module DummyValues where
 
 import System.Exit
+import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Sub
 
 data DummyOp = DummyOp {
-      partitionName :: FilePath
+      partitionFile :: FilePath
     , loopDev       :: FilePath
     , mapperDev     :: FilePath
     , mountpoint    :: FilePath
@@ -12,7 +13,7 @@ data DummyOp = DummyOp {
 }
 
 localOp = DummyOp {
-      partitionName = "local.vault"
+      partitionFile = "local.vault"
     , loopDev       = "/dev/loop42"
     , mapperDev     = "/dev/dm-4"
     , mountpoint    = "/mnt/point"
@@ -20,7 +21,7 @@ localOp = DummyOp {
 }
 
 localOp2 = DummyOp {
-      partitionName = "local.vault"
+      partitionFile = "local.vault"
     , loopDev       = "/dev/loop9"
     , mapperDev     = "/dev/dm-2"
     , mountpoint    = "/run/media/user/localhostname/mockVault"
@@ -28,7 +29,7 @@ localOp2 = DummyOp {
 }
 
 remoteOp = DummyOp {
-      partitionName = "remoteA.vault"
+      partitionFile = "remoteA.vault"
     , loopDev       = "/dev/loop84"
     , mapperDev     = "/dev/dm-8"
     , mountpoint    = "/mnt/point2"
@@ -40,6 +41,18 @@ showFailedCmd ("git", "log":_) =
     "git log failed: "
 showFailedCmd (_, cmd@(subcmd:params)) =
     subcmd ++ " failed: \ncommand: " ++ (show cmd)
+
+makeVRI ::DummyOp -> FilePath -> Base.VaultRuntimeInfo
+makeVRI op repoDir = Base.VaultRuntimeInfo {
+      Base.srcDir = "/home/user"
+    , Base.loopDev = loopDev op
+    , Base.mapperDev = mapperDev op
+    , Base.mountpoint = mountpoint op
+    , Base.repositoryDir = (mountpoint op) ++ repoDir
+    , Base.partition = partitionFile op
+    , Base.partitionName = "local"
+    , Base.partitionLocation = Base.LocalPartition
+}
 
 editCmd :: DummyOp -> (FilePath, [String])
 editCmd _ = ("nvim", [ "--clean"
@@ -60,7 +73,7 @@ openPartitionExecOk = [ loopSetupExec True, unlockExec True, mountExec True ]
 closePartitionExecOk = [ unmountExec True, lockExec True, loopDeleteExec True ]
 
 loopSetupCmd :: DummyOp -> (FilePath, [String])
-loopSetupCmd op = ("udisksctl", ["loop-setup", "-f", partitionName op])
+loopSetupCmd op = ("udisksctl", ["loop-setup", "-f", partitionFile op])
 
 unlockCmd :: DummyOp -> (FilePath, [String])
 unlockCmd op = ("udisksctl", ["unlock", "-b", loopDev op])
@@ -90,7 +103,7 @@ loopSetupExec success op =
     if not success
        then failedExecResult
        else successfulExecResult {
-                Sub.output = "Mapped file " ++ (partitionName op)
+                Sub.output = "Mapped file " ++ (partitionFile op)
                              ++ " as " ++ (loopDev op) ++ "."
             }
 

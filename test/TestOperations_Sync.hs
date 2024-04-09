@@ -45,7 +45,7 @@ test_syncSuccessful =
                                    , D.loopSetupExec  True  D.localOp
                                    , D.unlockExec     True  D.localOp
                                    , D.mountExec      True  D.localOp
-                                   , D.gitLogExec     True D.localOp
+                                   , D.gitLogExec     True  D.localOp
                                    , D.unmountExec    True  D.localOp
                                    , D.lockExec       True  D.localOp
                                    , D.loopDeleteExec True  D.localOp

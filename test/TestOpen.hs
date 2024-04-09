@@ -50,12 +50,14 @@ test_openVault :: Test
 test_openVault = TestList [
     TestLabel "loop-setup error prevents opening" $
     TestCase $ do
-        let mock = addMockExecResult loopSetupFail mockWithVaultDir
+        let mock = addMockExecResult result mockWithVaultDir
+                   where result = D.loopSetupExec False D.localOp
         let result = runState (runExceptT $ openVault "local.vault") mock
         let mockAfterExec = snd result
 
         let failParams = snd $ D.loopSetupCmd D.localOp
-        assertOpParamsError "loop-setup failed" failParams loopSetupFail result
+        let failExec = D.loopSetupExec False D.localOp
+        assertOpParamsError "loop-setup failed" failParams failExec result
 
         let expectedCommands = [ D.loopSetupCmd D.localOp ]
         assertEqual "only loop-setup was called"
@@ -69,17 +71,21 @@ test_openVault = TestList [
     TestLabel "unlock error prevents opening and deletes loop device" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultDir
-                   where results = [loopSetupOk, unlockFail, loopDeleteOk]
+                   where results = [ D.loopSetupExec True
+                                   , D.unlockExec    False
+                                   , D.loopDeleteExec  True
+                                   ] <*> (pure D.localOp)
         let result = runState (runExceptT $ openVault "local.vault") mock
         let mockAfterExec = snd result
 
         let failParams = snd $ D.unlockCmd D.localOp
-        assertOpParamsError "unlock failed" failParams unlockFail result
+        let failExec = D.unlockExec False D.localOp
+        assertOpParamsError "unlock failed" failParams failExec result
 
-        let expectedCommands = ([ D.loopSetupCmd
+        let expectedCommands = [ D.loopSetupCmd
                                 , D.unlockCmd
                                 , D.loopDeleteCmd
-                                ] <*> (pure D.localOp))
+                                ] <*> (pure D.localOp)
         assertEqual "loop-setup, unlock, loop-delete were called"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -91,19 +97,25 @@ test_openVault = TestList [
     TestLabel "mount error prevents opening and undoes unlock and loop-setup" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultDir
-                   where results = [loopSetupOk, unlockOk, mountFail, lockOk, loopDeleteOk]
+                   where results = [ D.loopSetupExec  True
+                                   , D.unlockExec     True
+                                   , D.mountExec      False
+                                   , D.lockExec       True
+                                   , D.loopDeleteExec True
+                                   ] <*> (pure D.localOp)
         let result = runState (runExceptT $ openVault "local.vault") mock
         let mockAfterExec = snd result
 
         let failParams = snd $ D.mountCmd D.localOp
-        assertOpParamsError "mount failed" failParams mountFail result
+        let failExec = D.mountExec False D.localOp
+        assertOpParamsError "mount failed" failParams failExec result
 
-        let expectedCommands = ([ D.loopSetupCmd
-                                , D.unlockCmd
-                                , D.mountCmd
-                                , D.lockCmd
-                                , D.loopDeleteCmd
-                                ] <*> (pure D.localOp))
+        let expectedCommands = [ D.loopSetupCmd
+                               , D.unlockCmd
+                               , D.mountCmd
+                               , D.lockCmd
+                               , D.loopDeleteCmd
+                               ] <*> (pure D.localOp)
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -115,11 +127,14 @@ test_openVault = TestList [
     TestLabel "mount succeeds, no inner repo" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultDir
-                   where results = [loopSetupOk, unlockOk, mountOk]
+                   where results = [ D.loopSetupExec True
+                                   , D.unlockExec    True
+                                   , D.mountExec     True
+                                   ] <*> (pure D.localOp)
         let result = runState (runExceptT $ openVault "local.vault") mock
         let mockAfterExec = snd result
 
-        let dummyVRI = makeDummyVRI ""
+        let dummyVRI = D.makeVRI D.localOp ""
         assertEqual "mount succeeds" (Right dummyVRI) (fst result)
 
         let expectedCommands = (D.openPartitionCmds <*> (pure D.localOp))
@@ -131,11 +146,14 @@ test_openVault = TestList [
     TestLabel "mount succeeds, vault has inner repo" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultAndRepoDir
-                   where results = [loopSetupOk, unlockOk, mountOk]
+                   where results = [ D.loopSetupExec True
+                                   , D.unlockExec    True
+                                   , D.mountExec     True
+                                   ] <*> (pure D.localOp)
         let result = runState (runExceptT $ openVault "local.vault") mock
         let mockAfterExec = snd result
 
-        let vri = makeDummyVRI "/repo"
+        let vri = D.makeVRI D.localOp "/repo"
         assertEqual "mount succeeds" (Right vri) (fst result)
 
         let expectedCommands = (D.openPartitionCmds <*> (pure D.localOp))
@@ -145,15 +163,3 @@ test_openVault = TestList [
         assertAllExecsConsumed mockAfterExec
 
     ]
-
-makeDummyVRI :: FilePath -> Base.VaultRuntimeInfo
-makeDummyVRI repoDir = Base.VaultRuntimeInfo {
-                  Base.srcDir = "/home/user",
-                  Base.loopDev = "/dev/loop42",
-                  Base.mapperDev = "/dev/dm-4",
-                  Base.mountpoint = "/mnt/point",
-                  Base.repositoryDir = "/mnt/point" ++ repoDir,
-                  Base.partition = "local.vault",
-                  Base.partitionName = "local",
-                  Base.partitionLocation = Base.LocalPartition
-              }

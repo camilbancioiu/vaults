@@ -31,7 +31,11 @@ test_closeVault = TestList [
     TestLabel "exporting commit log fails; closing vault succeeds" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultAndRepoDir
-                   where results = [gitLogFail, unmountOk, lockOk, loopDeleteOk]
+                   where results = [ D.gitLogExec       False
+                                   , D.unmountExec      True
+                                   , D.lockExec         True
+                                   , D.loopDeleteExec   True
+                                   ] <*> (pure D.localOp2)
         let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
         let mockAfterExec = snd result
 
@@ -50,7 +54,11 @@ test_closeVault = TestList [
     TestLabel "closing vault succeeds" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultAndRepoDir
-                   where results = [gitLogOk, unmountOk, lockOk, loopDeleteOk]
+                   where results = [ D.gitLogExec       False
+                                   , D.unmountExec      True
+                                   , D.lockExec         True
+                                   , D.loopDeleteExec   True
+                                   ] <*> (pure D.localOp2)
         let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
         let mockAfterExec = snd result
 
@@ -62,14 +70,17 @@ test_closeVault = TestList [
             "/home/user/vaults/mockVault"
             (currentDir mockAfterExec)
         assertEqual "git log saved"
-            ("/home/user/vaults/mockVault", "local.log", gitLogOutput)
+            ("/home/user/vaults/mockVault", "local.log", D.commitLog D.localOp)
             (writtenFile mockAfterExec)
         assertAllExecsConsumed mockAfterExec,
 
     TestLabel "closing remote vault succeeds" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultAndRepoDir
-                   where results = [unmountOk, lockOk, loopDeleteOk]
+                   where results = [ D.unmountExec      True
+                                   , D.lockExec         True
+                                   , D.loopDeleteExec   True
+                                   ] <*> (pure D.localOp2)
         let mockRemoteVRI = mockVaultRuntimeInfo {
             partitionLocation = RemotePartition
             }
