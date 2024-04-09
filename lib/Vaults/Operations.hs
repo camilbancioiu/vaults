@@ -3,24 +3,46 @@ module Vaults.Operations where
 import Control.Monad.Except
 import Data.List
 
-import Debug.Trace
-
 import Vaults.Base
 import qualified Vaults.Substrate as Substrate
 
 import Vaults.Open
 import Vaults.Close
+import qualified Vaults.CustomCfg as Cfg
 
 -- TODO write tests
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doEditVault vi = do
     vri <- openVault $ (localname vi) ++ ".vault"
-    (do lift $ Substrate.changeDir (trace "\n\ncd\n\n" (repositoryDir vri))
-        lift $ Substrate.call "nvim" ["."])
+    (do
+        lift $ Substrate.changeDir (repositoryDir vri)
+        callEditor vri
+        )
         `catchError` (\e -> closeVault vri >> throwError e)
-    trace "\n\nmark 1\n\n" (return ())
     closeVault vri
-    trace "\n\nmark 2\n\n" (return ())
+
+callEditor :: Substrate.Substrate m => VaultRuntimeInfo -> ExceptT String m ()
+callEditor vri = do
+    let cfg = Cfg.defaultEditCfg
+    let envkey = fst $ Cfg.envVar cfg
+    let envvalue = snd $ Cfg.envVar cfg
+    lift $ Substrate.setEnv envkey envvalue
+    lift $ Substrate.call (Cfg.editor cfg) (Cfg.editorCLIParams cfg)
+
+-- TODO write tests
+doShellVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
+doShellVault vi = do
+    vri <- openVault $ (localname vi) ++ ".vault"
+    (do
+        lift $ Substrate.changeDir (repositoryDir vri)
+        callShell vri
+        )
+        `catchError` (\e -> closeVault vri >> throwError e)
+    closeVault vri
+
+callShell :: Substrate.Substrate m => VaultRuntimeInfo -> ExceptT String m ()
+callShell vri = do
+    lift $ Substrate.call "/bin/sh" []
 
 -- TODO write tests
 doUploadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
@@ -31,22 +53,35 @@ doDownloadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doDownloadVault vi = mapM_ (downloadVaultPartition vi) (remotes vi)
 
 -- TODO write tests
-doSyncVault :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
-doSyncVault vi remote = do
+-- TODO consider alternate procedure (safer?)
+-- 1. remote loop-setup
+-- 1. local loop-setup
+-- 2. remote unlock
+-- 2. local unlock
+-- 3. remote mount
+-- 3. local mount
+-- 4. git fetch
+-- 5. local unmount
+-- 5. remote unmount
+-- 6. local lock
+-- 6. remote lock
+-- 7. local loop-delete
+-- 7. remote loop-delete
+doSyncVault :: Substrate.Substrate m => FilePath -> VaultInfo -> ExceptT String m ()
+doSyncVault remote vi = do
     remoteVRI <- openVault $ remote ++ ".vault"
     (syncLocalPartition vi remoteVRI remote)
         `catchError` (\e -> closeVault remoteVRI >> throwError e)
     closeVault remoteVRI
 
--- TODO write tests
 syncLocalPartition :: Substrate.Substrate m => VaultInfo -> VaultRuntimeInfo -> FilePath -> ExceptT String m ()
 syncLocalPartition vi remoteVRI remote = do
+    lift $ Substrate.changeDir (srcDir remoteVRI)
     localVRI <- openVault $ (localname vi) ++ ".vault"
     (performSync localVRI remote)
         `catchError` (\e -> closeVault localVRI >> throwError e)
     closeVault localVRI
 
--- TODO write tests
 performSync :: Substrate.Substrate m => VaultRuntimeInfo -> FilePath -> ExceptT String m ()
 performSync localVRI remote = do
     lift $ Substrate.changeDir (repositoryDir localVRI)

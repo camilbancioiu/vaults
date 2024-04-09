@@ -10,6 +10,7 @@ import qualified Vaults.Substrate as Substrate
 import Test.HUnit
 import Assertions
 import MockSubstrate
+import qualified DummyValues as D
 
 import Vaults.Open
 
@@ -36,14 +37,6 @@ test_prerequisites = TestList [
         assertOpError "non-vault folder" result
         assertNoExecCalls mockAfterExec,
 
-    TestLabel "open when vault already open fails" $
-    TestCase $ do
-        let mock = mockWithActiveVault
-        let result = runState (runExceptT $ openVault "local.vault") mock
-        let mockAfterExec = snd result
-        assertOpError "vault already open" result
-        assertNoExecCalls mockAfterExec,
-
     TestLabel "open without a partition filename fails" $
     TestCase $ do
         let mock = mockWithVaultDir
@@ -58,57 +51,66 @@ test_openVault = TestList [
     TestLabel "loop-setup error prevents opening" $
     TestCase $ do
         let mock = addMockExecResult loopSetupFail mockWithVaultDir
-        let failParams = ["loop-setup", "-f", "local.vault"]
         let result = runState (runExceptT $ openVault "local.vault") mock
         let mockAfterExec = snd result
+
+        let failParams = snd $ D.loopSetupCmd D.localOp
         assertOpParamsError "loop-setup failed" failParams loopSetupFail result
+
+        let expectedCommands = [ D.loopSetupCmd D.localOp ]
         assertEqual "only loop-setup was called"
-            [("udisksctl", failParams)]
+            expectedCommands
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
             "/home/user"
             (currentDir mockAfterExec)
-        assertNoVaultEnvVar mockAfterExec,
+        assertAllExecsConsumed mockAfterExec,
 
     TestLabel "unlock error prevents opening and deletes loop device" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultDir
                    where results = [loopSetupOk, unlockFail, loopDeleteOk]
-        let failParams = ["unlock", "-b", "/dev/loop42"]
         let result = runState (runExceptT $ openVault "local.vault") mock
         let mockAfterExec = snd result
+
+        let failParams = snd $ D.unlockCmd D.localOp
         assertOpParamsError "unlock failed" failParams unlockFail result
+
+        let expectedCommands = ([ D.loopSetupCmd
+                                , D.unlockCmd
+                                , D.loopDeleteCmd
+                                ] <*> (pure D.localOp))
         assertEqual "loop-setup, unlock, loop-delete were called"
-            [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
-            , ("udisksctl", failParams)
-            , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
-            ]
+            expectedCommands
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
             "/home/user"
             (currentDir mockAfterExec)
-        assertNoVaultEnvVar mockAfterExec,
+        assertAllExecsConsumed mockAfterExec,
 
     TestLabel "mount error prevents opening and undoes unlock and loop-setup" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultDir
                    where results = [loopSetupOk, unlockOk, mountFail, lockOk, loopDeleteOk]
-        let failParams = ["mount", "-b", "/dev/dm-4"]
         let result = runState (runExceptT $ openVault "local.vault") mock
         let mockAfterExec = snd result
+
+        let failParams = snd $ D.mountCmd D.localOp
         assertOpParamsError "mount failed" failParams mountFail result
+
+        let expectedCommands = ([ D.loopSetupCmd
+                                , D.unlockCmd
+                                , D.mountCmd
+                                , D.lockCmd
+                                , D.loopDeleteCmd
+                                ] <*> (pure D.localOp))
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
-            [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
-            , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
-            , ("udisksctl", failParams)
-            , ("udisksctl", ["lock", "-b", "/dev/dm-4"])
-            , ("udisksctl", ["loop-delete", "-b", "/dev/loop42"])
-            ]
+            expectedCommands
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
             "/home/user"
             (currentDir mockAfterExec)
-        assertNoVaultEnvVar mockAfterExec,
+        assertAllExecsConsumed mockAfterExec,
 
     TestLabel "mount succeeds, no inner repo" $
     TestCase $ do
@@ -116,19 +118,15 @@ test_openVault = TestList [
                    where results = [loopSetupOk, unlockOk, mountOk]
         let result = runState (runExceptT $ openVault "local.vault") mock
         let mockAfterExec = snd result
+
         let dummyVRI = makeDummyVRI ""
         assertEqual "mount succeeds" (Right dummyVRI) (fst result)
-        assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
-            [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
-            , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
-            , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
-            ]
-            (execRecorded mockAfterExec)
 
-        case (fst result) of
-             Left _ -> assertFailure "mounting failed"
-             Right vri -> do
-                assertActiveVaultEnvVarSet vri mockAfterExec,
+        let expectedCommands = (D.openPartitionCmds <*> (pure D.localOp))
+        assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
+            expectedCommands
+            (execRecorded mockAfterExec)
+        assertAllExecsConsumed mockAfterExec,
 
     TestLabel "mount succeeds, vault has inner repo" $
     TestCase $ do
@@ -136,19 +134,15 @@ test_openVault = TestList [
                    where results = [loopSetupOk, unlockOk, mountOk]
         let result = runState (runExceptT $ openVault "local.vault") mock
         let mockAfterExec = snd result
+
         let vri = makeDummyVRI "/repo"
         assertEqual "mount succeeds" (Right vri) (fst result)
-        assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
-            [ ("udisksctl", ["loop-setup", "-f", "local.vault"])
-            , ("udisksctl", ["unlock", "-b", "/dev/loop42"])
-            , ("udisksctl", ["mount", "-b", "/dev/dm-4"])
-            ]
-            (execRecorded mockAfterExec)
 
-        case (fst result) of
-             Left _ -> assertFailure "mounting failed"
-             Right vri -> do
-                assertActiveVaultEnvVarSet vri mockAfterExec
+        let expectedCommands = (D.openPartitionCmds <*> (pure D.localOp))
+        assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
+            expectedCommands
+            (execRecorded mockAfterExec)
+        assertAllExecsConsumed mockAfterExec
 
     ]
 

@@ -7,7 +7,8 @@ import qualified TestBase (allTests)
 import qualified TestUdisksctl (allTests)
 import qualified TestOpen (allTests)
 import qualified TestClose (allTests)
-import qualified TestOperations (allTests)
+import qualified TestOperations_Edit (allTests)
+import qualified TestOperations_Sync (allTests)
 
 main :: IO ()
 main = do
@@ -22,5 +23,6 @@ allTests = TestList [
     , TestUdisksctl.allTests
     , TestOpen.allTests
     , TestClose.allTests
-    , TestOperations.allTests
+    , TestOperations_Edit.allTests
+    , TestOperations_Sync.allTests
     ]
