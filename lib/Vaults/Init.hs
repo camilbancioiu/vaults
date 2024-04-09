@@ -1,0 +1,1 @@
+module Vaults.Init where

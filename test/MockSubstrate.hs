@@ -129,6 +129,7 @@ instance Substrate.Substrate (State Mock) where
     dirExists  = mock_dirExists
     fileExists = mock_fileExists
     getDir     = mock_getDir
+    createDir  = mock_createDir
     changeDir  = mock_changeDir
     lookupEnv = mock_lookupEnv
     setEnv    = mock_setEnv
@@ -159,6 +160,9 @@ mock_dirExists _ = return False
 
 mock_getDir :: State Mock String
 mock_getDir = gets currentDir
+
+mock_createDir :: FilePath -> State Mock ()
+mock_createDir ".vault" = 
 
 mock_changeDir :: String -> State Mock ()
 mock_changeDir dir = modify (setCurrentDir dir)
