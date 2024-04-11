@@ -3,6 +3,7 @@ module DummyValues where
 import System.Exit
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Sub
+import qualified Vaults.CustomCfg as Cfg
 
 data DummyOp = DummyOp {
       partitionFile :: FilePath
@@ -56,6 +57,7 @@ makeVRI op repoDir = Base.VaultRuntimeInfo {
 
 editCmd :: DummyOp -> (FilePath, [String])
 editCmd _ = ("nvim", [ "--clean"
+                     , "--cmd", "source .config/nvim/init.vim"
                      , "."
                      ])
 

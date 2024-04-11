@@ -54,7 +54,7 @@ test_closeVault = TestList [
     TestLabel "closing vault succeeds" $
     TestCase $ do
         let mock = addMockExecResults results mockWithVaultAndRepoDir
-                   where results = [ D.gitLogExec       False
+                   where results = [ D.gitLogExec       True
                                    , D.unmountExec      True
                                    , D.lockExec         True
                                    , D.loopDeleteExec   True
@@ -70,7 +70,7 @@ test_closeVault = TestList [
             "/home/user/vaults/mockVault"
             (currentDir mockAfterExec)
         assertEqual "git log saved"
-            ("/home/user/vaults/mockVault", "local.log", D.commitLog D.localOp)
+            ("/home/user/vaults/mockVault", "local.log", D.commitLog D.localOp2)
             (writtenFile mockAfterExec)
         assertAllExecsConsumed mockAfterExec,
 
