@@ -7,7 +7,6 @@ import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 import qualified Vaults.Udisksctl as U
 
--- TODO take the VRI as parameter; don't read from ENV
 closeVault :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT String m ()
 closeVault vri = do
     -- TODO refactor

@@ -52,7 +52,6 @@ doUploadVault vi = uploadVaultPartition vi (localname vi)
 doDownloadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doDownloadVault vi = mapM_ (downloadVaultPartition vi) (remotes vi)
 
--- TODO write tests
 -- TODO consider alternate procedure (safer?)
 -- 1. remote loop-setup
 -- 1. local loop-setup
