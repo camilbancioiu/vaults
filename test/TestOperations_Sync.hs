@@ -45,7 +45,7 @@ test_syncSuccessful =
                                    , D.loopSetupExec  True  D.localOp
                                    , D.unlockExec     True  D.localOp
                                    , D.mountExec      True  D.localOp
-                                   , D.gitLogExec     True D.localOp
+                                   , D.gitLogExec     True  D.localOp
                                    , D.unmountExec    True  D.localOp
                                    , D.lockExec       True  D.localOp
                                    , D.loopDeleteExec True  D.localOp
@@ -78,9 +78,6 @@ test_syncSuccessful =
             (execRecorded mockAfterExec)
         assertAllExecsConsumed mockAfterExec
 
--- TODO refactor tests of failures to highlight recovery commands
--- e.g. declare separate lists for "operational" vs "recovery" and assert on
--- their concatenation
 test_sync_RemoteFailed_LoopSetup :: Test
 test_sync_RemoteFailed_LoopSetup =
     TestLabel "remote loop-setup failure handled" $

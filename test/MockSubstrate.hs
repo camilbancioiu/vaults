@@ -80,49 +80,6 @@ dropHeadMockExecResult mock =
         execResults = tail (execResults mock)
     }
 
--- TODO refactor these definitions
-dummyPartition = "local.vault"
-dummyLoopDev = "/dev/loop42"
-dummyMapperDev = "/dev/dm-4"
-dummyMountpoint = "/mnt/point"
-
-loopSetupOk   = Substrate.ExecResult ExitSuccess loopSetupOutput ""
-loopSetupFail = Substrate.ExecResult (ExitFailure 16) "" "didnt work"
-loopDeleteOk  = Substrate.ExecResult ExitSuccess "" ""
-unlockOk      = Substrate.ExecResult ExitSuccess unlockOutput ""
-unlockFail    = Substrate.ExecResult (ExitFailure 16) "" "didnt work"
-mountOk       = Substrate.ExecResult ExitSuccess mountOutput ""
-unmountOk     = Substrate.ExecResult ExitSuccess "" ""
-mountFail     = Substrate.ExecResult (ExitFailure 16) "" "didnt work"
-lockOk        = Substrate.ExecResult ExitSuccess lockOutput ""
-gitLogOk      = Substrate.ExecResult ExitSuccess gitLogOutput ""
-gitLogFail    = Substrate.ExecResult (ExitFailure 16) "" "didnt work"
-loopSetupOutput  = "Mapped file " ++ dummyPartition ++ " as " ++ dummyLoopDev ++ "."
-unlockOutput     = "Unlocked " ++ dummyLoopDev ++ " as " ++ dummyMapperDev ++ "."
-mountOutput      = "Mounted " ++ dummyMapperDev ++ " at " ++ dummyMountpoint
-lockOutput       = "Locked " ++ dummyMapperDev ++ "."
-gitLogOutput     = "38a3\nfb22\n8c2a\n02ad\n"
-openVaultOk      = [loopSetupOk, unlockOk, mountOk]
-closeVaultOk     = [gitLogOk, unmountOk, lockOk, loopDeleteOk]
-
-dummy2Partition = "remote.vault"
-dummy2LoopDev = "/dev/loop84"
-dummy2MapperDev = "/dev/dm-8"
-dummy2Mountpoint = "/mnt/point2"
-
-loopSetupOk2   = Substrate.ExecResult ExitSuccess loopSetupOutput2 ""
-unlockOk2      = Substrate.ExecResult ExitSuccess unlockOutput2 ""
-mountOk2       = Substrate.ExecResult ExitSuccess mountOutput2 ""
-lockOk2        = Substrate.ExecResult ExitSuccess lockOutput2 ""
-loopSetupOutput2 = "Mapped file " ++ dummy2Partition ++ " as " ++ dummy2LoopDev ++ "."
-unlockOutput2    = "Unlocked " ++ dummy2LoopDev ++ " as " ++ dummy2MapperDev ++ "."
-mountOutput2     = "Mounted " ++ dummy2MapperDev ++ " at " ++ dummy2Mountpoint
-lockOutput2      = "Locked " ++ dummy2MapperDev ++ "."
-openVaultOkRemote      = [loopSetupOk2, unlockOk2, mountOk2]
--- closing the remote partition of a vault must not call git log, so there is
--- no output of gitLogOk
-closeVaultOkRemote     = [unmountOk, lockOk2, loopDeleteOk]
-
 instance Substrate.Substrate (State Mock) where
     readFile   = mock_readFile
     writeFile  = mock_writeFile
