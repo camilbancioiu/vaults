@@ -9,16 +9,18 @@ import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 
 data Mock = Mock {
-    currentDir :: FilePath,
-    prevDir :: FilePath,
-    hasVaultDir :: Bool,
-    hasRepoDir :: Bool,
-    hasNVIMConfig :: Bool,
-    envVars :: [(String, String)],
-    nExecs :: Int,
-    execRecorded :: [(String, [String])],
-    execResults :: [Substrate.ExecResult],
-    writtenFile :: (FilePath, FilePath, String)
+      currentDir :: FilePath
+    , prevDir :: FilePath
+    , hasVaultDir :: Bool
+    , hasRepoDir :: Bool
+    , hasNVIMConfig :: Bool
+    , envVars :: [(String, String)]
+    , nExecs :: Int
+    , execRecorded :: [(String, [String])]
+    , execResults :: [Substrate.ExecResult]
+    , createdDirs :: [String]
+    , writtenFiles :: [(FilePath, FilePath, String)]
+    , lastWrittenFile :: (FilePath, FilePath, String)
 } deriving Show
 
 setCurrentDir :: String -> Mock -> Mock
@@ -29,12 +31,22 @@ setCurrentDir dir mock =
     }
     where previousMockDir = currentDir mock
 
+addCreatedDir :: String -> Mock ->  Mock
+addCreatedDir dir mock =
+    mock {
+        createdDirs = dir:prevCreatedDirs
+    }
+    where prevCreatedDirs = createdDirs mock
+
 addWrittenFile :: FilePath -> String -> Mock -> Mock
 addWrittenFile fpath contents mock =
     mock {
-        writtenFile = (cwd, fpath, contents)
+          writtenFiles = addedFile:prevWrittenFiles
+        , lastWrittenFile = addedFile
     }
-    where cwd = currentDir mock
+    where addedFile = (cwd, fpath, contents)
+          prevWrittenFiles = writtenFiles mock
+          cwd = currentDir mock
 
 addMockEnvVar :: String -> String -> Mock -> Mock
 addMockEnvVar key val mock =
@@ -119,10 +131,10 @@ mock_getDir :: State Mock String
 mock_getDir = gets currentDir
 
 mock_createDir :: FilePath -> State Mock ()
-mock_createDir ".vault" = 
+mock_createDir dir = modify $ addCreatedDir dir
 
 mock_changeDir :: String -> State Mock ()
-mock_changeDir dir = modify (setCurrentDir dir)
+mock_changeDir dir = modify $ setCurrentDir dir
 
 mock_lookupEnv :: String -> State Mock (Maybe String)
 mock_lookupEnv key = do
@@ -183,7 +195,9 @@ emptyMock = Mock {
     , nExecs = 0
     , execRecorded = []
     , execResults = []
-    , writtenFile = ("", "", "")
+    , createdDirs = []
+    , writtenFiles = []
+    , lastWrittenFile = ("", "", "")
     }
 
 mockWithVaultDir :: Mock

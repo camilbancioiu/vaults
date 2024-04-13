@@ -11,3 +11,4 @@ test_init = do
     let result = runState (runExceptT $ initVault "dummy" "local") mock
     let mockAfterExec = snd result
 
+    
