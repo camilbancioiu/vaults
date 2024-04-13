@@ -78,9 +78,6 @@ test_syncSuccessful =
             (execRecorded mockAfterExec)
         assertAllExecsConsumed mockAfterExec
 
--- TODO refactor tests of failures to highlight recovery commands
--- e.g. declare separate lists for "operational" vs "recovery" and assert on
--- their concatenation
 test_sync_RemoteFailed_LoopSetup :: Test
 test_sync_RemoteFailed_LoopSetup =
     TestLabel "remote loop-setup failure handled" $

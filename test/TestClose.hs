@@ -18,13 +18,6 @@ allTests = TestList [
 
 test_closeVault :: Test
 test_closeVault = TestList [
-    -- TODO closing *local* vault succeeds
-    --  assert git log updated
-
-    -- TODO closing *remote* vault succeeds
-    --  assert cwd becomes srcDir
-    --  assert loopDev, mapperDev, repoDir are unreadable
-    --  assert git log *not* updated
 
     -- TODO closing fails
 
@@ -94,6 +87,9 @@ test_closeVault = TestList [
         assertEqual "dir changed to srcDir"
             "/home/user/vaults/mockVault"
             (currentDir mockAfterExec)
+        assertEqual "git log not saved"
+            (writtenFile emptyMock)
+            (writtenFile mockAfterExec)
         assertAllExecsConsumed mockAfterExec
 
     ]

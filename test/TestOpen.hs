@@ -15,11 +15,7 @@ import qualified DummyValues as D
 import Vaults.Open
 
 -- TODO test scenarios:
--- succeed opening with partition name only
--- -- i.e. extension .vault added correctly
---
 -- succeed forced opening in non-vault folder
--- fail forced opening when any vault already open
 
 allTests :: Test
 allTests = TestList [
