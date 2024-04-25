@@ -100,9 +100,9 @@ instance Substrate.Substrate (State Mock) where
     getDir     = mock_getDir
     createDir  = mock_createDir
     changeDir  = mock_changeDir
-    lookupEnv = mock_lookupEnv
-    setEnv    = mock_setEnv
-    unsetEnv  = mock_unsetEnv
+    lookupEnv  = mock_lookupEnv
+    setEnv     = mock_setEnv
+    unsetEnv   = mock_unsetEnv
     exec       = mock_exec
     call       = mock_call
     delay      = mock_delay

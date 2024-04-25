@@ -1,5 +1,8 @@
 module Vaults.Init where
 
-initVault :: Substrate.Substrate m => String -> String -> m ()
+import Control.Monad.Except
+import qualified Vaults.Substrate as Substrate
+
+initVault :: Substrate.Substrate m => String -> String -> ExceptT String m ()
 initVault vaultName localName = do
     return ()
