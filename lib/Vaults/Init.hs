@@ -5,4 +5,8 @@ import qualified Vaults.Substrate as Substrate
 
 initVault :: Substrate.Substrate m => String -> String -> ExceptT String m ()
 initVault vaultName localName = do
-    return ()
+    lift $ createDir ".vault"
+    lift $ writeFile ".vault/name" vaultName
+    lift $ writeFile ".vault/local" localName
+    lift $ writeFile ".vault/remotes" ""
+    lift $ writeFile ".vault/remoteStore" ""
