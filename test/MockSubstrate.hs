@@ -41,7 +41,7 @@ addCreatedDir dir mock =
 addWrittenFile :: FilePath -> String -> Mock -> Mock
 addWrittenFile fpath contents mock =
     mock {
-          writtenFiles = addedFile:prevWrittenFiles
+          writtenFiles = prevWrittenFiles ++ [addedFile]
         , lastWrittenFile = addedFile
     }
     where addedFile = (cwd, fpath, contents)

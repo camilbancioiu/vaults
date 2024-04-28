@@ -15,7 +15,8 @@ allTests = TestList [
 
 test_init :: Test
 test_init = TestCase $ do
-    let mock = emptyMock
+    let vaultDir = "/home/user/vaults/mockVault"
+    let mock = emptyMock { currentDir = vaultDir }
     let result = runState (runExceptT $ Init.initVault "dummy" "localhost") mock
     let mockAfterExec = snd result
 
@@ -24,9 +25,9 @@ test_init = TestCase $ do
         ( createdDirs mockAfterExec)
 
     assertEqual "files created by init"
-        [ ("", ".vault/name", "dummy")
-        , ("", ".vault/local", "localhost")
-        , ("",  ".vault/remotes", "")
-        , ("", ".vault/remoteStore", "")
+        [ (vaultDir, ".vault/name", "dummy")
+        , (vaultDir, ".vault/local", "localhost")
+        , (vaultDir, ".vault/remotes", "")
+        , (vaultDir, ".vault/remoteStore", "")
         ]
         ( writtenFiles mockAfterExec )
