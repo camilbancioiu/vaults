@@ -26,11 +26,26 @@ import qualified Vaults.Operations as Operations
 
 main :: IO ()
 main = do
-    vi <- loadVaultInfo
     operation <- execParser operationsParser
+    isVault <- isVaultDir
 
+    result <- if not isVault then handleNonVaultOperation operation
+                             else handleVaultOperation operation
+
+    case result of
+         Left errMsg -> putStrLn errMsg
+         Right _    -> return ()
+
+handleNonVaultOperation :: Operation -> IO (Either String ())
+handleNonVaultOperation operation =
+    case operation of
+         InitVault vname local -> runExceptT $ Operations.doInitVault vname local
+         _ -> return $ Left ("operation needs .vault: " ++ (show operation))
+
+handleVaultOperation :: Operation -> IO (Either String ())
+handleVaultOperation operation = do
+    vi <- loadVaultInfo
     let doOperation = case operation of
-                        InitVault vname local -> Operations.doInitVault vname local
                         EditVault             -> Operations.doEditVault
                         ShellVault            -> Operations.doShellVault
                         UploadVault           -> Operations.doUploadVault
@@ -38,10 +53,7 @@ main = do
                         SyncVault remote      -> Operations.doSyncVault remote
                         DiffLog _             -> doError "not implemented"
 
-    result <- runExceptT $ doOperation vi
-    case result of
-         Left errMsg -> putStrLn errMsg
-         Right _    -> return ()
+    runExceptT $ doOperation vi
 
 doError :: Substrate.Substrate m => String -> VaultInfo -> ExceptT String m ()
 doError msg _ = throwError msg
