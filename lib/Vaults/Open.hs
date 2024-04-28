@@ -12,6 +12,7 @@ import qualified Vaults.Udisksctl as U
 -- TODO validate loaded VaultInfo
 -- e.g. for empty name, empty localname etc
 -- TODO handle isForcedOpening
+-- TODO when partLoc == Base.RemotePartition, mount read-only
 -- TODO create separate flow for non-repo vaults
 openVault :: Substrate.Substrate m => FilePath -> ExceptT String m Base.VaultRuntimeInfo
 openVault partition = do

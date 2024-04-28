@@ -18,7 +18,8 @@ extra-source-files:  CHANGELOG.md
 library
   hs-source-dirs:      lib
   exposed-modules:     Vaults.Base, Vaults.Substrate, Vaults.Udisksctl,
-                       Vaults.Open, Vaults.Close, Vaults.Init
+                       Vaults.Init, Vaults.MkPartition,
+                       Vaults.Open, Vaults.Close,
                        Vaults.Operations, Vaults.CustomCfg
   -- other-modules:
   -- other-extensions:
@@ -41,7 +42,8 @@ test-suite vaults-test
   main-is:             Test.hs
   other-modules:       MockSubstrate, DummyValues, Assertions,
                        TestBase, TestUdisksctl,
-                       TestInit, TestOpen, TestClose,
+                       TestMkPartition, TestInit,
+                       TestOpen, TestClose,
                        TestOperations_Edit, TestOperations_Sync
   build-depends:       base, vaults,
                        HUnit, mtl

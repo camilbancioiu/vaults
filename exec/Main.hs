@@ -17,7 +17,6 @@ import qualified Vaults.Operations as Operations
 
 -- TODO operations to implement
 -- MkPartition, parameters "name" and "size", creates a file that can be mounted as a LUKS partition
--- DiffLog, parameter "remote", prints the log diff between local.log and remote.log
 
 main :: IO ()
 main = do

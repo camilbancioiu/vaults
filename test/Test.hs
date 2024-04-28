@@ -10,6 +10,7 @@ import qualified TestOpen (allTests)
 import qualified TestClose (allTests)
 import qualified TestOperations_Edit (allTests)
 import qualified TestOperations_Sync (allTests)
+import qualified TestMkPartition (allTests)
 
 main :: IO ()
 main = do
@@ -27,4 +28,5 @@ allTests = TestList [
     , TestClose.allTests
     , TestOperations_Edit.allTests
     , TestOperations_Sync.allTests
+    , TestMkPartition.allTests
     ]

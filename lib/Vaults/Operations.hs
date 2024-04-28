@@ -16,6 +16,10 @@ doInitVault :: Substrate.Substrate m => String -> String -> ExceptT String m ()
 doInitVault vaultName localName = do
     initVault vaultName localName
 
+doMakePartition :: Substrate.Substrate m => String -> Int -> VaultInfo -> ExceptT String m ()
+doMakePartition partitionName partitionSize vi = do
+    return ()
+
 -- TODO write tests (see test/TestOperations_Edit.hs)
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doEditVault vi = do
