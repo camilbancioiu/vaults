@@ -5,6 +5,7 @@ import Test.HUnit
 
 import qualified TestBase (allTests)
 import qualified TestUdisksctl (allTests)
+import qualified TestInit (allTests)
 import qualified TestOpen (allTests)
 import qualified TestClose (allTests)
 import qualified TestOperations_Edit (allTests)
@@ -21,6 +22,7 @@ allTests :: Test
 allTests = TestList [
       TestBase.allTests
     , TestUdisksctl.allTests
+    , TestInit.allTests
     , TestOpen.allTests
     , TestClose.allTests
     , TestOperations_Edit.allTests

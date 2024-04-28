@@ -14,9 +14,10 @@ data ExecResult = ExecResult {
 class Monad m => Substrate m where
     readFile      :: FilePath -> m String
     writeFile     :: FilePath -> String -> m ()
-    dirExists     :: FilePath -> m Bool
     fileExists    :: FilePath -> m Bool
     getDir        :: m FilePath
+    dirExists     :: FilePath -> m Bool
+    createDir     :: FilePath -> m ()
     changeDir     :: FilePath -> m ()
     lookupEnv     :: String -> m (Maybe String)
     setEnv        :: String -> String -> m ()

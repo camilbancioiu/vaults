@@ -3,7 +3,8 @@ module CLI where
 import System.FilePath.Posix
 import Options.Applicative
 
-data Operation = EditVault
+data Operation = InitVault String String
+               | EditVault
                | ShellVault
                | UploadVault
                | DownloadVault
@@ -14,12 +15,17 @@ data Operation = EditVault
 operationsParser :: ParserInfo Operation
 operationsParser = info operations (progDesc "operation")
 
-operations = subparser $  opEditVault
+operations = subparser $  opInitVault
+                       <> opEditVault
                        <> opShellVault
                        <> opUploadVault
                        <> opDownloadVault
                        <> opSyncVault
                        <> opDiffLog
+
+opInitVault = command "init" (info opInitVaultParser (progDesc "init vault"))
+opInitVaultParser = InitVault <$> argument str (metavar "VAULT_NAME")
+                              <*> argument str (metavar "LOCAL_PARTITION_NAME")
 
 opEditVault = command "edit" (info opEditVaultParser (progDesc "edit vault"))
 opEditVaultParser = pure EditVault
