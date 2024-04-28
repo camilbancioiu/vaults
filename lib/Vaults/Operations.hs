@@ -6,9 +6,14 @@ import Data.List
 import Vaults.Base
 import qualified Vaults.Substrate as Substrate
 
+import Vaults.Init
 import Vaults.Open
 import Vaults.Close
 import qualified Vaults.CustomCfg as Cfg
+
+doInitVault :: Substrate.Substrate m => String -> String -> ExceptT String m ()
+doInitVault vaultName localName = do
+    initVault vaultName localName
 
 -- TODO write tests
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
