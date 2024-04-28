@@ -112,6 +112,8 @@ mock_fileExists :: FilePath -> State Mock Bool
 mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig
 mock_fileExists _ = return False
 
+-- TODO replace mockVaultInfo with a member of Mock
+-- TODO which can be configured by the calling test
 mock_readFile :: FilePath -> State Mock String
 mock_readFile ".vault/name" = return (Base.name mockVaultInfo)
 mock_readFile ".vault/local" = return (Base.localname mockVaultInfo)
