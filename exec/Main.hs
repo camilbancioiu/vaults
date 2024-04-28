@@ -46,7 +46,7 @@ handleVaultOperation operation = do
                         UploadVault           -> Operations.doUploadVault
                         DownloadVault         -> Operations.doDownloadVault
                         SyncVault remote      -> Operations.doSyncVault remote
-                        DiffLog _             -> doError "not implemented"
+                        DiffLog remote        -> Operations.doDiffLog remote
 
     runExceptT $ doOperation vi
 

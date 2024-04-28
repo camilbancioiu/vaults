@@ -51,6 +51,13 @@ callShell :: Substrate.Substrate m => ExceptT String m ()
 callShell = do
     lift $ Substrate.call "/bin/sh" []
 
+doDiffLog :: Substrate.Substrate m => String -> VaultInfo -> ExceptT String m ()
+doDiffLog remote vi = do
+    lift $ Substrate.call "diff" [ "-u"
+                                 , (localname vi) ++ ".log"
+                                 , remote ++ ".log"
+                                 ]
+
 -- TODO write tests
 doUploadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doUploadVault vi = uploadVaultPartition vi (localname vi)
