@@ -1,6 +1,7 @@
 module Vaults.Operations where
 
 import Control.Monad.Except
+import System.Exit
 import Data.List
 
 import Vaults.Base
@@ -51,12 +52,20 @@ callShell :: Substrate.Substrate m => ExceptT String m ()
 callShell = do
     lift $ Substrate.call "/bin/sh" []
 
+-- TODO consider `diff --from-file=local.log [each-remote.log]`
 doDiffLog :: Substrate.Substrate m => String -> VaultInfo -> ExceptT String m ()
 doDiffLog remote vi = do
-    lift $ Substrate.call "diff" [ "-u"
-                                 , (localname vi) ++ ".log"
-                                 , remote ++ ".log"
-                                 ]
+    result <- lift $ Substrate.exec "diff" [ "-u"
+                                           , (localname vi) ++ ".log"
+                                           , remote ++ ".log"
+                                           ] ""
+
+    -- `diff` returns code 0 when files are identical and 1 when they differ;
+    -- for error it returns 2.
+    case Substrate.exitCode result of
+         ExitSuccess    -> return ()
+         ExitFailure 1  -> lift $ Substrate.echo (Substrate.output result)
+         ExitFailure 2  -> lift $ Substrate.echo (Substrate.errorOutput result)
 
 -- TODO write tests
 doUploadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
