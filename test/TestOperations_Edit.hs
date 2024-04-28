@@ -12,12 +12,15 @@ import Assertions
 import MockSubstrate
 import qualified DummyValues as D
 
+-- TODO test where the editor crashes
+-- TODO test with shell
+-- TODO test where the shell crashes
+
 allTests :: Test
 allTests = TestList [
     test_editSuccessful
     ]
 
--- TODO test where the editor crashes
 test_editSuccessful :: Test
 test_editSuccessful =
     TestLabel "edit successful" $

@@ -15,38 +15,40 @@ doInitVault :: Substrate.Substrate m => String -> String -> ExceptT String m ()
 doInitVault vaultName localName = do
     initVault vaultName localName
 
--- TODO write tests
+-- TODO write tests (see test/TestOperations_Edit.hs)
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doEditVault vi = do
     vri <- openVault $ (localname vi) ++ ".vault"
     (do
         lift $ Substrate.changeDir (repositoryDir vri)
-        callEditor vri
+        callEditor
         )
         `catchError` (\e -> closeVault vri >> throwError e)
     closeVault vri
 
-callEditor :: Substrate.Substrate m => VaultRuntimeInfo -> ExceptT String m ()
-callEditor vri = do
+callEditor :: Substrate.Substrate m => ExceptT String m ()
+callEditor = do
     let cfg = Cfg.defaultEditCfg
     let envkey = fst $ Cfg.envVar cfg
     let envvalue = snd $ Cfg.envVar cfg
+    let editorExec = Cfg.editor cfg
+    let editorParams = Cfg.editorCLIParams cfg
     lift $ Substrate.setEnv envkey envvalue
-    lift $ Substrate.call (Cfg.editor cfg) (Cfg.editorCLIParams cfg)
+    lift $ Substrate.call editorExec editorParams
 
--- TODO write tests
+-- TODO write tests (see test/TestOperations_Edit.hs)
 doShellVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doShellVault vi = do
     vri <- openVault $ (localname vi) ++ ".vault"
     (do
         lift $ Substrate.changeDir (repositoryDir vri)
-        callShell vri
+        callShell
         )
         `catchError` (\e -> closeVault vri >> throwError e)
     closeVault vri
 
-callShell :: Substrate.Substrate m => VaultRuntimeInfo -> ExceptT String m ()
-callShell vri = do
+callShell :: Substrate.Substrate m => ExceptT String m ()
+callShell = do
     lift $ Substrate.call "/bin/sh" []
 
 -- TODO write tests
