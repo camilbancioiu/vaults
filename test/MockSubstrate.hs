@@ -4,6 +4,7 @@ module MockSubstrate where
 
 import System.Exit
 import Control.Monad.State
+import Control.Exception.Base
 
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
@@ -21,6 +22,7 @@ data Mock = Mock {
     , createdDirs :: [String]
     , writtenFiles :: [(FilePath, FilePath, String)]
     , lastWrittenFile :: (FilePath, FilePath, String)
+    , callExceptions :: [Either String ()]
 } deriving Show
 
 setCurrentDir :: String -> Mock -> Mock
@@ -92,6 +94,18 @@ dropHeadMockExecResult mock =
         execResults = tail (execResults mock)
     }
 
+addMockExceptions :: [Either String ()] -> Mock -> Mock
+addMockExceptions mexs mock =
+    mock {
+        callExceptions = (callExceptions mock) ++ mexs
+    }
+
+dropHeadMockExceptions :: Mock -> Mock
+dropHeadMockExceptions mock =
+    mock {
+        callExceptions = tail (callExceptions mock)
+    }
+
 instance Substrate.Substrate (State Mock) where
     readFile   = mock_readFile
     writeFile  = mock_writeFile
@@ -112,6 +126,8 @@ mock_fileExists :: FilePath -> State Mock Bool
 mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig
 mock_fileExists _ = return False
 
+-- TODO replace mockVaultInfo with a member of Mock
+-- TODO which can be configured by the calling test
 mock_readFile :: FilePath -> State Mock String
 mock_readFile ".vault/name" = return (Base.name mockVaultInfo)
 mock_readFile ".vault/local" = return (Base.localname mockVaultInfo)
@@ -155,10 +171,15 @@ mock_exec executable params _ = do
     modify dropHeadMockExecResult
     return er
 
-mock_call :: FilePath -> [String] -> State Mock ()
+mock_call :: FilePath -> [String] -> State Mock (Either String ())
 mock_call executable params = do
     modify $ recordExec (executable, params)
     modify incExecs
+    mexcepts <- gets callExceptions
+    if null mexcepts
+       then return $ Right ()
+       else do
+           return $ head mexcepts
 
 mock_delay :: Int -> State Mock ()
 mock_delay _ = return ()
@@ -198,6 +219,7 @@ emptyMock = Mock {
     , createdDirs = []
     , writtenFiles = []
     , lastWrittenFile = ("", "", "")
+    , callExceptions = []
     }
 
 mockWithVaultDir :: Mock
