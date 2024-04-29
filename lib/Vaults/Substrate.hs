@@ -11,6 +11,7 @@ data ExecResult = ExecResult {
     errorOutput :: String
 } deriving (Eq, Show)
 
+-- TODO consider returning ExceptT from all methods
 class Monad m => Substrate m where
     readFile      :: FilePath -> m String
     writeFile     :: FilePath -> String -> m ()
@@ -23,6 +24,6 @@ class Monad m => Substrate m where
     setEnv        :: String -> String -> m ()
     unsetEnv      :: String -> m ()
     exec          :: FilePath -> [String] -> String -> m ExecResult
-    call          :: FilePath -> [String] -> m ()
+    call          :: FilePath -> [String] -> m (Either String ())
     delay         :: Int -> m ()
     echo          :: String -> m ()
