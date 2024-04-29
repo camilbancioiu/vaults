@@ -18,9 +18,9 @@ makePartition partition partitionSize vi = do
          (throwError "partition filename is required")
 
     let partitionFilename = partition ++ ".vault"
-    lift $ Substrate.call "dd" [ "bs=1M"
-                               , "count=" ++ (show partitionSize)
-                               , "if=/dev/urandom"
-                               , "of=" ++ partitionFilename
-                               ]
+    ExceptT $ Substrate.call "dd" [ "bs=1M"
+                                  , "count=" ++ (show partitionSize)
+                                  , "if=/dev/urandom"
+                                  , "of=" ++ partitionFilename
+                                  ]
     return ()

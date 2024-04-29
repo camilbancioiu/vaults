@@ -15,7 +15,7 @@ import Vaults.Open
 import Vaults.Close
 import qualified Vaults.Operations as Operations
 
--- TODO operations to implement
+-- TODO operations to implement:
 -- MkPartition, parameters "name" and "size", creates a file that can be mounted as a LUKS partition
 
 main :: IO ()
