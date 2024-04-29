@@ -4,6 +4,7 @@ module MockSubstrate where
 
 import System.Exit
 import Control.Monad.State
+import Control.Exception.Base
 
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
@@ -21,7 +22,13 @@ data Mock = Mock {
     , createdDirs :: [String]
     , writtenFiles :: [(FilePath, FilePath, String)]
     , lastWrittenFile :: (FilePath, FilePath, String)
+    , callExceptions :: [MockException]
 } deriving Show
+
+data MockException = MockException String
+                   deriving (Show, Eq)
+
+instance Exception MockException
 
 setCurrentDir :: String -> Mock -> Mock
 setCurrentDir dir mock =
@@ -91,6 +98,13 @@ dropHeadMockExecResult mock =
     mock {
         execResults = tail (execResults mock)
     }
+
+addMockException :: String -> Mock -> Mock
+addMockException emsg mock =
+    mock {
+        callExceptions = newCallExceptions
+    }
+    where newCallExceptions = (callExceptions mock) ++ [MockException emsg]
 
 instance Substrate.Substrate (State Mock) where
     readFile   = mock_readFile
@@ -198,6 +212,7 @@ emptyMock = Mock {
     , createdDirs = []
     , writtenFiles = []
     , lastWrittenFile = ("", "", "")
+    , callExceptions = []
     }
 
 mockWithVaultDir :: Mock

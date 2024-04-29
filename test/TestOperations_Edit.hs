@@ -18,7 +18,8 @@ import qualified DummyValues as D
 
 allTests :: Test
 allTests = TestList [
-    test_editSuccessful
+    test_editSuccessful,
+    test_editorCrashes
     ]
 
 test_editSuccessful :: Test
@@ -46,3 +47,19 @@ test_editSuccessful =
             expectedCommands
             (execRecorded mockAfterExec)
         assertAllExecsConsumed mockAfterExec
+
+test_editorCrashes :: Test
+test_editorCrashes =
+    TestLabel "editor crashes" $
+    TestCase $ do
+        let operation = Operations.doEditVault mockVaultInfo
+        let mock = addMockExecResults results mockWithVaultAndRepoDir
+                   where results = (  D.openPartitionExecOk
+                                   ++ [ D.gitLogExec True ]
+                                   ++ D.closePartitionExecOk
+                                   ) <*> (pure D.localOp)
+        let mock = addMockException "editor crashed" mock
+        let result = runState (runExceptT $ operation) mock
+        -- let mockAfterExec = snd result
+        assertEqual "vault opened, editor crashed, closed" (Left "editor crashed") (fst result)
+
