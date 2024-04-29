@@ -8,6 +8,8 @@ import Control.Concurrent
 
 import qualified Vaults.Substrate as Substrate
 
+-- TODO consider wrapping all methods in ExceptT
+-- TODO e.g. readFile = ExceptT . Prelude.readFile
 instance Substrate.Substrate IO where
     readFile    = Prelude.readFile
     writeFile   = Prelude.writeFile
@@ -20,14 +22,19 @@ instance Substrate.Substrate IO where
     setEnv      = System.Environment.setEnv
     unsetEnv    = System.Environment.unsetEnv
     exec        = execIOProcess
-    call        = System.Process.callProcess
+    call        = callIOProcess
     delay       = Control.Concurrent.threadDelay
     echo        = putStrLn
+
+callIOProcess :: String -> [String] -> IO (Either String ())
+callIOProcess cmd args = do
+    catch (System.Process.callProcess cmd args)
+          (\e -> return $ Left (show e))
 
 execIOProcess :: String -> [String] -> String -> IO Substrate.ExecResult
 execIOProcess cmd args sin = do
     let pcmd = (proc cmd args)
-    result <- readCreateProcessWithExitCode pcmd sin
+    result <- System.Process.readCreateProcessWithExitCode pcmd sin
     let (exc, sout, serr) = result
     return Substrate.ExecResult {
         Substrate.exitCode = exc,

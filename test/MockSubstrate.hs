@@ -22,13 +22,8 @@ data Mock = Mock {
     , createdDirs :: [String]
     , writtenFiles :: [(FilePath, FilePath, String)]
     , lastWrittenFile :: (FilePath, FilePath, String)
-    , callExceptions :: [Maybe MockException]
+    , callExceptions :: [Either String ()]
 } deriving Show
-
-data MockException = MockException String
-                   deriving (Show, Eq)
-
-instance Exception MockException
 
 setCurrentDir :: String -> Mock -> Mock
 setCurrentDir dir mock =
@@ -99,12 +94,11 @@ dropHeadMockExecResult mock =
         execResults = tail (execResults mock)
     }
 
-addMockExceptions :: [Maybe String] -> Mock -> Mock
+addMockExceptions :: [Either String ()] -> Mock -> Mock
 addMockExceptions mexs mock =
     mock {
-        callExceptions = (callExceptions mock) ++ newCallExceptions
+        callExceptions = (callExceptions mock) ++ mexs
     }
-    where newCallExceptions = map (fmap MockException) mexs
 
 dropHeadMockExceptions :: Mock -> Mock
 dropHeadMockExceptions mock =
@@ -177,19 +171,15 @@ mock_exec executable params _ = do
     modify dropHeadMockExecResult
     return er
 
-mock_call :: FilePath -> [String] -> State Mock ()
+mock_call :: FilePath -> [String] -> State Mock (Either String ())
 mock_call executable params = do
     modify $ recordExec (executable, params)
     modify incExecs
     mexcepts <- gets callExceptions
     if null mexcepts
-       then return ()
+       then return $ Right ()
        else do
-           let mexcept = head mexcepts
-           modify dropHeadMockExceptions
-           case mexcept of
-                Nothing -> return ()
-                Just ex -> throw ex
+           return $ head mexcepts
 
 mock_delay :: Int -> State Mock ()
 mock_delay _ = return ()
