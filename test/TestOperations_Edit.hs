@@ -58,8 +58,9 @@ test_editorCrashes =
                                    ++ [ D.gitLogExec True ]
                                    ++ D.closePartitionExecOk
                                    ) <*> (pure D.localOp)
-        let mock = addMockException "editor crashed" mock
-        let result = runState (runExceptT $ operation) mock
+        let mockWithCrash = addMockExceptions [ Just "editor crashed"
+                                              ] mock
+        let result = runState (runExceptT $ operation) mockWithCrash
         -- let mockAfterExec = snd result
         assertEqual "vault opened, editor crashed, closed" (Left "editor crashed") (fst result)
 
