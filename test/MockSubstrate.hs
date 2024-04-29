@@ -22,7 +22,7 @@ data Mock = Mock {
     , createdDirs :: [String]
     , writtenFiles :: [(FilePath, FilePath, String)]
     , lastWrittenFile :: (FilePath, FilePath, String)
-    , callExceptions :: [MockException]
+    , callExceptions :: [Maybe MockException]
 } deriving Show
 
 data MockException = MockException String
@@ -99,12 +99,18 @@ dropHeadMockExecResult mock =
         execResults = tail (execResults mock)
     }
 
-addMockException :: String -> Mock -> Mock
-addMockException emsg mock =
+addMockExceptions :: [Maybe String] -> Mock -> Mock
+addMockExceptions mexs mock =
     mock {
-        callExceptions = newCallExceptions
+        callExceptions = (callExceptions mock) ++ newCallExceptions
     }
-    where newCallExceptions = (callExceptions mock) ++ [MockException emsg]
+    where newCallExceptions = map (fmap MockException) mexs
+
+dropHeadMockExceptions :: Mock -> Mock
+dropHeadMockExceptions mock =
+    mock {
+        callExceptions = tail (callExceptions mock)
+    }
 
 instance Substrate.Substrate (State Mock) where
     readFile   = mock_readFile
@@ -126,6 +132,8 @@ mock_fileExists :: FilePath -> State Mock Bool
 mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig
 mock_fileExists _ = return False
 
+-- TODO replace mockVaultInfo with a member of Mock
+-- TODO which can be configured by the calling test
 mock_readFile :: FilePath -> State Mock String
 mock_readFile ".vault/name" = return (Base.name mockVaultInfo)
 mock_readFile ".vault/local" = return (Base.localname mockVaultInfo)
@@ -173,6 +181,15 @@ mock_call :: FilePath -> [String] -> State Mock ()
 mock_call executable params = do
     modify $ recordExec (executable, params)
     modify incExecs
+    mexcepts <- gets callExceptions
+    if null mexcepts
+       then return ()
+       else do
+           let mexcept = head mexcepts
+           modify dropHeadMockExceptions
+           case mexcept of
+                Nothing -> return ()
+                Just ex -> throw ex
 
 mock_delay :: Int -> State Mock ()
 mock_delay _ = return ()
