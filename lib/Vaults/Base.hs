@@ -18,6 +18,7 @@ data VaultInfo = VaultInfo {
     , remoteStore :: String
 } deriving (Eq, Show)
 
+-- TODO disambiguate fields partition and partitionName
 data VaultRuntimeInfo = VaultRuntimeInfo {
       srcDir :: FilePath
     , loopDev :: FilePath

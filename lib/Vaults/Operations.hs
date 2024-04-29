@@ -56,6 +56,7 @@ callShell :: Substrate.Substrate m => ExceptT String m ()
 callShell = do
     lift $ Substrate.call "/bin/sh" []
 
+-- TODO write tests
 -- TODO consider `diff --from-file=local.log [each-remote.log]`
 doDiffLog :: Substrate.Substrate m => String -> VaultInfo -> ExceptT String m ()
 doDiffLog remote vi = do

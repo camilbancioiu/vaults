@@ -14,13 +14,15 @@ import qualified DummyValues as D
 
 allTests :: Test
 allTests = TestList [
-    test_MkPartitionSuccess
+    -- test_MkPartitionSuccess
     ]
 
 test_MkPartitionSuccess :: Test
 test_MkPartitionSuccess =
     TestLabel "make partition succeeds" $
     TestCase $ do
-        -- let operation = 
+        -- let operation =
         -- let mock = mockWithVaultDir
         assertFailure "not implemented"
+
+
