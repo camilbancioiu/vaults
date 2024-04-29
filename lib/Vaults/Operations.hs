@@ -8,6 +8,7 @@ import Vaults.Base
 import qualified Vaults.Substrate as Substrate
 
 import Vaults.Init
+import Vaults.MkPartition
 import Vaults.Open
 import Vaults.Close
 import qualified Vaults.CustomCfg as Cfg
@@ -17,8 +18,7 @@ doInitVault vaultName localName = do
     initVault vaultName localName
 
 doMakePartition :: Substrate.Substrate m => String -> Int -> VaultInfo -> ExceptT String m ()
-doMakePartition partitionName partitionSize vi = do
-    return ()
+doMakePartition = makePartition
 
 -- TODO write tests (see test/TestOperations_Edit.hs)
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
