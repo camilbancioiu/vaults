@@ -65,7 +65,9 @@ doDiffLog remote vi = do
     case Substrate.exitCode result of
          ExitSuccess    -> return ()
          ExitFailure 1  -> lift $ Substrate.echo (Substrate.output result)
-         ExitFailure 2  -> lift $ Substrate.echo (Substrate.errorOutput result)
+         ExitFailure 2  -> do let e = Substrate.errorOutput result
+                              lift $ Substrate.echo e
+                              throwError e
 
 -- TODO write tests
 doUploadVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
