@@ -15,9 +15,8 @@ import Vaults.Open
 import Vaults.Close
 import qualified Vaults.Operations as Operations
 
--- TODO operations to implement
+-- TODO operations to implement:
 -- MkPartition, parameters "name" and "size", creates a file that can be mounted as a LUKS partition
--- DiffLog, parameter "remote", prints the log diff between local.log and remote.log
 
 main :: IO ()
 main = do
@@ -41,6 +40,7 @@ handleVaultOperation :: Operation -> IO (Either String ())
 handleVaultOperation operation = do
     vi <- loadVaultInfo
     let doOperation = case operation of
+                        MakePartition part sz -> Operations.doMakePartition part sz
                         EditVault             -> Operations.doEditVault
                         ShellVault            -> Operations.doShellVault
                         UploadVault           -> Operations.doUploadVault

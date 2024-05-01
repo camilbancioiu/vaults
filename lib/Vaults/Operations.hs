@@ -8,6 +8,7 @@ import Vaults.Base
 import qualified Vaults.Substrate as Substrate
 
 import Vaults.Init
+import Vaults.MkPartition
 import Vaults.Open
 import Vaults.Close
 import qualified Vaults.CustomCfg as Cfg
@@ -15,6 +16,9 @@ import qualified Vaults.CustomCfg as Cfg
 doInitVault :: Substrate.Substrate m => String -> String -> ExceptT String m ()
 doInitVault vaultName localName = do
     initVault vaultName localName
+
+doMakePartition :: Substrate.Substrate m => String -> Int -> VaultInfo -> ExceptT String m ()
+doMakePartition = makePartition
 
 -- TODO write tests (see test/TestOperations_Edit.hs)
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
@@ -52,6 +56,7 @@ callShell :: Substrate.Substrate m => ExceptT String m ()
 callShell = do
     ExceptT $ Substrate.call "/bin/sh" []
 
+-- TODO write tests
 -- TODO consider `diff --from-file=local.log [each-remote.log]`
 doDiffLog :: Substrate.Substrate m => String -> VaultInfo -> ExceptT String m ()
 doDiffLog remote vi = do

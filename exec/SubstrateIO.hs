@@ -4,6 +4,7 @@ import System.Directory
 import System.Environment
 import System.Process
 import System.Exit
+import Control.Exception
 import Control.Concurrent
 
 import qualified Vaults.Substrate as Substrate
@@ -28,8 +29,10 @@ instance Substrate.Substrate IO where
 
 callIOProcess :: String -> [String] -> IO (Either String ())
 callIOProcess cmd args = do
-    catch (System.Process.callProcess cmd args)
-          (\e -> return $ Left (show e))
+    catch (do System.Process.callProcess cmd args
+              return $ Right ()
+          )
+          (\e -> return $ Left (show $ (e::SomeException)))
 
 execIOProcess :: String -> [String] -> String -> IO Substrate.ExecResult
 execIOProcess cmd args sin = do

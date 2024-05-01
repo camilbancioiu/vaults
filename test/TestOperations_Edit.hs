@@ -12,7 +12,6 @@ import Assertions
 import MockSubstrate
 import qualified DummyValues as D
 
--- TODO test where the editor crashes
 -- TODO test with shell
 -- TODO test where the shell crashes
 
