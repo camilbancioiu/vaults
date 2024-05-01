@@ -40,6 +40,7 @@ handleVaultOperation :: Operation -> IO (Either String ())
 handleVaultOperation operation = do
     vi <- loadVaultInfo
     let doOperation = case operation of
+                        MakePartition part sz -> Operations.doMakePartition part sz
                         EditVault             -> Operations.doEditVault
                         ShellVault            -> Operations.doShellVault
                         UploadVault           -> Operations.doUploadVault

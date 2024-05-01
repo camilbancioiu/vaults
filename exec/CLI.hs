@@ -4,6 +4,7 @@ import System.FilePath.Posix
 import Options.Applicative
 
 data Operation = InitVault String String
+               | MakePartition String Int
                | EditVault
                | ShellVault
                | UploadVault
@@ -16,6 +17,7 @@ operationsParser :: ParserInfo Operation
 operationsParser = info operations (progDesc "operation")
 
 operations = subparser $  opInitVault
+                       <> opMakePartition
                        <> opEditVault
                        <> opShellVault
                        <> opUploadVault
@@ -26,6 +28,10 @@ operations = subparser $  opInitVault
 opInitVault = command "init" (info opInitVaultParser (progDesc "init vault"))
 opInitVaultParser = InitVault <$> argument str (metavar "VAULT_NAME")
                               <*> argument str (metavar "LOCAL_PARTITION_NAME")
+
+opMakePartition = command "mkpart" (info opMakePartitionParser (progDesc "make partition"))
+opMakePartitionParser = MakePartition <$> argument str (metavar "PARTITION_NAME")
+                                      <*> argument auto (metavar "PARTITION_SIZE")
 
 opEditVault = command "edit" (info opEditVaultParser (progDesc "edit vault"))
 opEditVaultParser = pure EditVault
