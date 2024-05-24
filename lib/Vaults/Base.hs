@@ -25,6 +25,7 @@ data VaultRuntimeInfo = VaultRuntimeInfo {
     , mapperDev :: FilePath
     , repositoryDir :: FilePath
     , mountpoint :: FilePath
+    -- TODO rename to partitionFile
     , partition :: FilePath
     , partitionName :: FilePath
     , partitionLocation :: PartitionLocation

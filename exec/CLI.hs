@@ -7,6 +7,7 @@ data Operation = InitVault String String
                | MakePartition String Int
                | EditVault
                | ShellVault
+               | ShellPartition String
                | UploadVault
                | DownloadVault
                | SyncVault String
@@ -20,6 +21,7 @@ operations = subparser $  opInitVault
                        <> opMakePartition
                        <> opEditVault
                        <> opShellVault
+                       <> opShellPartition
                        <> opUploadVault
                        <> opDownloadVault
                        <> opSyncVault
@@ -38,6 +40,9 @@ opEditVaultParser = pure EditVault
 
 opShellVault = command "shell" (info opShellVaultParser (progDesc "edit vault"))
 opShellVaultParser = pure ShellVault
+
+opShellPartition = command "shell-partition" (info opShellPartitionParser (progDesc "edit partition"))
+opShellPartitionParser = ShellPartition <$> argument str (metavar "PARTITION")
 
 opUploadVault = command "up" (info opUploadVaultParser (progDesc "upload vault"))
 opUploadVaultParser = pure UploadVault
