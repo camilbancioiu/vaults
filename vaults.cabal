@@ -41,9 +41,14 @@ test-suite vaults-test
   hs-source-dirs:      test
   main-is:             Test.hs
   other-modules:       MockSubstrate, DummyValues, Assertions,
-                       TestBase, TestUdisksctl,
-                       TestMkPartition, TestInit,
-                       TestOpen, TestClose,
-                       TestOperations_Edit, TestOperations_Sync
+                       TestBase,
+                       TestUdisksctl,
+                       TestMkPartition,
+                       TestInit,
+                       TestOpen,
+                       TestClose,
+                       TestOperations_Edit,
+                       TestOperations_ShellPartition,
+                       TestOperations_Sync
   build-depends:       base, vaults,
                        HUnit, mtl

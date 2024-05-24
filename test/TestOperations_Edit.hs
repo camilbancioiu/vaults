@@ -3,8 +3,6 @@ module TestOperations_Edit where
 import Control.Monad.State
 import Control.Monad.Except
 
-import qualified Vaults.Base as Base
-import qualified Vaults.Substrate as Substrate
 import qualified Vaults.Operations as Operations
 
 import Test.HUnit

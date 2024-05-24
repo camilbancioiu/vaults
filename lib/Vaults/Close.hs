@@ -20,16 +20,16 @@ closeVault vri = do
                         then extractCommitLog
                         else return ""
                     )
-                    (\e -> closeVaultDevice vri >> throwError e)
+                    (\e -> closePartition vri >> throwError e)
 
-    closeVaultDevice vri
+    closePartition vri
 
     if needCommitLog
         then saveCommitLog vri commitLog
         else return ()
 
-closeVaultDevice :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT String m ()
-closeVaultDevice vri = do
+closePartition :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT String m ()
+closePartition vri = do
     lift $ Substrate.changeDir (Base.srcDir vri)
     lift $ Substrate.delay 1000000
     U.unmountDevice (Base.mapperDev vri)

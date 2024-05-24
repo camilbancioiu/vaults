@@ -34,6 +34,7 @@ handleNonVaultOperation :: Operation -> IO (Either String ())
 handleNonVaultOperation operation =
     case operation of
          InitVault vname local -> runExceptT $ Operations.doInitVault vname local
+         ShellPartition partition -> runExceptT $ Operations.doShellPartition partition
          _ -> return $ Left ("operation needs .vault: " ++ (show operation))
 
 handleVaultOperation :: Operation -> IO (Either String ())

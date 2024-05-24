@@ -9,6 +9,7 @@ import qualified TestInit (allTests)
 import qualified TestOpen (allTests)
 import qualified TestClose (allTests)
 import qualified TestOperations_Edit (allTests)
+import qualified TestOperations_ShellPartition (allTests)
 import qualified TestOperations_Sync (allTests)
 import qualified TestMkPartition (allTests)
 
@@ -27,6 +28,7 @@ allTests = TestList [
     , TestOpen.allTests
     , TestClose.allTests
     , TestOperations_Edit.allTests
+    , TestOperations_ShellPartition.allTests
     , TestOperations_Sync.allTests
     , TestMkPartition.allTests
     ]

@@ -11,7 +11,7 @@ import qualified Vaults.Udisksctl as U
 
 -- TODO validate loaded VaultInfo
 -- e.g. for empty name, empty localname etc
--- TODO handle isForcedOpening
+-- TODO handle isForcedOpening?
 -- TODO when partLoc == Base.RemotePartition, mount read-only
 -- TODO create separate flow for non-repo vaults
 openVault :: Substrate.Substrate m => FilePath -> ExceptT String m Base.VaultRuntimeInfo
@@ -23,6 +23,14 @@ openVault partition = do
     vi <- lift $ Base.loadVaultInfo
     let partLoc = Base.getPartitionLocation vi partition
     when (partLoc == Base.UnknownPartition) (throwError $ "unknown vault partition " ++ partition)
+
+    vri <- openPartition partition
+    let vriWithPartLoc = vri { Base.partitionLocation = partLoc }
+    return vriWithPartLoc
+
+openPartition :: Substrate.Substrate m => String -> ExceptT String m Base.VaultRuntimeInfo
+openPartition partition = do
+    when (length partition == 0) (throwError "partition filename is required")
 
     srcDir <- lift $ Substrate.getDir
     loopDev <- U.createLoopDevice partition
@@ -40,10 +48,11 @@ openVault partition = do
             , Base.mapperDev = mapperDev
             , Base.partition = partition
             , Base.partitionName = takeBaseName partition
-            , Base.partitionLocation = partLoc
+            , Base.partitionLocation = Base.UnknownPartition
         }
 
     return vri
+
 
 guardedUnlockDevice :: Substrate.Substrate m => FilePath -> ExceptT String m FilePath
 guardedUnlockDevice loopDev = do
@@ -60,8 +69,6 @@ guardedMountDevice loopDev mapperDev = do
                   U.deleteLoopDevice loopDev
                   throwError e)
 
--- resolveRepoDir returns the path `mountpoint/repo` if it exists, otherwise
--- it returns the path `mountpoint`.
 resolveRepoDir :: Substrate.Substrate m => FilePath -> ExceptT String m FilePath
 resolveRepoDir mountpoint = do
     -- TODO if ensureIsVaultDir, then the folder repo/.git must exist

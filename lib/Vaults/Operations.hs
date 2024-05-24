@@ -56,6 +56,16 @@ callShell :: Substrate.Substrate m => ExceptT String m ()
 callShell = do
     ExceptT $ Substrate.call "/bin/sh" []
 
+doShellPartition :: Substrate.Substrate m => String -> ExceptT String m ()
+doShellPartition partition = do
+    vri <- openPartition partition
+    (do
+        lift $ Substrate.changeDir (repositoryDir vri)
+        callShell
+        )
+        `catchError` (\e -> closeVault vri >> throwError e)
+    closePartition vri
+
 -- TODO write tests
 -- TODO consider `diff --from-file=local.log [each-remote.log]`
 doDiffLog :: Substrate.Substrate m => String -> VaultInfo -> ExceptT String m ()
