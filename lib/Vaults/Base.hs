@@ -3,6 +3,8 @@ module Vaults.Base where
 import Data.Maybe
 import Data.List.Extra
 import Control.Monad.Except
+import Control.Monad.Trans
+import Control.Monad
 
 import qualified Vaults.Substrate as Substrate
 

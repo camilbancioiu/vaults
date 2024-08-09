@@ -1,6 +1,8 @@
 module Vaults.Udisksctl where
 
 import System.Exit
+import Control.Monad
+import Control.Monad.Trans
 import Control.Monad.Except
 
 import qualified Vaults.Substrate as Substrate

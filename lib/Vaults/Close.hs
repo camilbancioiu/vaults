@@ -1,5 +1,7 @@
 module Vaults.Close where
 
+import Control.Monad.Trans
+import Control.Monad
 import Control.Monad.Except
 import System.Exit
 

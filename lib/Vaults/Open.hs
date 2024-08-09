@@ -3,6 +3,8 @@ module Vaults.Open where
 import System.Directory
 import System.FilePath.Posix
 import Control.Monad.Except
+import Control.Monad.Trans
+import Control.Monad
 import Data.Maybe
 
 import qualified Vaults.Base as Base
