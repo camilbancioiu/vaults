@@ -15,14 +15,11 @@ import Vaults.Open
 import Vaults.Close
 import qualified Vaults.Operations as Operations
 
--- TODO operations to implement:
--- MkPartition, parameters "name" and "size", creates a file that can be mounted as a LUKS partition
-
 main :: IO ()
 main = do
     operation <- execParser operationsParser
-    isVault <- isVaultDir
 
+    isVault <- isVaultDir
     result <- if not isVault then handleNonVaultOperation operation
                              else handleVaultOperation operation
 
@@ -41,15 +38,16 @@ handleVaultOperation :: Operation -> IO (Either String ())
 handleVaultOperation operation = do
     vi <- loadVaultInfo
     let doOperation = case operation of
-                        MakePartition part sz -> Operations.doMakePartition part sz
-                        EditVault             -> Operations.doEditVault
-                        ShellVault            -> Operations.doShellVault
-                        UploadVault           -> Operations.doUploadVault
-                        DownloadVault         -> Operations.doDownloadVault
-                        SyncVault remote      -> Operations.doSyncVault remote
-                        DiffLog remote        -> Operations.doDiffLog remote
+                        MakePartition part sz    -> Operations.doMakePartition part sz vi
+                        EditVault                -> Operations.doEditVault vi
+                        ShellVault               -> Operations.doShellVault vi
+                        ShellPartition partition -> Operations.doShellPartition partition
+                        UploadVault              -> Operations.doUploadVault vi
+                        DownloadVault            -> Operations.doDownloadVault vi
+                        SyncVault remote         -> Operations.doSyncVault remote vi
+                        DiffLog remote           -> Operations.doDiffLog remote vi
 
-    runExceptT $ doOperation vi
+    runExceptT $ doOperation
 
 doError :: Substrate.Substrate m => String -> VaultInfo -> ExceptT String m ()
 doError msg _ = throwError msg
