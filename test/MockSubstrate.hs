@@ -121,6 +121,7 @@ instance Substrate.Substrate (State Mock) where
     call       = mock_call
     delay      = mock_delay
     echo       = mock_echo
+    sync       = mock_sync
 
 mock_fileExists :: FilePath -> State Mock Bool
 mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig
@@ -186,6 +187,9 @@ mock_delay _ = return ()
 
 mock_echo :: String -> State Mock ()
 mock_echo _ = return ()
+
+mock_sync :: State Mock (Either String ())
+mock_sync = return $ Right ()
 
 mockVaultInfo = Base.VaultInfo {
     Base.name = "mockVault",

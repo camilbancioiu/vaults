@@ -26,6 +26,7 @@ instance Substrate.Substrate IO where
     call        = callIOProcess
     delay       = Control.Concurrent.threadDelay
     echo        = putStrLn
+    sync        = callIOSync
 
 callIOProcess :: String -> [String] -> IO (Either String ())
 callIOProcess cmd args = do
@@ -44,3 +45,6 @@ execIOProcess cmd args sin = do
         Substrate.output = sout,
         Substrate.errorOutput = serr
     }
+
+callIOSync :: IO (Either String ())
+callIOSync = callIOProcess "sync" []

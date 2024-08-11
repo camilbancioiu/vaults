@@ -27,3 +27,4 @@ class Monad m => Substrate m where
     call          :: FilePath -> [String] -> m (Either String ())
     delay         :: Int -> m ()
     echo          :: String -> m ()
+    sync          :: m (Either String ())

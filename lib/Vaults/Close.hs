@@ -33,6 +33,7 @@ closeVault vri = do
 closePartition :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT String m ()
 closePartition vri = do
     lift $ Substrate.changeDir (Base.srcDir vri)
+    lift $ Substrate.sync
     lift $ Substrate.delay 1000000
     U.unmountDevice (Base.mapperDev vri)
     lift $ Substrate.delay 500000
