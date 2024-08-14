@@ -23,6 +23,7 @@ data Mock = Mock {
     , writtenFiles :: [(FilePath, FilePath, String)]
     , lastWrittenFile :: (FilePath, FilePath, String)
     , callExceptions :: [Either String ()]
+    , allSubstrateOps :: [ [String] ]
 } deriving Show
 
 setCurrentDir :: String -> Mock -> Mock
