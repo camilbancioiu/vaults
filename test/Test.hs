@@ -12,6 +12,7 @@ import qualified TestOperations_Edit (allTests)
 import qualified TestOperations_ShellPartition (allTests)
 import qualified TestOperations_Sync (allTests)
 import qualified TestMkPartition (allTests)
+import qualified TestMkRepo (allTests)
 
 main :: IO ()
 main = do
@@ -31,4 +32,5 @@ allTests = TestList [
     , TestOperations_ShellPartition.allTests
     , TestOperations_Sync.allTests
     , TestMkPartition.allTests
+    , TestMkRepo.allTests
     ]
