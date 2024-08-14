@@ -23,7 +23,6 @@ data Mock = Mock {
     , writtenFiles :: [(FilePath, FilePath, String)]
     , lastWrittenFile :: (FilePath, FilePath, String)
     , callExceptions :: [Either String ()]
-    , allSubstrateOps :: [ [String] ]
 } deriving Show
 
 setCurrentDir :: String -> Mock -> Mock
@@ -124,17 +123,17 @@ instance Substrate.Substrate (State Mock) where
     echo       = mock_echo
     sync       = mock_sync
 
-mock_fileExists :: FilePath -> State Mock Bool
-mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig
-mock_fileExists _ = return False
-
 -- TODO replace mockVaultInfo with a member of Mock
 -- TODO which can be configured by the calling test
 mock_readFile :: FilePath -> State Mock String
-mock_readFile ".vault/name" = return (Base.name mockVaultInfo)
-mock_readFile ".vault/local" = return (Base.localname mockVaultInfo)
-mock_readFile ".vault/remotes" = return (unlines $ Base.remotes mockVaultInfo)
-mock_readFile ".vault/remoteStore" = return (Base.remoteStore mockVaultInfo)
+mock_readFile fname = do
+    modify $ recordExec ("readFile", [fname])
+    case fname of
+         ".vault/name" -> return (Base.name mockVaultInfo)
+         ".vault/local" -> return (Base.localname mockVaultInfo)
+         ".vault/remotes" -> return (unlines $ Base.remotes mockVaultInfo)
+         ".vault/remoteStore" -> return (Base.remoteStore mockVaultInfo)
+         _ -> return "not found"
 
 mock_writeFile :: FilePath -> String -> State Mock ()
 mock_writeFile fpath contents =
@@ -146,6 +145,10 @@ mock_dirExists "repo" = gets hasRepoDir
 mock_dirExists dir = do
     dirs <- gets createdDirs
     return (elem dir dirs)
+
+mock_fileExists :: FilePath -> State Mock Bool
+mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig
+mock_fileExists _ = return False
 
 mock_getDir :: State Mock String
 mock_getDir = gets currentDir

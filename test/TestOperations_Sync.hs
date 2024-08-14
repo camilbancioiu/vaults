@@ -58,10 +58,13 @@ test_syncSuccessful =
 
         assertEqual "sync successful" (Right ()) (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
+                               ] ++
+                               D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
                                , D.mountCmd      D.localOp
                                , D.gitFetchCmd   "remoteA" D.localOp
@@ -91,7 +94,8 @@ test_sync_RemoteFailed_LoopSetup =
         let expectedError = Left $ D.showFailedCmd (D.loopSetupCmd D.remoteOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd D.remoteOp ]
+        let expectedCommands = D.readVaultInfoCmds ++
+                             [ D.loopSetupCmd D.remoteOp ]
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -113,7 +117,8 @@ test_sync_RemoteFailed_Unlock =
         let expectedError = Left $ D.showFailedCmd (D.unlockCmd D.remoteOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.loopDeleteCmd D.remoteOp
                                ]
@@ -140,7 +145,8 @@ test_sync_RemoteFailed_Mount =
         let expectedError = Left $ D.showFailedCmd (D.mountCmd D.remoteOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
                                , D.lockCmd       D.remoteOp
@@ -171,10 +177,13 @@ test_sync_LocalFailed_LoopSetup =
         let expectedError = Left $ D.showFailedCmd (D.loopSetupCmd D.localOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
+                               ] ++
+                               D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.localOp
                                , D.unmountCmd    D.remoteOp
                                , D.lockCmd       D.remoteOp
                                , D.loopDeleteCmd D.remoteOp
@@ -206,10 +215,13 @@ test_sync_LocalFailed_Unlock =
         let expectedError = Left $ D.showFailedCmd (D.unlockCmd D.localOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
+                               ] ++
+                               D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
                                , D.loopDeleteCmd D.localOp
                                , D.unmountCmd    D.remoteOp
@@ -245,10 +257,13 @@ test_sync_LocalFailed_Mount =
         let expectedError = Left $ D.showFailedCmd (D.mountCmd D.localOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
+                               ] ++
+                               D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
                                , D.mountCmd      D.localOp
                                , D.lockCmd       D.localOp
@@ -288,10 +303,13 @@ test_sync_LocalFailed_GitLog =
         let expectedError = Left $ D.showFailedCmd (D.gitLogCmd D.localOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
+                               ] ++
+                               D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
                                , D.mountCmd      D.localOp
                                , D.gitFetchCmd   "remoteA" D.localOp
@@ -332,10 +350,13 @@ test_sync_LocalFailed_Unmount =
         let expectedError = Left $ D.showFailedCmd (D.unmountCmd D.localOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
+                               ] ++
+                               D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
                                , D.mountCmd      D.localOp
                                , D.gitFetchCmd   "remoteA" D.localOp
@@ -375,10 +396,13 @@ test_sync_LocalFailed_Lock =
         let expectedError = Left $ D.showFailedCmd (D.lockCmd D.localOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
+                               ] ++
+                               D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
                                , D.mountCmd      D.localOp
                                , D.gitFetchCmd   "remoteA" D.localOp
@@ -421,10 +445,13 @@ test_sync_LocalFailed_LoopDelete =
         let expectedError = Left $ D.showFailedCmd (D.loopDeleteCmd D.localOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
+                               ] ++
+                               D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
                                , D.mountCmd      D.localOp
                                , D.gitFetchCmd   "remoteA" D.localOp
@@ -465,10 +492,13 @@ test_sync_RemoteFailed_Unmount =
         let expectedError = Left $ D.showFailedCmd (D.unmountCmd D.remoteOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
+                               ] ++
+                               D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
                                , D.mountCmd      D.localOp
                                , D.gitFetchCmd   "remoteA" D.localOp
@@ -508,10 +538,13 @@ test_sync_RemoteFailed_Lock =
         let expectedError = Left $ D.showFailedCmd (D.lockCmd D.remoteOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
+                               ] ++
+                               D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
                                , D.mountCmd      D.localOp
                                , D.gitFetchCmd   "remoteA" D.localOp
@@ -554,10 +587,13 @@ test_sync_RemoteFailed_LoopDelete =
         let expectedError = Left $ D.showFailedCmd (D.loopDeleteCmd D.remoteOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
+                               ] ++
+                               D.readVaultInfoCmds ++
+                               [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
                                , D.mountCmd      D.localOp
                                , D.gitFetchCmd   "remoteA" D.localOp

@@ -92,6 +92,13 @@ gitFetchCmd remote _ = ("git", ["fetch", remote])
 gitLogCmd :: DummyOp -> (FilePath, [String])
 gitLogCmd _ = ("git", ["log", "--format=%H"])
 
+readVaultInfoCmds = [
+    ("readFile", [".vault/name"]),
+    ("readFile", [".vault/local"]),
+    ("readFile", [".vault/remotes"]),
+    ("readFile", [".vault/remoteStore"])
+    ]
+
 loopSetupExec :: Bool -> DummyOp -> Sub.ExecResult
 loopSetupExec success op =
     if not success
