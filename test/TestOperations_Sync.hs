@@ -72,11 +72,14 @@ test_syncSuccessful =
                           ++   D.postOpenPartitionCmds
                           ++ [ D.gitFetchCmd   "remoteA" D.localOp
                              , D.gitLogCmd
-                             , D.unmountCmd    D.localOp
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++ [ D.unmountCmd    D.localOp
                              , D.lockCmd       D.localOp
                              , D.loopDeleteCmd D.localOp
                              ]
                           ++ [("writeFile", ["local.log"])]
+                          ++   D.preClosePartitionCmds
                           ++ [ D.unmountCmd    D.remoteOp
                              , D.lockCmd       D.remoteOp
                              , D.loopDeleteCmd D.remoteOp
@@ -190,7 +193,9 @@ test_sync_LocalFailed_LoopSetup =
                             ++   D.postOpenPartitionCmds
                             ++   D.preOpenPartitionCmds
                             ++ [ D.loopSetupCmd  D.localOp
-                               , D.unmountCmd    D.remoteOp
+                               ]
+                            ++   D.preClosePartitionCmds
+                            ++ [ D.unmountCmd    D.remoteOp
                                , D.lockCmd       D.remoteOp
                                , D.loopDeleteCmd D.remoteOp
                                ]
@@ -231,7 +236,9 @@ test_sync_LocalFailed_Unlock =
                             ++ [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
                                , D.loopDeleteCmd D.localOp
-                               , D.unmountCmd    D.remoteOp
+                               ]
+                            ++   D.preClosePartitionCmds
+                            ++ [ D.unmountCmd    D.remoteOp
                                , D.lockCmd       D.remoteOp
                                , D.loopDeleteCmd D.remoteOp
                                ]
@@ -276,7 +283,9 @@ test_sync_LocalFailed_Mount =
                                , D.mountCmd      D.localOp
                                , D.lockCmd       D.localOp
                                , D.loopDeleteCmd D.localOp
-                               , D.unmountCmd    D.remoteOp
+                               ]
+                            ++   D.preClosePartitionCmds
+                            ++ [ D.unmountCmd    D.remoteOp
                                , D.lockCmd       D.remoteOp
                                , D.loopDeleteCmd D.remoteOp
                                ]
@@ -325,10 +334,14 @@ test_sync_LocalFailed_GitLog =
                             ++   D.postOpenPartitionCmds
                             ++ [ D.gitFetchCmd   "remoteA" D.localOp
                                , D.gitLogCmd
-                               , D.unmountCmd    D.localOp
+                               ]
+                            ++   D.preClosePartitionCmds
+                            ++ [ D.unmountCmd    D.localOp
                                , D.lockCmd       D.localOp
                                , D.loopDeleteCmd D.localOp
-                               , D.unmountCmd    D.remoteOp
+                               ]
+                            ++   D.preClosePartitionCmds
+                            ++ [ D.unmountCmd    D.remoteOp
                                , D.lockCmd       D.remoteOp
                                , D.loopDeleteCmd D.remoteOp
                                ]
@@ -375,8 +388,12 @@ test_sync_LocalFailed_Unmount =
                             ++   D.postOpenPartitionCmds
                             ++ [ D.gitFetchCmd   "remoteA" D.localOp
                                , D.gitLogCmd
-                               , D.unmountCmd    D.localOp
-                               , D.unmountCmd    D.remoteOp
+                               ]
+                            ++   D.preClosePartitionCmds
+                            ++ [ D.unmountCmd    D.localOp
+                               ]
+                            ++   D.preClosePartitionCmds
+                            ++ [ D.unmountCmd    D.remoteOp
                                , D.lockCmd       D.remoteOp
                                , D.loopDeleteCmd D.remoteOp
                                ]
@@ -424,9 +441,13 @@ test_sync_LocalFailed_Lock =
                             ++   D.postOpenPartitionCmds
                             ++ [ D.gitFetchCmd   "remoteA" D.localOp
                                , D.gitLogCmd
-                               , D.unmountCmd    D.localOp
+                               ]
+                            ++   D.preClosePartitionCmds
+                            ++ [ D.unmountCmd    D.localOp
                                , D.lockCmd       D.localOp
-                               , D.unmountCmd    D.remoteOp
+                               ]
+                            ++   D.preClosePartitionCmds
+                            ++ [ D.unmountCmd    D.remoteOp
                                , D.lockCmd       D.remoteOp
                                , D.loopDeleteCmd D.remoteOp
                                ]
@@ -476,10 +497,14 @@ test_sync_LocalFailed_LoopDelete =
                             ++   D.postOpenPartitionCmds
                             ++ [ D.gitFetchCmd   "remoteA" D.localOp
                                , D.gitLogCmd
-                               , D.unmountCmd    D.localOp
+                               ]
+                            ++   D.preClosePartitionCmds
+                            ++ [ D.unmountCmd    D.localOp
                                , D.lockCmd       D.localOp
                                , D.loopDeleteCmd D.localOp
-                               , D.unmountCmd    D.remoteOp
+                               ]
+                            ++   D.preClosePartitionCmds
+                            ++ [ D.unmountCmd    D.remoteOp
                                , D.lockCmd       D.remoteOp
                                , D.loopDeleteCmd D.remoteOp
                                ]
@@ -526,11 +551,14 @@ test_sync_RemoteFailed_Unmount =
                             ++   D.postOpenPartitionCmds
                             ++ [ D.gitFetchCmd   "remoteA" D.localOp
                                , D.gitLogCmd
-                               , D.unmountCmd    D.localOp
+                               ]
+                            ++   D.preClosePartitionCmds
+                            ++ [ D.unmountCmd    D.localOp
                                , D.lockCmd       D.localOp
                                , D.loopDeleteCmd D.localOp
                                ]
                             ++ [("writeFile", ["local.log"])]
+                            ++   D.preClosePartitionCmds
                             ++ [ D.unmountCmd    D.remoteOp
                                ]
         assertEqual "commands"
@@ -577,11 +605,14 @@ test_sync_RemoteFailed_Lock =
                             ++   D.postOpenPartitionCmds
                             ++ [ D.gitFetchCmd   "remoteA" D.localOp
                                , D.gitLogCmd
-                               , D.unmountCmd    D.localOp
+                               ]
+                            ++   D.preClosePartitionCmds
+                            ++ [ D.unmountCmd    D.localOp
                                , D.lockCmd       D.localOp
                                , D.loopDeleteCmd D.localOp
                                ]
                             ++ [("writeFile", ["local.log"])]
+                            ++   D.preClosePartitionCmds
                             ++ [ D.unmountCmd    D.remoteOp
                                , D.lockCmd       D.remoteOp
                                ]
@@ -631,11 +662,14 @@ test_sync_RemoteFailed_LoopDelete =
                           ++   D.postOpenPartitionCmds
                           ++ [ D.gitFetchCmd   "remoteA" D.localOp
                              , D.gitLogCmd
-                             , D.unmountCmd    D.localOp
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++ [ D.unmountCmd    D.localOp
                              , D.lockCmd       D.localOp
                              , D.loopDeleteCmd D.localOp
                              ]
                           ++ [("writeFile", ["local.log"])]
+                          ++   D.preClosePartitionCmds
                           ++ [ D.unmountCmd    D.remoteOp
                              , D.lockCmd       D.remoteOp
                              , D.loopDeleteCmd D.remoteOp

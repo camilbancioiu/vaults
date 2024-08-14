@@ -41,6 +41,7 @@ test_editSuccessful =
                           ++ [ D.editCmd            D.localOp
                              , D.gitLogCmd
                              ]
+                          ++   D.preClosePartitionCmds
                           ++ ( D.closePartitionCmds D.localOp )
                           ++ [ ("writeFile", ["local.log"]) ]
 
@@ -71,6 +72,7 @@ test_editorCrashes =
                           ++ [ D.editCmd            D.localOp
                              , D.gitLogCmd
                              ]
+                          ++   D.preClosePartitionCmds
                           ++ ( D.closePartitionCmds D.localOp )
                           ++ [ ("writeFile", ["local.log"]) ]
 

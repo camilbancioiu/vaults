@@ -125,6 +125,7 @@ instance Substrate.Substrate (State Mock) where
 
 -- TODO replace mockVaultInfo with a member of Mock
 -- TODO which can be configured by the calling test
+-- needs to read from writtenFiles as well
 mock_readFile :: FilePath -> State Mock String
 mock_readFile fpath = do
     modify $ recordExec ("readFile", [fpath])

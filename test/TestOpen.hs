@@ -164,7 +164,9 @@ test_openVault = TestList [
 
         let expectedCommands = D.preOpenPartitionCmds
                           ++ ( D.openPartitionCmds D.localOp )
-                            ++ D.postOpenPartitionCmds
+                          ++ [ ("changeDir", []),
+                               ("dirExists", ["repo"])
+                             ]
 
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             expectedCommands

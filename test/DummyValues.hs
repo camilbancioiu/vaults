@@ -106,6 +106,10 @@ postOpenPartitionCmds = [
     ("changeDir", [])
     ]
 
+preClosePartitionCmds = [
+    ("changeDir", [])
+    ]
+
 loopSetupExec :: Bool -> DummyOp -> Sub.ExecResult
 loopSetupExec success op =
     if not success
