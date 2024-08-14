@@ -32,7 +32,8 @@ test_closeVault = TestList [
         let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
         let mockAfterExec = snd result
 
-        let expectedCommands = D.closePartitionWithLogCmds <*> (pure D.localOp2)
+        let expectedCommands = [ D.gitLogCmd ]
+                            ++ ( D.closePartitionCmds D.localOp2 )
         assertEqual "unmounted, locked, deleted loop"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -55,7 +56,9 @@ test_closeVault = TestList [
         let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
         let mockAfterExec = snd result
 
-        let expectedCommands = D.closePartitionWithLogCmds <*> (pure D.localOp2)
+        let expectedCommands = [ D.gitLogCmd ]
+                            ++ ( D.closePartitionCmds D.localOp2 )
+                            ++ [ ("writeFile", ["local.log"]) ]
         assertEqual "unmounted, locked, deleted loop"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -80,7 +83,7 @@ test_closeVault = TestList [
         let result = runState (runExceptT $ closeVault mockRemoteVRI) mock
         let mockAfterExec = snd result
 
-        let expectedCommands = D.closePartitionCmds <*> (pure D.localOp2)
+        let expectedCommands = D.closePartitionCmds D.localOp2
         assertEqual "unmounted, locked, deleted loop"
             expectedCommands
             (execRecorded mockAfterExec)

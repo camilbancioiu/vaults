@@ -35,11 +35,14 @@ test_editSuccessful =
 
         -- No need to assert on a call to cd (cd needs a shell anyway); working
         -- dir is changed via Substrate.changeDir.
-        let expectedOperationCmds = (  D.openPartitionCmds
-                                    ++ [ D.editCmd, D.gitLogCmd ]
-                                    ++ D.closePartitionCmds
-                                    ) <*> (pure D.localOp)
-        let expectedCommands = D.readVaultInfoCmds ++ expectedOperationCmds
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ ( D.openPartitionCmds  D.localOp )
+                          ++   D.postOpenPartitionCmds
+                          ++ [ D.editCmd            D.localOp
+                             , D.gitLogCmd
+                             ]
+                          ++ ( D.closePartitionCmds D.localOp )
+                          ++ [ ("writeFile", ["local.log"]) ]
 
         assertEqual "all commands executed"
             expectedCommands
@@ -62,11 +65,14 @@ test_editorCrashes =
         let mockAfterExec = snd result
         assertEqual "vault opened, editor crashed, closed" (Left "editor crashed") (fst result)
 
-        let expectedOperationCmds = (  D.openPartitionCmds
-                                    ++ [ D.editCmd, D.gitLogCmd ]
-                                    ++ D.closePartitionCmds
-                                    ) <*> (pure D.localOp)
-        let expectedCommands = D.readVaultInfoCmds ++ expectedOperationCmds
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ ( D.openPartitionCmds  D.localOp )
+                          ++   D.postOpenPartitionCmds
+                          ++ [ D.editCmd            D.localOp
+                             , D.gitLogCmd
+                             ]
+                          ++ ( D.closePartitionCmds D.localOp )
+                          ++ [ ("writeFile", ["local.log"]) ]
 
         assertEqual "all commands executed"
             expectedCommands

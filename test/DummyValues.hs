@@ -61,9 +61,8 @@ editCmd _ = ("nvim", [ "--clean"
                      , "."
                      ])
 
-openPartitionCmds = [ loopSetupCmd, unlockCmd, mountCmd ]
-closePartitionCmds = [ unmountCmd, lockCmd, loopDeleteCmd ]
-closePartitionWithLogCmds = gitLogCmd : closePartitionCmds
+openPartitionCmds op = [ loopSetupCmd op, unlockCmd op, mountCmd op ]
+closePartitionCmds op = [ unmountCmd op, lockCmd op, loopDeleteCmd op ]
 
 openPartitionExecOk = [ loopSetupExec True, unlockExec True, mountExec True ]
 closePartitionExecOk = [ unmountExec True, lockExec True, loopDeleteExec True ]
@@ -89,14 +88,19 @@ loopDeleteCmd op = ("udisksctl", ["loop-delete", "-b", loopDev op])
 gitFetchCmd :: String -> DummyOp -> (FilePath, [String])
 gitFetchCmd remote _ = ("git", ["fetch", remote])
 
-gitLogCmd :: DummyOp -> (FilePath, [String])
-gitLogCmd _ = ("git", ["log", "--format=%H"])
+gitLogCmd :: (FilePath, [String])
+gitLogCmd = ("git", ["log", "--format=%H"])
 
-readVaultInfoCmds = [
+preOpenPartitionCmds = [
+    ("dirExists", [".vault"]),
     ("readFile", [".vault/name"]),
     ("readFile", [".vault/local"]),
     ("readFile", [".vault/remotes"]),
     ("readFile", [".vault/remoteStore"])
+    ]
+
+postOpenPartitionCmds = [
+    ("dirExists", ["repo"])
     ]
 
 loopSetupExec :: Bool -> DummyOp -> Sub.ExecResult

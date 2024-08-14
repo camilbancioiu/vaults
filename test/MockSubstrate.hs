@@ -126,9 +126,9 @@ instance Substrate.Substrate (State Mock) where
 -- TODO replace mockVaultInfo with a member of Mock
 -- TODO which can be configured by the calling test
 mock_readFile :: FilePath -> State Mock String
-mock_readFile fname = do
-    modify $ recordExec ("readFile", [fname])
-    case fname of
+mock_readFile fpath = do
+    modify $ recordExec ("readFile", [fpath])
+    case fpath of
          ".vault/name" -> return (Base.name mockVaultInfo)
          ".vault/local" -> return (Base.localname mockVaultInfo)
          ".vault/remotes" -> return (unlines $ Base.remotes mockVaultInfo)
@@ -136,15 +136,18 @@ mock_readFile fname = do
          _ -> return "not found"
 
 mock_writeFile :: FilePath -> String -> State Mock ()
-mock_writeFile fpath contents =
+mock_writeFile fpath contents = do
+    modify $ recordExec ("writeFile", [fpath])
     modify (addWrittenFile fpath contents)
 
 mock_dirExists :: FilePath -> State Mock Bool
-mock_dirExists ".vault" = gets hasVaultDir
-mock_dirExists "repo" = gets hasRepoDir
 mock_dirExists dir = do
-    dirs <- gets createdDirs
-    return (elem dir dirs)
+    modify $ recordExec ("dirExists", [dir])
+    case dir of
+         ".vault" -> gets hasVaultDir
+         "repo"   -> gets hasRepoDir
+         _        -> do dirs <- gets createdDirs
+                        return (elem dir dirs)
 
 mock_fileExists :: FilePath -> State Mock Bool
 mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig

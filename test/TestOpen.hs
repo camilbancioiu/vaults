@@ -56,7 +56,7 @@ test_openVault = TestList [
         assertOpParamsError "loop-setup failed" failParams failExec result
 
         let expectedOperationCmds = [ D.loopSetupCmd D.localOp ]
-        let expectedCommands = D.readVaultInfoCmds ++ expectedOperationCmds
+        let expectedCommands = D.preOpenPartitionCmds ++ expectedOperationCmds
 
         assertEqual "only loop-setup was called"
             expectedCommands
@@ -84,7 +84,7 @@ test_openVault = TestList [
                                     , D.unlockCmd
                                     , D.loopDeleteCmd
                                     ] <*> (pure D.localOp)
-        let expectedCommands = D.readVaultInfoCmds ++ expectedOperationCmds
+        let expectedCommands = D.preOpenPartitionCmds ++ expectedOperationCmds
 
         assertEqual "loop-setup, unlock, loop-delete were called"
             expectedCommands
@@ -116,7 +116,8 @@ test_openVault = TestList [
                                     , D.lockCmd
                                     , D.loopDeleteCmd
                                     ] <*> (pure D.localOp)
-        let expectedCommands = D.readVaultInfoCmds ++ expectedOperationCmds
+        let expectedCommands = D.preOpenPartitionCmds
+                            ++ expectedOperationCmds
 
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             expectedCommands
@@ -136,11 +137,12 @@ test_openVault = TestList [
         let result = runState (runExceptT $ openVault "local.vault") mock
         let mockAfterExec = snd result
 
-        let dummyVRI = D.makeVRI D.localOp ""
-        assertEqual "mount succeeds" (Right dummyVRI) (fst result)
+        let vri = D.makeVRI D.localOp ""
+        assertEqual "mount succeeds" (Right vri) (fst result)
 
-        let expectedOperationCmds = (D.openPartitionCmds <*> (pure D.localOp))
-        let expectedCommands = D.readVaultInfoCmds ++ expectedOperationCmds
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ ( D.openPartitionCmds D.localOp )
+                          ++   D.postOpenPartitionCmds
 
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             expectedCommands
@@ -160,8 +162,9 @@ test_openVault = TestList [
         let vri = D.makeVRI D.localOp "/repo"
         assertEqual "mount succeeds" (Right vri) (fst result)
 
-        let expectedOperationCmds = (D.openPartitionCmds <*> (pure D.localOp))
-        let expectedCommands = D.readVaultInfoCmds ++ expectedOperationCmds
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ ( D.openPartitionCmds D.localOp )
+                            ++ D.postOpenPartitionCmds
 
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             expectedCommands
