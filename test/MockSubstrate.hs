@@ -151,16 +151,29 @@ mock_dirExists dir = do
 
 mock_fileExists :: FilePath -> State Mock Bool
 mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig
-mock_fileExists _ = return False
+mock_fileExists fpath = do
+    modify $ recordExec ("fileExists", [fpath])
+    case fpath of
+         "./.config/nvim/init.vim" -> gets hasNVIMConfig
+         _                         -> do wfiles <- gets writtenFiles
+                                         let getfpath = \(_, fpath, _) -> fpath
+                                         let fpaths = map getfpath wfiles
+                                         return (elem fpath fpaths)
 
 mock_getDir :: State Mock String
-mock_getDir = gets currentDir
+mock_getDir = do
+    modify $ recordExec ("getDir", [])
+    gets currentDir
 
 mock_createDir :: FilePath -> State Mock ()
-mock_createDir dir = modify $ addCreatedDir dir
+mock_createDir dir = do
+    modify $ recordExec ("createDir", [])
+    modify $ addCreatedDir dir
 
 mock_changeDir :: String -> State Mock ()
-mock_changeDir dir = modify $ setCurrentDir dir
+mock_changeDir dir = do
+    modify $ recordExec ("changeDir", [])
+    modify $ setCurrentDir dir
 
 mock_lookupEnv :: String -> State Mock (Maybe String)
 mock_lookupEnv key = do

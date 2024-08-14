@@ -96,11 +96,14 @@ preOpenPartitionCmds = [
     ("readFile", [".vault/name"]),
     ("readFile", [".vault/local"]),
     ("readFile", [".vault/remotes"]),
-    ("readFile", [".vault/remoteStore"])
+    ("readFile", [".vault/remoteStore"]),
+    ("getDir", [])
     ]
 
 postOpenPartitionCmds = [
-    ("dirExists", ["repo"])
+    ("changeDir", []),
+    ("dirExists", ["repo"]),
+    ("changeDir", [])
     ]
 
 loopSetupExec :: Bool -> DummyOp -> Sub.ExecResult
