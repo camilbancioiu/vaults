@@ -12,6 +12,7 @@ data ExecResult = ExecResult {
 } deriving (Eq, Show)
 
 -- TODO consider returning ExceptT from all methods
+-- especially from createDir and changeDir
 class Monad m => Substrate m where
     readFile      :: FilePath -> m String
     writeFile     :: FilePath -> String -> m ()

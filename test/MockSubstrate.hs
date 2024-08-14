@@ -142,7 +142,9 @@ mock_writeFile fpath contents =
 mock_dirExists :: FilePath -> State Mock Bool
 mock_dirExists ".vault" = gets hasVaultDir
 mock_dirExists "repo" = gets hasRepoDir
-mock_dirExists _ = return False
+mock_dirExists dir = do
+    dirs <- gets createdDirs
+    return (elem dir dirs)
 
 mock_getDir :: State Mock String
 mock_getDir = gets currentDir

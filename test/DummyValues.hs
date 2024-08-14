@@ -25,7 +25,7 @@ localOp2 = DummyOp {
       partitionFile = "local.vault"
     , loopDev       = "/dev/loop9"
     , mapperDev     = "/dev/dm-2"
-    , mountpoint    = "/run/media/user/localhostname/mockVault"
+    , mountpoint    = "/run/media/user/localhostname/mockVault" -- TODO update URL format
     , commitLog     = "38a3\nab22\n8f2a\n03ac\n"
 }
 
@@ -61,12 +61,6 @@ editCmd _ = ("nvim", [ "--clean"
                      , "."
                      ])
 
-gitFetchCmd :: String -> DummyOp -> (FilePath, [String])
-gitFetchCmd remote _ = ("git", ["fetch", remote])
-
-gitLogCmd :: DummyOp -> (FilePath, [String])
-gitLogCmd _ = ("git", ["log", "--format=%H"])
-
 openPartitionCmds = [ loopSetupCmd, unlockCmd, mountCmd ]
 closePartitionCmds = [ unmountCmd, lockCmd, loopDeleteCmd ]
 closePartitionWithLogCmds = gitLogCmd : closePartitionCmds
@@ -92,13 +86,11 @@ lockCmd op = ("udisksctl", ["lock", "-b", loopDev op])
 loopDeleteCmd :: DummyOp -> (FilePath, [String])
 loopDeleteCmd op = ("udisksctl", ["loop-delete", "-b", loopDev op])
 
-gitLogExec :: Bool -> DummyOp -> Sub.ExecResult
-gitLogExec success op =
-    if not success
-       then failedExecResult
-       else successfulExecResult {
-                Sub.output = commitLog op
-       }
+gitFetchCmd :: String -> DummyOp -> (FilePath, [String])
+gitFetchCmd remote _ = ("git", ["fetch", remote])
+
+gitLogCmd :: DummyOp -> (FilePath, [String])
+gitLogCmd _ = ("git", ["log", "--format=%H"])
 
 loopSetupExec :: Bool -> DummyOp -> Sub.ExecResult
 loopSetupExec success op =
@@ -145,6 +137,24 @@ lockExec success op =
        then failedExecResult
        else successfulExecResult {
                 Sub.output = "Locked " ++ (loopDev op) ++ "."
+       }
+
+gitLogExec :: Bool -> DummyOp -> Sub.ExecResult
+gitLogExec success op =
+    if not success
+       then failedExecResult
+       else successfulExecResult {
+                Sub.output = commitLog op
+       }
+
+gitRemoteExec :: Bool -> DummyOp -> Sub.ExecResult
+gitRemoteExec success op =
+    if not success
+       then failedExecResult
+       else successfulExecResult {
+                Sub.output = unlines [
+                    "remoteA\t/run/media/user/"
+                ]
        }
 
 successfulExecResult :: Sub.ExecResult
