@@ -178,14 +178,19 @@ mock_changeDir dir = do
 
 mock_lookupEnv :: String -> State Mock (Maybe String)
 mock_lookupEnv key = do
+    modify $ recordExec ("lookupEnv", [key])
     mock <- get
     return (lookup key $ envVars mock)
 
 mock_setEnv :: String -> String -> State Mock ()
-mock_setEnv key val = modify (addMockEnvVar key val)
+mock_setEnv key val = do
+    modify $ recordExec ("setEnv", [key])
+    modify (addMockEnvVar key val)
 
 mock_unsetEnv :: String -> State Mock ()
-mock_unsetEnv key = modify (removeMockEnvVar key)
+mock_unsetEnv key = do
+    modify $ recordExec ("unsetEnv", [key])
+    modify (removeMockEnvVar key)
 
 mock_exec :: String -> [String] -> String -> State Mock Substrate.ExecResult
 mock_exec executable params _ = do
@@ -206,13 +211,15 @@ mock_call executable params = do
            return $ head mexcepts
 
 mock_delay :: Int -> State Mock ()
-mock_delay _ = return ()
+mock_delay _ = modify $ recordExec ("delay", [])
 
 mock_echo :: String -> State Mock ()
-mock_echo _ = return ()
+mock_echo _ = modify $ recordExec ("echo", [])
 
 mock_sync :: State Mock (Either String ())
-mock_sync = return $ Right ()
+mock_sync = do
+    modify $ recordExec ("sync", [])
+    return $ Right ()
 
 mockVaultInfo = Base.VaultInfo {
     Base.name = "mockVault",
