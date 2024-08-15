@@ -38,6 +38,7 @@ test_editSuccessful =
         let expectedCommands = D.preOpenPartitionCmds
                           ++ ( D.openPartitionCmds  D.localOp )
                           ++   D.postOpenPartitionCmds
+                          ++ [ ("changeDir", []) ]
                           ++ [ D.editCmd            D.localOp
                              , D.gitLogCmd
                              ]
@@ -69,6 +70,7 @@ test_editorCrashes =
         let expectedCommands = D.preOpenPartitionCmds
                           ++ ( D.openPartitionCmds  D.localOp )
                           ++   D.postOpenPartitionCmds
+                          ++ [ ("changeDir", []) ]
                           ++ [ D.editCmd            D.localOp
                              , D.gitLogCmd
                              ]

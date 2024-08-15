@@ -102,8 +102,7 @@ preOpenPartitionCmds = [
 
 postOpenPartitionCmds = [
     ("changeDir", []),
-    ("dirExists", ["repo"]),
-    ("changeDir", [])
+    ("dirExists", ["repo"])
     ]
 
 preClosePartitionCmds = [
