@@ -4,6 +4,7 @@ import System.Exit
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Sub
 import qualified Vaults.CustomCfg as Cfg
+import qualified MockSubstrate
 
 data DummyOp = DummyOp {
       partitionFile :: FilePath
@@ -45,7 +46,7 @@ showFailedCmd (_, cmd@(subcmd:params)) =
 
 makeVRI ::DummyOp -> FilePath -> Base.VaultRuntimeInfo
 makeVRI op repoDir = Base.VaultRuntimeInfo {
-      Base.srcDir = "/home/user"
+      Base.srcDir = Base.srcDir MockSubstrate.mockVaultRuntimeInfo
     , Base.loopDev = loopDev op
     , Base.mapperDev = mapperDev op
     , Base.mountpoint = mountpoint op
@@ -108,7 +109,6 @@ syncCmd = ("sync", [])
 setEnvCmd :: String -> (FilePath, [String])
 setEnvCmd varname = ("setEnv", [varname])
 
-
 preOpenPartitionCmds = [
     ("dirExists", [".vault"]),
     ("readFile", [".vault/name"]),
@@ -118,13 +118,15 @@ preOpenPartitionCmds = [
     ("getDir", [])
     ]
 
-postOpenPartitionCmds = [
-    ("changeDir", []),
+postOpenPartitionCmds :: DummyOp -> [(FilePath, [String])]
+postOpenPartitionCmds op = [
+    ("changeDir", [mountpoint op]),
     ("dirExists", ["repo"])
     ]
 
-preClosePartitionCmds = [
-    ("changeDir", []),
+preClosePartitionCmds :: Base.VaultRuntimeInfo -> [(FilePath, [String])]
+preClosePartitionCmds vri = [
+    ("changeDir", [Base.srcDir vri]),
     syncCmd,
     delayCmd
     ]

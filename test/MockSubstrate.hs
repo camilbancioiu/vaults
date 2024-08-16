@@ -173,7 +173,7 @@ mock_createDir dir = do
 
 mock_changeDir :: String -> State Mock ()
 mock_changeDir dir = do
-    modify $ recordExec ("changeDir", [])
+    modify $ recordExec ("changeDir", [dir])
     modify $ setCurrentDir dir
 
 mock_lookupEnv :: String -> State Mock (Maybe String)
@@ -258,13 +258,13 @@ emptyMock = Mock {
 
 mockWithVaultDir :: Mock
 mockWithVaultDir = emptyMock {
+    currentDir = "/home/user/vaults/mockVault",
     hasVaultDir = True
     }
 
 mockWithVaultAndRepoDir :: Mock
-mockWithVaultAndRepoDir = emptyMock {
-      hasVaultDir = True
-    , hasRepoDir = True
+mockWithVaultAndRepoDir = mockWithVaultDir {
+    hasRepoDir = True
 }
 
 mockWithEnvVar :: (String, String) -> Mock

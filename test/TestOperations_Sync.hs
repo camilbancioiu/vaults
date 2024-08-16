@@ -63,22 +63,22 @@ test_syncSuccessful =
                              , D.unlockCmd     D.remoteOp
                              , D.mountCmd      D.remoteOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]      -- TODO why?
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ ("changeDir", [Base.srcDir mockVaultRuntimeInfo]) ]      -- TODO why?
                           ++   D.preOpenPartitionCmds
                           ++ [ D.loopSetupCmd  D.localOp
                              , D.unlockCmd     D.localOp
                              , D.mountCmd      D.localOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]      -- TODO why?
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ ("changeDir", ["/mnt/point/repo"]) ]      -- TODO why?
                           ++ [ D.gitFetchCmd   "remoteA" D.localOp
                              , D.gitLogCmd
                              ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.localOp
                           ++ [("writeFile", ["local.log"])]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
@@ -186,12 +186,12 @@ test_sync_LocalFailed_LoopSetup =
                              , D.unlockCmd     D.remoteOp
                              , D.mountCmd      D.remoteOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ ("changeDir", [Base.srcDir mockVaultRuntimeInfo]) ]        -- TODO why?
                           ++   D.preOpenPartitionCmds
                           ++ [ D.loopSetupCmd  D.localOp
                              ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
@@ -225,14 +225,14 @@ test_sync_LocalFailed_Unlock =
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
                                ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ ("changeDir", [Base.srcDir mockVaultRuntimeInfo]) ]        -- TODO why?
                           ++   D.preOpenPartitionCmds
                           ++ [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
                                , D.loopDeleteCmd D.localOp
                                ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
@@ -268,8 +268,8 @@ test_sync_LocalFailed_Mount =
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
                                ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ ("changeDir", [Base.srcDir mockVaultRuntimeInfo]) ]        -- TODO why?
                           ++   D.preOpenPartitionCmds
                           ++ [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
@@ -277,7 +277,7 @@ test_sync_LocalFailed_Mount =
                                , D.lockCmd       D.localOp
                                , D.loopDeleteCmd D.localOp
                                ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
@@ -315,21 +315,21 @@ test_sync_LocalFailed_GitLog =
                              , D.unlockCmd     D.remoteOp
                              , D.mountCmd      D.remoteOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ ("changeDir", [Base.srcDir mockVaultRuntimeInfo]) ]        -- TODO why?
                           ++   D.preOpenPartitionCmds
                           ++ [ D.loopSetupCmd  D.localOp
                              , D.unlockCmd     D.localOp
                              , D.mountCmd      D.localOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ ("changeDir", ["/mnt/point/repo"]) ]        -- TODO why?
                           ++ [ D.gitFetchCmd   "remoteA" D.localOp
                              , D.gitLogCmd
                              ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.localOp
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
@@ -365,22 +365,22 @@ test_sync_LocalFailed_Unmount =
                              , D.unlockCmd     D.remoteOp
                              , D.mountCmd      D.remoteOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ ("changeDir", [Base.srcDir mockVaultRuntimeInfo]) ]        -- TODO why?
                           ++   D.preOpenPartitionCmds
                           ++ [ D.loopSetupCmd  D.localOp
                              , D.unlockCmd     D.localOp
                              , D.mountCmd      D.localOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ ("changeDir", ["/mnt/point/repo"]) ]        -- TODO why?
                           ++ [ D.gitFetchCmd   "remoteA" D.localOp
                              , D.gitLogCmd
                              ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++ [ D.unmountCmd    D.localOp
                              ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
@@ -417,24 +417,24 @@ test_sync_LocalFailed_Lock =
                              , D.unlockCmd     D.remoteOp
                              , D.mountCmd      D.remoteOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ ("changeDir", [Base.srcDir mockVaultRuntimeInfo]) ]        -- TODO why?
                           ++   D.preOpenPartitionCmds
                           ++ [ D.loopSetupCmd  D.localOp
                              , D.unlockCmd     D.localOp
                              , D.mountCmd      D.localOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ ("changeDir", ["/mnt/point/repo"]) ]        -- TODO why?
                           ++ [ D.gitFetchCmd   "remoteA" D.localOp
                              , D.gitLogCmd
                              ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++ [ D.unmountCmd    D.localOp
                              , D.delayCmd
                              , D.lockCmd       D.localOp
                              ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
@@ -473,21 +473,21 @@ test_sync_LocalFailed_LoopDelete =
                              , D.unlockCmd     D.remoteOp
                              , D.mountCmd      D.remoteOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ ("changeDir", [Base.srcDir mockVaultRuntimeInfo]) ]        -- TODO why?
                           ++   D.preOpenPartitionCmds
                           ++ [ D.loopSetupCmd  D.localOp
                              , D.unlockCmd     D.localOp
                              , D.mountCmd      D.localOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ ("changeDir", ["/mnt/point/repo"]) ]        -- TODO why?
                           ++ [ D.gitFetchCmd   "remoteA" D.localOp
                              , D.gitLogCmd
                              ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.localOp
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
@@ -523,22 +523,22 @@ test_sync_RemoteFailed_Unmount =
                              , D.unlockCmd     D.remoteOp
                              , D.mountCmd      D.remoteOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ ("changeDir", [Base.srcDir mockVaultRuntimeInfo]) ]        -- TODO why?
                           ++   D.preOpenPartitionCmds
                           ++ [ D.loopSetupCmd  D.localOp
                              , D.unlockCmd     D.localOp
                              , D.mountCmd      D.localOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ ("changeDir", ["/mnt/point/repo"]) ]        -- TODO why?
                           ++ [ D.gitFetchCmd   "remoteA" D.localOp
                              , D.gitLogCmd
                              ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.localOp
                           ++ [("writeFile", ["local.log"])]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++ [ D.unmountCmd    D.remoteOp
                              ]
         assertEqual "commands"
@@ -576,22 +576,22 @@ test_sync_RemoteFailed_Lock =
                              , D.unlockCmd     D.remoteOp
                              , D.mountCmd      D.remoteOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ ("changeDir", [Base.srcDir mockVaultRuntimeInfo]) ]        -- TODO why?
                           ++   D.preOpenPartitionCmds
                           ++ [ D.loopSetupCmd  D.localOp
                              , D.unlockCmd     D.localOp
                              , D.mountCmd      D.localOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]        -- TODO why?
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ ("changeDir", ["/mnt/point/repo"]) ]        -- TODO why?
                           ++ [ D.gitFetchCmd   "remoteA" D.localOp
                              , D.gitLogCmd
                              ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.localOp
                           ++ [("writeFile", ["local.log"])]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++ [ D.unmountCmd    D.remoteOp
                              , D.delayCmd
                              , D.lockCmd       D.remoteOp
@@ -633,22 +633,22 @@ test_sync_RemoteFailed_LoopDelete =
                              , D.unlockCmd     D.remoteOp
                              , D.mountCmd      D.remoteOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]      -- TODO why?
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ ("changeDir", [Base.srcDir mockVaultRuntimeInfo]) ]      -- TODO why?
                           ++   D.preOpenPartitionCmds
                           ++ [ D.loopSetupCmd  D.localOp
                              , D.unlockCmd     D.localOp
                              , D.mountCmd      D.localOp
                              ]
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]      -- TODO why?
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ ("changeDir", ["/mnt/point/repo"]) ]      -- TODO why?
                           ++ [ D.gitFetchCmd   "remoteA" D.localOp
                              , D.gitLogCmd
                              ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.localOp
                           ++ [("writeFile", ["local.log"])]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands

@@ -62,7 +62,7 @@ test_openVault = TestList [
             expectedCommands
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
-            "/home/user"
+            (currentDir mockWithVaultDir)
             (currentDir mockAfterExec)
         assertAllExecsConsumed mockAfterExec,
 
@@ -90,7 +90,7 @@ test_openVault = TestList [
             expectedCommands
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
-            "/home/user"
+            (currentDir mockWithVaultDir)
             (currentDir mockAfterExec)
         assertAllExecsConsumed mockAfterExec,
 
@@ -123,7 +123,7 @@ test_openVault = TestList [
             expectedCommands
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
-            "/home/user"
+            (currentDir mockWithVaultDir)
             (currentDir mockAfterExec)
         assertAllExecsConsumed mockAfterExec,
 
@@ -142,7 +142,7 @@ test_openVault = TestList [
 
         let expectedCommands = D.preOpenPartitionCmds
                           ++ ( D.openPartitionCmds D.localOp )
-                          ++   D.postOpenPartitionCmds
+                          ++   D.postOpenPartitionCmds D.localOp
 
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             expectedCommands
@@ -164,7 +164,7 @@ test_openVault = TestList [
 
         let expectedCommands = D.preOpenPartitionCmds
                           ++ ( D.openPartitionCmds D.localOp )
-                          ++ [ ("changeDir", []),       -- TODO why?
+                          ++ [ ("changeDir", [D.mountpoint D.localOp]),
                                ("dirExists", ["repo"])
                              ]
 

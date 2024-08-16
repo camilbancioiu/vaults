@@ -37,13 +37,13 @@ test_editSuccessful =
         -- dir is changed via Substrate.changeDir.
         let expectedCommands = D.preOpenPartitionCmds
                           ++ ( D.openPartitionCmds  D.localOp )
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ ("changeDir", ["/mnt/point/repo"]) ]
                           ++ [ D.setEnvCmd "VIMRUNTIME"
                              , D.editCmd            D.localOp
                              , D.gitLogCmd
                              ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++ ( D.closePartitionCmds D.localOp )
                           ++ [ ("writeFile", ["local.log"]) ]
 
@@ -70,13 +70,13 @@ test_editorCrashes =
 
         let expectedCommands = D.preOpenPartitionCmds
                           ++ ( D.openPartitionCmds  D.localOp )
-                          ++   D.postOpenPartitionCmds
-                          ++ [ ("changeDir", []) ]
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ ("changeDir", ["/mnt/point/repo"]) ]
                           ++ [ D.setEnvCmd "VIMRUNTIME"
                              , D.editCmd            D.localOp
                              , D.gitLogCmd
                              ]
-                          ++   D.preClosePartitionCmds
+                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
                           ++ ( D.closePartitionCmds D.localOp )
                           ++ [ ("writeFile", ["local.log"]) ]
 
