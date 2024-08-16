@@ -61,8 +61,16 @@ editCmd _ = ("nvim", [ "--clean"
                      , "."
                      ])
 
-openPartitionCmds op = [ loopSetupCmd op, unlockCmd op, mountCmd op ]
-closePartitionCmds op = [ unmountCmd op, lockCmd op, loopDeleteCmd op ]
+openPartitionCmds op = [ loopSetupCmd op
+                       , unlockCmd op
+                       , mountCmd op
+                       ]
+
+closePartitionCmds op = [ unmountCmd op
+                        , delayCmd
+                        , lockCmd op
+                        , loopDeleteCmd op
+                        ]
 
 openPartitionExecOk = [ loopSetupExec True, unlockExec True, mountExec True ]
 closePartitionExecOk = [ unmountExec True, lockExec True, loopDeleteExec True ]
@@ -91,6 +99,16 @@ gitFetchCmd remote _ = ("git", ["fetch", remote])
 gitLogCmd :: (FilePath, [String])
 gitLogCmd = ("git", ["log", "--format=%H"])
 
+delayCmd :: (FilePath, [String])
+delayCmd = ("delay", [])
+
+syncCmd :: (FilePath, [String])
+syncCmd = ("sync", [])
+
+setEnvCmd :: String -> (FilePath, [String])
+setEnvCmd varname = ("setEnv", [varname])
+
+
 preOpenPartitionCmds = [
     ("dirExists", [".vault"]),
     ("readFile", [".vault/name"]),
@@ -106,7 +124,9 @@ postOpenPartitionCmds = [
     ]
 
 preClosePartitionCmds = [
-    ("changeDir", [])
+    ("changeDir", []),
+    syncCmd,
+    delayCmd
     ]
 
 loopSetupExec :: Bool -> DummyOp -> Sub.ExecResult

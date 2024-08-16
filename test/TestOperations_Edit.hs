@@ -39,7 +39,8 @@ test_editSuccessful =
                           ++ ( D.openPartitionCmds  D.localOp )
                           ++   D.postOpenPartitionCmds
                           ++ [ ("changeDir", []) ]
-                          ++ [ D.editCmd            D.localOp
+                          ++ [ D.setEnvCmd "VIMRUNTIME"
+                             , D.editCmd            D.localOp
                              , D.gitLogCmd
                              ]
                           ++   D.preClosePartitionCmds
@@ -71,7 +72,8 @@ test_editorCrashes =
                           ++ ( D.openPartitionCmds  D.localOp )
                           ++   D.postOpenPartitionCmds
                           ++ [ ("changeDir", []) ]
-                          ++ [ D.editCmd            D.localOp
+                          ++ [ D.setEnvCmd "VIMRUNTIME"
+                             , D.editCmd            D.localOp
                              , D.gitLogCmd
                              ]
                           ++   D.preClosePartitionCmds

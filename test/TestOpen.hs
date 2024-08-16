@@ -164,7 +164,7 @@ test_openVault = TestList [
 
         let expectedCommands = D.preOpenPartitionCmds
                           ++ ( D.openPartitionCmds D.localOp )
-                          ++ [ ("changeDir", []),
+                          ++ [ ("changeDir", []),       -- TODO why?
                                ("dirExists", ["repo"])
                              ]
 
