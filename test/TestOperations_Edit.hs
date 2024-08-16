@@ -38,12 +38,12 @@ test_editSuccessful =
         let expectedCommands = D.preOpenPartitionCmds
                           ++ ( D.openPartitionCmds  D.localOp )
                           ++   D.postOpenPartitionCmds D.localOp
-                          ++ [ ("changeDir", ["/mnt/point/repo"]) ]
+                          ++ [ D.changeToRepoDir D.localOp ]
                           ++ [ D.setEnvCmd "VIMRUNTIME"
                              , D.editCmd            D.localOp
                              , D.gitLogCmd
                              ]
-                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
+                          ++   D.preClosePartitionCmds
                           ++ ( D.closePartitionCmds D.localOp )
                           ++ [ ("writeFile", ["local.log"]) ]
 
@@ -71,12 +71,12 @@ test_editorCrashes =
         let expectedCommands = D.preOpenPartitionCmds
                           ++ ( D.openPartitionCmds  D.localOp )
                           ++   D.postOpenPartitionCmds D.localOp
-                          ++ [ ("changeDir", ["/mnt/point/repo"]) ]
+                          ++ [ D.changeToRepoDir D.localOp ]
                           ++ [ D.setEnvCmd "VIMRUNTIME"
                              , D.editCmd            D.localOp
                              , D.gitLogCmd
                              ]
-                          ++   D.preClosePartitionCmds mockVaultRuntimeInfo
+                          ++   D.preClosePartitionCmds
                           ++ ( D.closePartitionCmds D.localOp )
                           ++ [ ("writeFile", ["local.log"]) ]
 

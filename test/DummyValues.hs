@@ -106,6 +106,12 @@ delayCmd = ("delay", [])
 syncCmd :: (FilePath, [String])
 syncCmd = ("sync", [])
 
+changeToSrcDir :: (FilePath, [String])
+changeToSrcDir = ("changeDir", [Base.srcDir MockSubstrate.mockVaultRuntimeInfo])
+
+changeToRepoDir :: DummyOp -> (FilePath, [String])
+changeToRepoDir op = ("changeDir", [(mountpoint op) ++ "/repo"])
+
 setEnvCmd :: String -> (FilePath, [String])
 setEnvCmd varname = ("setEnv", [varname])
 
@@ -124,9 +130,9 @@ postOpenPartitionCmds op = [
     ("dirExists", ["repo"])
     ]
 
-preClosePartitionCmds :: Base.VaultRuntimeInfo -> [(FilePath, [String])]
-preClosePartitionCmds vri = [
-    ("changeDir", [Base.srcDir vri]),
+preClosePartitionCmds :: [(FilePath, [String])]
+preClosePartitionCmds = [
+    changeToSrcDir,
     syncCmd,
     delayCmd
     ]
