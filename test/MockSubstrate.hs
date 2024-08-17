@@ -123,48 +123,74 @@ instance Substrate.Substrate (State Mock) where
     echo       = mock_echo
     sync       = mock_sync
 
-mock_fileExists :: FilePath -> State Mock Bool
-mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig
-mock_fileExists _ = return False
-
 -- TODO replace mockVaultInfo with a member of Mock
 -- TODO which can be configured by the calling test
+-- needs to read from writtenFiles as well
 mock_readFile :: FilePath -> State Mock String
-mock_readFile ".vault/name" = return (Base.name mockVaultInfo)
-mock_readFile ".vault/local" = return (Base.localname mockVaultInfo)
-mock_readFile ".vault/remotes" = return (unlines $ Base.remotes mockVaultInfo)
-mock_readFile ".vault/remoteStore" = return (Base.remoteStore mockVaultInfo)
+mock_readFile fpath = do
+    modify $ recordExec ("readFile", [fpath])
+    case fpath of
+         ".vault/name" -> return (Base.name mockVaultInfo)
+         ".vault/local" -> return (Base.localname mockVaultInfo)
+         ".vault/remotes" -> return (unlines $ Base.remotes mockVaultInfo)
+         ".vault/remoteStore" -> return (Base.remoteStore mockVaultInfo)
+         _ -> return "not found"
 
 mock_writeFile :: FilePath -> String -> State Mock ()
-mock_writeFile fpath contents =
+mock_writeFile fpath contents = do
+    modify $ recordExec ("writeFile", [fpath])
     modify (addWrittenFile fpath contents)
 
 mock_dirExists :: FilePath -> State Mock Bool
-mock_dirExists ".vault" = gets hasVaultDir
-mock_dirExists "repo" = gets hasRepoDir
 mock_dirExists dir = do
-    dirs <- gets createdDirs
-    return (elem dir dirs)
+    modify $ recordExec ("dirExists", [dir])
+    case dir of
+         ".vault" -> gets hasVaultDir
+         "repo"   -> gets hasRepoDir
+         _        -> do dirs <- gets createdDirs
+                        return (elem dir dirs)
+
+mock_fileExists :: FilePath -> State Mock Bool
+mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig
+mock_fileExists fpath = do
+    modify $ recordExec ("fileExists", [fpath])
+    case fpath of
+         "./.config/nvim/init.vim" -> gets hasNVIMConfig
+         _                         -> do wfiles <- gets writtenFiles
+                                         let getfpath = \(_, fpath, _) -> fpath
+                                         let fpaths = map getfpath wfiles
+                                         return (elem fpath fpaths)
 
 mock_getDir :: State Mock String
-mock_getDir = gets currentDir
+mock_getDir = do
+    modify $ recordExec ("getDir", [])
+    gets currentDir
 
 mock_createDir :: FilePath -> State Mock ()
-mock_createDir dir = modify $ addCreatedDir dir
+mock_createDir dir = do
+    modify $ recordExec ("createDir", [])
+    modify $ addCreatedDir dir
 
 mock_changeDir :: String -> State Mock ()
-mock_changeDir dir = modify $ setCurrentDir dir
+mock_changeDir dir = do
+    modify $ recordExec ("changeDir", [dir])
+    modify $ setCurrentDir dir
 
 mock_lookupEnv :: String -> State Mock (Maybe String)
 mock_lookupEnv key = do
+    modify $ recordExec ("lookupEnv", [key])
     mock <- get
     return (lookup key $ envVars mock)
 
 mock_setEnv :: String -> String -> State Mock ()
-mock_setEnv key val = modify (addMockEnvVar key val)
+mock_setEnv key val = do
+    modify $ recordExec ("setEnv", [key])
+    modify (addMockEnvVar key val)
 
 mock_unsetEnv :: String -> State Mock ()
-mock_unsetEnv key = modify (removeMockEnvVar key)
+mock_unsetEnv key = do
+    modify $ recordExec ("unsetEnv", [key])
+    modify (removeMockEnvVar key)
 
 mock_exec :: String -> [String] -> String -> State Mock Substrate.ExecResult
 mock_exec executable params _ = do
@@ -185,13 +211,15 @@ mock_call executable params = do
            return $ head mexcepts
 
 mock_delay :: Int -> State Mock ()
-mock_delay _ = return ()
+mock_delay _ = modify $ recordExec ("delay", [])
 
 mock_echo :: String -> State Mock ()
-mock_echo _ = return ()
+mock_echo _ = modify $ recordExec ("echo", [])
 
 mock_sync :: State Mock (Either String ())
-mock_sync = return $ Right ()
+mock_sync = do
+    modify $ recordExec ("sync", [])
+    return $ Right ()
 
 mockVaultInfo = Base.VaultInfo {
     Base.name = "mockVault",
@@ -230,13 +258,13 @@ emptyMock = Mock {
 
 mockWithVaultDir :: Mock
 mockWithVaultDir = emptyMock {
+    currentDir = "/home/user/vaults/mockVault",
     hasVaultDir = True
     }
 
 mockWithVaultAndRepoDir :: Mock
-mockWithVaultAndRepoDir = emptyMock {
-      hasVaultDir = True
-    , hasRepoDir = True
+mockWithVaultAndRepoDir = mockWithVaultDir {
+    hasRepoDir = True
 }
 
 mockWithEnvVar :: (String, String) -> Mock

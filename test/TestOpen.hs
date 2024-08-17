@@ -55,12 +55,14 @@ test_openVault = TestList [
         let failExec = D.loopSetupExec False D.localOp
         assertOpParamsError "loop-setup failed" failParams failExec result
 
-        let expectedCommands = [ D.loopSetupCmd D.localOp ]
+        let expectedOperationCmds = [ D.loopSetupCmd D.localOp ]
+        let expectedCommands = D.preOpenPartitionCmds ++ expectedOperationCmds
+
         assertEqual "only loop-setup was called"
             expectedCommands
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
-            "/home/user"
+            (currentDir mockWithVaultDir)
             (currentDir mockAfterExec)
         assertAllExecsConsumed mockAfterExec,
 
@@ -78,15 +80,17 @@ test_openVault = TestList [
         let failExec = D.unlockExec False D.localOp
         assertOpParamsError "unlock failed" failParams failExec result
 
-        let expectedCommands = [ D.loopSetupCmd
-                                , D.unlockCmd
-                                , D.loopDeleteCmd
-                                ] <*> (pure D.localOp)
+        let expectedOperationCmds = [ D.loopSetupCmd
+                                    , D.unlockCmd
+                                    , D.loopDeleteCmd
+                                    ] <*> (pure D.localOp)
+        let expectedCommands = D.preOpenPartitionCmds ++ expectedOperationCmds
+
         assertEqual "loop-setup, unlock, loop-delete were called"
             expectedCommands
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
-            "/home/user"
+            (currentDir mockWithVaultDir)
             (currentDir mockAfterExec)
         assertAllExecsConsumed mockAfterExec,
 
@@ -106,17 +110,20 @@ test_openVault = TestList [
         let failExec = D.mountExec False D.localOp
         assertOpParamsError "mount failed" failParams failExec result
 
-        let expectedCommands = [ D.loopSetupCmd
-                               , D.unlockCmd
-                               , D.mountCmd
-                               , D.lockCmd
-                               , D.loopDeleteCmd
-                               ] <*> (pure D.localOp)
+        let expectedOperationCmds = [ D.loopSetupCmd
+                                    , D.unlockCmd
+                                    , D.mountCmd
+                                    , D.lockCmd
+                                    , D.loopDeleteCmd
+                                    ] <*> (pure D.localOp)
+        let expectedCommands = D.preOpenPartitionCmds
+                            ++ expectedOperationCmds
+
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             expectedCommands
             (execRecorded mockAfterExec)
         assertEqual "current directory not changed"
-            "/home/user"
+            (currentDir mockWithVaultDir)
             (currentDir mockAfterExec)
         assertAllExecsConsumed mockAfterExec,
 
@@ -130,10 +137,13 @@ test_openVault = TestList [
         let result = runState (runExceptT $ openVault "local.vault") mock
         let mockAfterExec = snd result
 
-        let dummyVRI = D.makeVRI D.localOp ""
-        assertEqual "mount succeeds" (Right dummyVRI) (fst result)
+        let vri = D.makeVRI D.localOp ""
+        assertEqual "mount succeeds" (Right vri) (fst result)
 
-        let expectedCommands = (D.openPartitionCmds <*> (pure D.localOp))
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ ( D.openPartitionCmds D.localOp )
+                          ++   D.postOpenPartitionCmds D.localOp
+
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -152,7 +162,10 @@ test_openVault = TestList [
         let vri = D.makeVRI D.localOp "/repo"
         assertEqual "mount succeeds" (Right vri) (fst result)
 
-        let expectedCommands = (D.openPartitionCmds <*> (pure D.localOp))
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ ( D.openPartitionCmds D.localOp )
+                          ++   D.postOpenPartitionCmds D.localOp
+
         assertEqual "loop-setup, unlock, mount, lock, loop-delete were called"
             expectedCommands
             (execRecorded mockAfterExec)

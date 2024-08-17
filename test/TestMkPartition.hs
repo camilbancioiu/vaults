@@ -60,6 +60,7 @@ test_MkPartitionSuccess =
                                           , "/dev/mapper/mockVault"
                                           ]
                                  )
+                               , ("delay", [])
                                , ("sudo", [ "cryptsetup"
                                           , "close"
                                           , "mockVault"

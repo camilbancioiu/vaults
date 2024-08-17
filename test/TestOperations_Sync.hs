@@ -58,21 +58,28 @@ test_syncSuccessful =
 
         assertEqual "sync successful" (Right ()) (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
-                               , D.unlockCmd     D.remoteOp
-                               , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
-                               , D.unlockCmd     D.localOp
-                               , D.mountCmd      D.localOp
-                               , D.gitFetchCmd   "remoteA" D.localOp
-                               , D.gitLogCmd     D.localOp
-                               , D.unmountCmd    D.localOp
-                               , D.lockCmd       D.localOp
-                               , D.loopDeleteCmd D.localOp
-                               , D.unmountCmd    D.remoteOp
-                               , D.lockCmd       D.remoteOp
-                               , D.loopDeleteCmd D.remoteOp
-                               ]
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.remoteOp
+                             , D.unlockCmd     D.remoteOp
+                             , D.mountCmd      D.remoteOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ D.changeToSrcDir ]
+                          ++   D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.localOp
+                             , D.unlockCmd     D.localOp
+                             , D.mountCmd      D.localOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ D.changeToRepoDir D.localOp ]
+                          ++ [ D.gitFetchCmd   "remoteA" D.localOp
+                             , D.gitLogCmd
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.localOp
+                          ++ [("writeFile", ["local.log"])]
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -91,7 +98,8 @@ test_sync_RemoteFailed_LoopSetup =
         let expectedError = Left $ D.showFailedCmd (D.loopSetupCmd D.remoteOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd D.remoteOp ]
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd D.remoteOp ]
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -113,10 +121,11 @@ test_sync_RemoteFailed_Unlock =
         let expectedError = Left $ D.showFailedCmd (D.unlockCmd D.remoteOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
-                               , D.unlockCmd     D.remoteOp
-                               , D.loopDeleteCmd D.remoteOp
-                               ]
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.remoteOp
+                             , D.unlockCmd     D.remoteOp
+                             , D.loopDeleteCmd D.remoteOp
+                             ]
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -140,12 +149,13 @@ test_sync_RemoteFailed_Mount =
         let expectedError = Left $ D.showFailedCmd (D.mountCmd D.remoteOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
-                               , D.unlockCmd     D.remoteOp
-                               , D.mountCmd      D.remoteOp
-                               , D.lockCmd       D.remoteOp
-                               , D.loopDeleteCmd D.remoteOp
-                               ]
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.remoteOp
+                             , D.unlockCmd     D.remoteOp
+                             , D.mountCmd      D.remoteOp
+                             , D.lockCmd       D.remoteOp
+                             , D.loopDeleteCmd D.remoteOp
+                             ]
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -171,14 +181,18 @@ test_sync_LocalFailed_LoopSetup =
         let expectedError = Left $ D.showFailedCmd (D.loopSetupCmd D.localOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
-                               , D.unlockCmd     D.remoteOp
-                               , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
-                               , D.unmountCmd    D.remoteOp
-                               , D.lockCmd       D.remoteOp
-                               , D.loopDeleteCmd D.remoteOp
-                               ]
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.remoteOp
+                             , D.unlockCmd     D.remoteOp
+                             , D.mountCmd      D.remoteOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ D.changeToSrcDir ]
+                          ++   D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.localOp
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -186,7 +200,7 @@ test_sync_LocalFailed_LoopSetup =
 
 test_sync_LocalFailed_Unlock :: Test
 test_sync_LocalFailed_Unlock =
-    TestLabel "unlock local failure handled" $
+    TestLabel "local unlock failure handled" $
     TestCase $ do
         let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
@@ -206,16 +220,20 @@ test_sync_LocalFailed_Unlock =
         let expectedError = Left $ D.showFailedCmd (D.unlockCmd D.localOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
+                               ]
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ D.changeToSrcDir ]
+                          ++   D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
                                , D.loopDeleteCmd D.localOp
-                               , D.unmountCmd    D.remoteOp
-                               , D.lockCmd       D.remoteOp
-                               , D.loopDeleteCmd D.remoteOp
                                ]
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -223,7 +241,7 @@ test_sync_LocalFailed_Unlock =
 
 test_sync_LocalFailed_Mount :: Test
 test_sync_LocalFailed_Mount =
-    TestLabel "unlock local failure handled" $
+    TestLabel "local mount failure handled" $
     TestCase $ do
         let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
@@ -245,18 +263,22 @@ test_sync_LocalFailed_Mount =
         let expectedError = Left $ D.showFailedCmd (D.mountCmd D.localOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.remoteOp
                                , D.unlockCmd     D.remoteOp
                                , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
+                               ]
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ D.changeToSrcDir ]
+                          ++   D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.localOp
                                , D.unlockCmd     D.localOp
                                , D.mountCmd      D.localOp
                                , D.lockCmd       D.localOp
                                , D.loopDeleteCmd D.localOp
-                               , D.unmountCmd    D.remoteOp
-                               , D.lockCmd       D.remoteOp
-                               , D.loopDeleteCmd D.remoteOp
                                ]
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -285,24 +307,30 @@ test_sync_LocalFailed_GitLog =
         let result = runState (runExceptT $ operation) mock
         let mockAfterExec = snd result
 
-        let expectedError = Left $ D.showFailedCmd (D.gitLogCmd D.localOp)
+        let expectedError = Left $ D.showFailedCmd D.gitLogCmd
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
-                               , D.unlockCmd     D.remoteOp
-                               , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
-                               , D.unlockCmd     D.localOp
-                               , D.mountCmd      D.localOp
-                               , D.gitFetchCmd   "remoteA" D.localOp
-                               , D.gitLogCmd     D.localOp
-                               , D.unmountCmd    D.localOp
-                               , D.lockCmd       D.localOp
-                               , D.loopDeleteCmd D.localOp
-                               , D.unmountCmd    D.remoteOp
-                               , D.lockCmd       D.remoteOp
-                               , D.loopDeleteCmd D.remoteOp
-                               ]
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.remoteOp
+                             , D.unlockCmd     D.remoteOp
+                             , D.mountCmd      D.remoteOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ D.changeToSrcDir ]
+                          ++   D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.localOp
+                             , D.unlockCmd     D.localOp
+                             , D.mountCmd      D.localOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ D.changeToRepoDir D.localOp ]
+                          ++ [ D.gitFetchCmd   "remoteA" D.localOp
+                             , D.gitLogCmd
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.localOp
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -332,19 +360,28 @@ test_sync_LocalFailed_Unmount =
         let expectedError = Left $ D.showFailedCmd (D.unmountCmd D.localOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
-                               , D.unlockCmd     D.remoteOp
-                               , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
-                               , D.unlockCmd     D.localOp
-                               , D.mountCmd      D.localOp
-                               , D.gitFetchCmd   "remoteA" D.localOp
-                               , D.gitLogCmd     D.localOp
-                               , D.unmountCmd    D.localOp
-                               , D.unmountCmd    D.remoteOp
-                               , D.lockCmd       D.remoteOp
-                               , D.loopDeleteCmd D.remoteOp
-                               ]
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.remoteOp
+                             , D.unlockCmd     D.remoteOp
+                             , D.mountCmd      D.remoteOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ D.changeToSrcDir ]
+                          ++   D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.localOp
+                             , D.unlockCmd     D.localOp
+                             , D.mountCmd      D.localOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ D.changeToRepoDir D.localOp ]
+                          ++ [ D.gitFetchCmd   "remoteA" D.localOp
+                             , D.gitLogCmd
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++ [ D.unmountCmd    D.localOp
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -375,20 +412,30 @@ test_sync_LocalFailed_Lock =
         let expectedError = Left $ D.showFailedCmd (D.lockCmd D.localOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
-                               , D.unlockCmd     D.remoteOp
-                               , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
-                               , D.unlockCmd     D.localOp
-                               , D.mountCmd      D.localOp
-                               , D.gitFetchCmd   "remoteA" D.localOp
-                               , D.gitLogCmd     D.localOp
-                               , D.unmountCmd    D.localOp
-                               , D.lockCmd       D.localOp
-                               , D.unmountCmd    D.remoteOp
-                               , D.lockCmd       D.remoteOp
-                               , D.loopDeleteCmd D.remoteOp
-                               ]
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.remoteOp
+                             , D.unlockCmd     D.remoteOp
+                             , D.mountCmd      D.remoteOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ D.changeToSrcDir ]
+                          ++   D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.localOp
+                             , D.unlockCmd     D.localOp
+                             , D.mountCmd      D.localOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ D.changeToRepoDir D.localOp ]
+                          ++ [ D.gitFetchCmd   "remoteA" D.localOp
+                             , D.gitLogCmd
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++ [ D.unmountCmd    D.localOp
+                             , D.delayCmd
+                             , D.lockCmd       D.localOp
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -397,7 +444,7 @@ test_sync_LocalFailed_Lock =
 
 test_sync_LocalFailed_LoopDelete :: Test
 test_sync_LocalFailed_LoopDelete =
-    TestLabel "local lock failure handled" $
+    TestLabel "local loop-delete failure handled" $
     TestCase $ do
         let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
@@ -421,21 +468,27 @@ test_sync_LocalFailed_LoopDelete =
         let expectedError = Left $ D.showFailedCmd (D.loopDeleteCmd D.localOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
-                               , D.unlockCmd     D.remoteOp
-                               , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
-                               , D.unlockCmd     D.localOp
-                               , D.mountCmd      D.localOp
-                               , D.gitFetchCmd   "remoteA" D.localOp
-                               , D.gitLogCmd     D.localOp
-                               , D.unmountCmd    D.localOp
-                               , D.lockCmd       D.localOp
-                               , D.loopDeleteCmd D.localOp
-                               , D.unmountCmd    D.remoteOp
-                               , D.lockCmd       D.remoteOp
-                               , D.loopDeleteCmd D.remoteOp
-                               ]
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.remoteOp
+                             , D.unlockCmd     D.remoteOp
+                             , D.mountCmd      D.remoteOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ D.changeToSrcDir ]
+                          ++   D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.localOp
+                             , D.unlockCmd     D.localOp
+                             , D.mountCmd      D.localOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ D.changeToRepoDir D.localOp ]
+                          ++ [ D.gitFetchCmd   "remoteA" D.localOp
+                             , D.gitLogCmd
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.localOp
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -443,7 +496,7 @@ test_sync_LocalFailed_LoopDelete =
 
 test_sync_RemoteFailed_Unmount :: Test
 test_sync_RemoteFailed_Unmount =
-    TestLabel "local unmount failure handled" $
+    TestLabel "remote unmount failure handled" $
     TestCase $ do
         let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
@@ -465,19 +518,29 @@ test_sync_RemoteFailed_Unmount =
         let expectedError = Left $ D.showFailedCmd (D.unmountCmd D.remoteOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
-                               , D.unlockCmd     D.remoteOp
-                               , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
-                               , D.unlockCmd     D.localOp
-                               , D.mountCmd      D.localOp
-                               , D.gitFetchCmd   "remoteA" D.localOp
-                               , D.gitLogCmd     D.localOp
-                               , D.unmountCmd    D.localOp
-                               , D.lockCmd       D.localOp
-                               , D.loopDeleteCmd D.localOp
-                               , D.unmountCmd    D.remoteOp
-                               ]
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.remoteOp
+                             , D.unlockCmd     D.remoteOp
+                             , D.mountCmd      D.remoteOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ D.changeToSrcDir ]
+                          ++   D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.localOp
+                             , D.unlockCmd     D.localOp
+                             , D.mountCmd      D.localOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ D.changeToRepoDir D.localOp ]
+                          ++ [ D.gitFetchCmd   "remoteA" D.localOp
+                             , D.gitLogCmd
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.localOp
+                          ++ [("writeFile", ["local.log"])]
+                          ++   D.preClosePartitionCmds
+                          ++ [ D.unmountCmd    D.remoteOp
+                             ]
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -485,7 +548,7 @@ test_sync_RemoteFailed_Unmount =
 
 test_sync_RemoteFailed_Lock :: Test
 test_sync_RemoteFailed_Lock =
-    TestLabel "local lock failure handled" $
+    TestLabel "remote lock failure handled" $
     TestCase $ do
         let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
@@ -500,7 +563,7 @@ test_sync_RemoteFailed_Lock =
                                    , D.lockExec       True  D.localOp
                                    , D.loopDeleteExec True  D.localOp
                                    , D.unmountExec    True  D.remoteOp
-                                   , D.lockExec       False  D.remoteOp
+                                   , D.lockExec       False D.remoteOp
                                    ]
         let result = runState (runExceptT $ operation) mock
         let mockAfterExec = snd result
@@ -508,20 +571,31 @@ test_sync_RemoteFailed_Lock =
         let expectedError = Left $ D.showFailedCmd (D.lockCmd D.remoteOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
-                               , D.unlockCmd     D.remoteOp
-                               , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
-                               , D.unlockCmd     D.localOp
-                               , D.mountCmd      D.localOp
-                               , D.gitFetchCmd   "remoteA" D.localOp
-                               , D.gitLogCmd     D.localOp
-                               , D.unmountCmd    D.localOp
-                               , D.lockCmd       D.localOp
-                               , D.loopDeleteCmd D.localOp
-                               , D.unmountCmd    D.remoteOp
-                               , D.lockCmd       D.remoteOp
-                               ]
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.remoteOp
+                             , D.unlockCmd     D.remoteOp
+                             , D.mountCmd      D.remoteOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ D.changeToSrcDir ]
+                          ++   D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.localOp
+                             , D.unlockCmd     D.localOp
+                             , D.mountCmd      D.localOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ D.changeToRepoDir D.localOp ]
+                          ++ [ D.gitFetchCmd   "remoteA" D.localOp
+                             , D.gitLogCmd
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.localOp
+                          ++ [("writeFile", ["local.log"])]
+                          ++   D.preClosePartitionCmds
+                          ++ [ D.unmountCmd    D.remoteOp
+                             , D.delayCmd
+                             , D.lockCmd       D.remoteOp
+                             ]
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
@@ -530,7 +604,7 @@ test_sync_RemoteFailed_Lock =
 
 test_sync_RemoteFailed_LoopDelete :: Test
 test_sync_RemoteFailed_LoopDelete =
-    TestLabel "local lock failure handled" $
+    TestLabel "remote loop-delete failure handled" $
     TestCase $ do
         let operation = Operations.doSyncVault "remoteA" mockVaultInfo
         let mock = addMockExecResults results mockWithVaultAndRepoDir
@@ -554,21 +628,28 @@ test_sync_RemoteFailed_LoopDelete =
         let expectedError = Left $ D.showFailedCmd (D.loopDeleteCmd D.remoteOp)
         assertEqual "sync failed" expectedError (fst result)
 
-        let expectedCommands = [ D.loopSetupCmd  D.remoteOp
-                               , D.unlockCmd     D.remoteOp
-                               , D.mountCmd      D.remoteOp
-                               , D.loopSetupCmd  D.localOp
-                               , D.unlockCmd     D.localOp
-                               , D.mountCmd      D.localOp
-                               , D.gitFetchCmd   "remoteA" D.localOp
-                               , D.gitLogCmd     D.localOp
-                               , D.unmountCmd    D.localOp
-                               , D.lockCmd       D.localOp
-                               , D.loopDeleteCmd D.localOp
-                               , D.unmountCmd    D.remoteOp
-                               , D.lockCmd       D.remoteOp
-                               , D.loopDeleteCmd D.remoteOp
-                               ]
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.remoteOp
+                             , D.unlockCmd     D.remoteOp
+                             , D.mountCmd      D.remoteOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.remoteOp
+                          ++ [ D.changeToSrcDir ]
+                          ++   D.preOpenPartitionCmds
+                          ++ [ D.loopSetupCmd  D.localOp
+                             , D.unlockCmd     D.localOp
+                             , D.mountCmd      D.localOp
+                             ]
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ D.changeToRepoDir D.localOp ]
+                          ++ [ D.gitFetchCmd   "remoteA" D.localOp
+                             , D.gitLogCmd
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.localOp
+                          ++ [("writeFile", ["local.log"])]
+                          ++   D.preClosePartitionCmds
+                          ++   D.closePartitionCmds D.remoteOp
         assertEqual "commands"
             expectedCommands
             (execRecorded mockAfterExec)
