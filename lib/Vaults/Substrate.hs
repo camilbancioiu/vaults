@@ -13,6 +13,7 @@ data ExecResult = ExecResult {
 
 -- TODO consider returning ExceptT from all methods
 -- especially from createDir and changeDir
+-- TODO function fileExists isn't used anywhere (yet), remove?
 class Monad m => Substrate m where
     readFile      :: FilePath -> m String
     writeFile     :: FilePath -> String -> m ()

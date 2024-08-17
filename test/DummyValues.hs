@@ -4,6 +4,7 @@ import System.Exit
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Sub
 import qualified Vaults.CustomCfg as Cfg
+import qualified MockSubstrate
 
 data DummyOp = DummyOp {
       partitionFile :: FilePath
@@ -45,7 +46,7 @@ showFailedCmd (_, cmd@(subcmd:params)) =
 
 makeVRI ::DummyOp -> FilePath -> Base.VaultRuntimeInfo
 makeVRI op repoDir = Base.VaultRuntimeInfo {
-      Base.srcDir = "/home/user"
+      Base.srcDir = Base.srcDir MockSubstrate.mockVaultRuntimeInfo
     , Base.loopDev = loopDev op
     , Base.mapperDev = mapperDev op
     , Base.mountpoint = mountpoint op
@@ -61,9 +62,16 @@ editCmd _ = ("nvim", [ "--clean"
                      , "."
                      ])
 
-openPartitionCmds = [ loopSetupCmd, unlockCmd, mountCmd ]
-closePartitionCmds = [ unmountCmd, lockCmd, loopDeleteCmd ]
-closePartitionWithLogCmds = gitLogCmd : closePartitionCmds
+openPartitionCmds op = [ loopSetupCmd op
+                       , unlockCmd op
+                       , mountCmd op
+                       ]
+
+closePartitionCmds op = [ unmountCmd op
+                        , delayCmd
+                        , lockCmd op
+                        , loopDeleteCmd op
+                        ]
 
 openPartitionExecOk = [ loopSetupExec True, unlockExec True, mountExec True ]
 closePartitionExecOk = [ unmountExec True, lockExec True, loopDeleteExec True ]
@@ -89,8 +97,45 @@ loopDeleteCmd op = ("udisksctl", ["loop-delete", "-b", loopDev op])
 gitFetchCmd :: String -> DummyOp -> (FilePath, [String])
 gitFetchCmd remote _ = ("git", ["fetch", remote])
 
-gitLogCmd :: DummyOp -> (FilePath, [String])
-gitLogCmd _ = ("git", ["log", "--format=%H"])
+gitLogCmd :: (FilePath, [String])
+gitLogCmd = ("git", ["log", "--format=%H"])
+
+delayCmd :: (FilePath, [String])
+delayCmd = ("delay", [])
+
+syncCmd :: (FilePath, [String])
+syncCmd = ("sync", [])
+
+changeToSrcDir :: (FilePath, [String])
+changeToSrcDir = ("changeDir", [Base.srcDir MockSubstrate.mockVaultRuntimeInfo])
+
+changeToRepoDir :: DummyOp -> (FilePath, [String])
+changeToRepoDir op = ("changeDir", [(mountpoint op) ++ "/repo"])
+
+setEnvCmd :: String -> (FilePath, [String])
+setEnvCmd varname = ("setEnv", [varname])
+
+preOpenPartitionCmds = [
+    ("dirExists", [".vault"]),
+    ("readFile", [".vault/name"]),
+    ("readFile", [".vault/local"]),
+    ("readFile", [".vault/remotes"]),
+    ("readFile", [".vault/remoteStore"]),
+    ("getDir", [])
+    ]
+
+postOpenPartitionCmds :: DummyOp -> [(FilePath, [String])]
+postOpenPartitionCmds op = [
+    ("changeDir", [mountpoint op]),
+    ("dirExists", ["repo"])
+    ]
+
+preClosePartitionCmds :: [(FilePath, [String])]
+preClosePartitionCmds = [
+    changeToSrcDir,
+    syncCmd,
+    delayCmd
+    ]
 
 loopSetupExec :: Bool -> DummyOp -> Sub.ExecResult
 loopSetupExec success op =

@@ -35,10 +35,17 @@ test_editSuccessful =
 
         -- No need to assert on a call to cd (cd needs a shell anyway); working
         -- dir is changed via Substrate.changeDir.
-        let expectedCommands = (  D.openPartitionCmds
-                               ++ [ D.editCmd, D.gitLogCmd ]
-                               ++ D.closePartitionCmds
-                               ) <*> (pure D.localOp)
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ ( D.openPartitionCmds  D.localOp )
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ D.changeToRepoDir D.localOp ]
+                          ++ [ D.setEnvCmd "VIMRUNTIME"
+                             , D.editCmd            D.localOp
+                             , D.gitLogCmd
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++ ( D.closePartitionCmds D.localOp )
+                          ++ [ ("writeFile", ["local.log"]) ]
 
         assertEqual "all commands executed"
             expectedCommands
@@ -61,10 +68,17 @@ test_editorCrashes =
         let mockAfterExec = snd result
         assertEqual "vault opened, editor crashed, closed" (Left "editor crashed") (fst result)
 
-        let expectedCommands = (  D.openPartitionCmds
-                               ++ [ D.editCmd, D.gitLogCmd ]
-                               ++ D.closePartitionCmds
-                               ) <*> (pure D.localOp)
+        let expectedCommands = D.preOpenPartitionCmds
+                          ++ ( D.openPartitionCmds  D.localOp )
+                          ++   D.postOpenPartitionCmds D.localOp
+                          ++ [ D.changeToRepoDir D.localOp ]
+                          ++ [ D.setEnvCmd "VIMRUNTIME"
+                             , D.editCmd            D.localOp
+                             , D.gitLogCmd
+                             ]
+                          ++   D.preClosePartitionCmds
+                          ++ ( D.closePartitionCmds D.localOp )
+                          ++ [ ("writeFile", ["local.log"]) ]
 
         assertEqual "all commands executed"
             expectedCommands
