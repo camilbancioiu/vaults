@@ -49,7 +49,7 @@ handleVaultOperation operation = do
                         UploadVault              -> Operations.doUploadVault vi
                         DownloadVault            -> Operations.doDownloadVault vi
                         SyncVault remote         -> Operations.doSyncVault remote vi
-                        DiffLog remote           -> Operations.doDiffLog remote vi
+                        DiffLog                  -> Operations.doDiffLog vi
 
     runExceptT $ doOperation
 

@@ -11,7 +11,7 @@ data Operation = InitVault String String
                | UploadVault
                | DownloadVault
                | SyncVault String
-               | DiffLog String
+               | DiffLog
                deriving Show
 
 operationsParser :: ParserInfo Operation
@@ -54,4 +54,4 @@ opSyncVault = command "sync" (info opSyncVaultParser (progDesc "sync vault"))
 opSyncVaultParser = SyncVault <$> argument str (metavar "PARTITION")
 
 opDiffLog = command "diff" (info opDiffLogParser (progDesc "diff vault log"))
-opDiffLogParser = DiffLog <$> argument str (metavar "PARTITION")
+opDiffLogParser = pure DiffLog
