@@ -28,7 +28,7 @@ main = do
          Right _    -> return ()
 
 handleNonVaultOperation :: Operation -> IO (Either String ())
-handleNonVaultOperation operation =
+handleNonVaultOperation operation = do
     putStrLn $ "Performing non-vault operation " ++ (show operation)
     case operation of
          InitVault vname local -> runExceptT $ Operations.doInitVault vname local
