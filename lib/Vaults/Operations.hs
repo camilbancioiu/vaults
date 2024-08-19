@@ -78,13 +78,13 @@ doShellPartition partition = do
     lift $ Substrate.echo "Partition closed."
 
 -- TODO write tests
--- TODO consider `diff --from-file=local.log [each-remote.log]`
-doDiffLog :: Substrate.Substrate m => String -> VaultInfo -> ExceptT String m ()
-doDiffLog remote vi = do
-    result <- lift $ Substrate.exec "diff" [ "-u"
-                                           , (localname vi) ++ ".log"
-                                           , remote ++ ".log"
-                                           ] ""
+doDiffLog :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
+doDiffLog vi = do
+    let localLog = (localname vi) ++ ".log"
+    let remoteLogs = map (++ ".log") (remotes vi)
+    let diffArgs = [ "-u" , "--from-file=" ++ localLog ] ++ remoteLogs
+
+    result <- lift $ Substrate.exec "diff" diffArgs ""
 
     -- `diff` returns code 0 when files are identical and 1 when they differ;
     -- for error it returns 2.

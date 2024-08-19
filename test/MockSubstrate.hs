@@ -214,7 +214,7 @@ mock_delay :: Int -> State Mock ()
 mock_delay _ = modify $ recordExec ("delay", [])
 
 mock_echo :: String -> State Mock ()
-mock_echo _ = modify $ recordExec ("echo", [])
+mock_echo _ = return ()
 
 mock_sync :: State Mock (Either String ())
 mock_sync = do
