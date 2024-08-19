@@ -1,54 +1,55 @@
 module Vaults.Close where
 
-import Control.Monad.Trans
 import Control.Monad
 import Control.Monad.Except
+import Control.Monad.Trans
 import System.Exit
-
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 import qualified Vaults.Udisksctl as U
 
-closeVault :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT String m ()
+closeVault :: (Substrate.Substrate m) => Base.VaultRuntimeInfo -> ExceptT String m ()
 closeVault vri = do
-    -- TODO refactor
-    -- TODO if this is not a real vault with a git repo, do not extract the
-    -- commit log
-    let needCommitLog = (Base.partitionLocation vri) == Base.LocalPartition
+  -- TODO refactor
+  -- TODO if this is not a real vault with a git repo, do not extract the
+  -- commit log
+  let needCommitLog = (Base.partitionLocation vri) == Base.LocalPartition
 
-    commitLog <- catchError
-                    (do
-                        if needCommitLog
-                        then extractCommitLog
-                        else return ""
-                    )
-                    (\e -> closePartition vri >> throwError e)
+  commitLog <-
+    catchError
+      ( do
+          if needCommitLog
+            then extractCommitLog
+            else return ""
+      )
+      (\e -> closePartition vri >> throwError e)
 
-    closePartition vri
+  closePartition vri
 
-    if needCommitLog
-        then saveCommitLog vri commitLog
-        else return ()
+  if needCommitLog
+    then saveCommitLog vri commitLog
+    else return ()
 
-closePartition :: Substrate.Substrate m => Base.VaultRuntimeInfo -> ExceptT String m ()
+closePartition :: (Substrate.Substrate m) => Base.VaultRuntimeInfo -> ExceptT String m ()
 closePartition vri = do
-    lift $ Substrate.changeDir (Base.srcDir vri)
-    lift $ Substrate.sync
-    lift $ Substrate.delay 1000000
-    U.unmountDevice (Base.mapperDev vri)
-    lift $ Substrate.delay 500000
-    U.lockDevice (Base.loopDev vri)
-    U.deleteLoopDevice (Base.loopDev vri)
+  lift $ Substrate.changeDir (Base.srcDir vri)
+  lift $ Substrate.sync
+  lift $ Substrate.delay 1000000
+  U.unmountDevice (Base.mapperDev vri)
+  lift $ Substrate.delay 500000
+  U.lockDevice (Base.loopDev vri)
+  U.deleteLoopDevice (Base.loopDev vri)
 
-extractCommitLog :: Substrate.Substrate m => ExceptT String m String
+extractCommitLog :: (Substrate.Substrate m) => ExceptT String m String
 extractCommitLog = do
-    result <- lift $ Substrate.exec "git" ["log", "--format=%H"] ""
-    when (Substrate.exitCode result /= ExitSuccess)
-         (throwError $ "git log failed: " ++ (Substrate.errorOutput result))
-    let commitLog = Substrate.output result
-    return commitLog
+  result <- lift $ Substrate.exec "git" ["log", "--format=%H"] ""
+  when
+    (Substrate.exitCode result /= ExitSuccess)
+    (throwError $ "git log failed: " ++ (Substrate.errorOutput result))
+  let commitLog = Substrate.output result
+  return commitLog
 
-saveCommitLog :: Substrate.Substrate m => Base.VaultRuntimeInfo -> String -> ExceptT String m ()
+saveCommitLog :: (Substrate.Substrate m) => Base.VaultRuntimeInfo -> String -> ExceptT String m ()
 saveCommitLog vri commitLog = do
-    let logFilename = (Base.partitionName vri) ++ ".log"
-    lift $ Substrate.writeFile logFilename commitLog
+  let logFilename = (Base.partitionName vri) ++ ".log"
+  lift $ Substrate.writeFile logFilename commitLog
