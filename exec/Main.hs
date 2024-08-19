@@ -29,6 +29,7 @@ main = do
 
 handleNonVaultOperation :: Operation -> IO (Either String ())
 handleNonVaultOperation operation =
+    putStrLn $ "Performing non-vault operation " ++ (show operation)
     case operation of
          InitVault vname local -> runExceptT $ Operations.doInitVault vname local
          ShellPartition partition -> runExceptT $ Operations.doShellPartition partition
@@ -37,6 +38,9 @@ handleNonVaultOperation operation =
 handleVaultOperation :: Operation -> IO (Either String ())
 handleVaultOperation operation = do
     vi <- loadVaultInfo
+    putStrLn $ "Performing operation " ++ (show operation)
+                                       ++ " on vault "
+                                       ++ (name vi)
     let doOperation = case operation of
                         MakePartition part sz    -> Operations.doMakePartition part sz vi
                         EditVault                -> Operations.doEditVault vi

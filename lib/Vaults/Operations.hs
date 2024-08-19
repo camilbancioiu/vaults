@@ -26,12 +26,15 @@ doMakePartition = makePartition
 doEditVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doEditVault vi = do
     vri <- openVault $ (localname vi) ++ ".vault"
+    lift $ Substrate.echo "Vault opened, starting editor..."
     (do
         lift $ Substrate.changeDir (repositoryDir vri)
         callEditor
         )
         `catchError` (\e -> closeVault vri >> throwError e)
+    lift $ Substrate.echo "Editor closed."
     closeVault vri
+    lift $ Substrate.echo "Vault closed."
 
 callEditor :: Substrate.Substrate m => ExceptT String m ()
 callEditor = do
@@ -47,12 +50,15 @@ callEditor = do
 doShellVault :: Substrate.Substrate m => VaultInfo -> ExceptT String m ()
 doShellVault vi = do
     vri <- openVault $ (localname vi) ++ ".vault"
+    lift $ Substrate.echo "Vault opened, starting shell session..."
     (do
         lift $ Substrate.changeDir (repositoryDir vri)
         callShell
         )
         `catchError` (\e -> closeVault vri >> throwError e)
+    lift $ Substrate.echo "Shell session closed."
     closeVault vri
+    lift $ Substrate.echo "Vault closed."
 
 callShell :: Substrate.Substrate m => ExceptT String m ()
 callShell = do
@@ -61,12 +67,15 @@ callShell = do
 doShellPartition :: Substrate.Substrate m => String -> ExceptT String m ()
 doShellPartition partition = do
     vri <- openPartition partition
+    lift $ Substrate.echo "Partition opened, starting shell session..."
     (do
         lift $ Substrate.changeDir (repositoryDir vri)
         callShell
         )
         `catchError` (\e -> closeVault vri >> throwError e)
+    lift $ Substrate.echo "Shell session closed."
     closePartition vri
+    lift $ Substrate.echo "Partition closed."
 
 -- TODO write tests
 -- TODO consider `diff --from-file=local.log [each-remote.log]`
@@ -130,13 +139,17 @@ performSync localVRI remote = do
 
 -- TODO write tests
 uploadVaultPartition :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
-uploadVaultPartition vi partition =
+uploadVaultPartition vi partition = do
+    lift $ Substrate.echo "Uploading..."
     mapM_ (upload vi) [partition ++ ".vault", partition ++ ".log"]
+    lift $ Substrate.echo "Done."
 
 -- TODO write tests
 downloadVaultPartition :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
 downloadVaultPartition vi partition = do
+    lift $ Substrate.echo "Downloading..."
     mapM_ (download vi) [partition ++ ".vault", partition ++ ".log"]
+    lift $ Substrate.echo "Done."
 
 -- TODO write tests
 upload :: Substrate.Substrate m => VaultInfo -> FilePath -> ExceptT String m ()
