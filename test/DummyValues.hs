@@ -1,5 +1,6 @@
 module DummyValues where
 
+import Data.List
 import qualified MockSubstrate
 import System.Exit
 import qualified Vaults.Base as Base
@@ -148,6 +149,17 @@ preClosePartitionCmds =
     delayCmd
   ]
 
+uploadPartitionCmds :: String -> [(FilePath, [String])]
+uploadPartitionCmds partition =
+  let vi = MockSubstrate.mockVaultInfo
+      partitionFile = partition ++ ".vault"
+      partitionLogFile = partition ++ ".log"
+      remotePartitionFile = mkpath [(Base.remoteStore vi), (Base.name vi), partitionFile]
+      remotePartitionLogFile = mkpath [(Base.remoteStore vi), (Base.name vi), partitionLogFile]
+   in [ ("rsync", ["-ivz", partitionFile, remotePartitionFile]),
+        ("rsync", ["-ivz", partitionLogFile, remotePartitionLogFile])
+      ]
+
 loopSetupExec :: Bool -> DummyOp -> Sub.ExecResult
 loopSetupExec success op =
   if not success
@@ -246,3 +258,6 @@ failedExecResult =
       Sub.output = "didn't work",
       Sub.errorOutput = ""
     }
+
+mkpath :: [String] -> String
+mkpath = concat . (intersperse "/")

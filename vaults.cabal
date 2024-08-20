@@ -50,5 +50,6 @@ test-suite vaults-test
                        TestOperations_Edit,
                        TestOperations_ShellPartition,
                        TestOperations_Sync
+                       TestOperations_Up
   build-depends:       base, vaults,
                        HUnit, mtl

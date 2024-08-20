@@ -10,6 +10,7 @@ import qualified TestOpen (allTests)
 import qualified TestOperations_Edit (allTests)
 import qualified TestOperations_ShellPartition (allTests)
 import qualified TestOperations_Sync (allTests)
+import qualified TestOperations_Up (allTests)
 import qualified TestUdisksctl (allTests)
 
 main :: IO ()
@@ -30,5 +31,6 @@ allTests =
       TestOperations_Edit.allTests,
       TestOperations_ShellPartition.allTests,
       TestOperations_Sync.allTests,
+      TestOperations_Up.allTests,
       TestMkPartition.allTests
     ]
