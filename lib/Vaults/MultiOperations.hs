@@ -1,6 +1,8 @@
 module Vaults.MultiOperations where
 
+import Control.Monad
 import Control.Monad.Except
+import Control.Monad.Trans
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 
