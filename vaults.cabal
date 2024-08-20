@@ -27,7 +27,7 @@ library
   build-depends:       base, directory, filepath, process, mtl, extra
 
 executable vault
-  hs-source-dirs:      exec
+  hs-source-dirs:      exe
   main-is:             Main.hs
   -- other-extensions:
   build-depends:       base, vaults, filepath, optparse-applicative,
