@@ -99,8 +99,34 @@ doUploadVault :: (Substrate.Substrate m) => VaultInfo -> ExceptT String m ()
 doUploadVault vi = uploadVaultPartition vi (localname vi)
 
 -- TODO write tests
+uploadVaultPartition :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
+uploadVaultPartition vi partition = do
+  lift $ Substrate.echo "Uploading partition " ++ partition ++ "..."
+  mapM_ (upload vi) [partition ++ ".vault", partition ++ ".log"]
+  lift $ Substrate.echo "Done."
+
+-- TODO write tests
+upload :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
+upload vi filename = do
+  let remoteFilename = mkpath [(remoteStore vi), (name vi), filename]
+  ExceptT $ Substrate.call "rsync" ["-ivz", filename, remoteFilename]
+
+-- TODO write tests
 doDownloadVault :: (Substrate.Substrate m) => VaultInfo -> ExceptT String m ()
 doDownloadVault vi = mapM_ (downloadVaultPartition vi) (remotes vi)
+
+-- TODO write tests
+downloadVaultPartition :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
+downloadVaultPartition vi partition = do
+  lift $ Substrate.echo "Downloading partition " ++ partition ++ "..."
+  mapM_ (download vi) [partition ++ ".vault", partition ++ ".log"]
+  lift $ Substrate.echo "Done."
+
+-- TODO write tests
+download :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
+download vi filename = do
+  let remoteFilename = mkpath [(remoteStore vi), (name vi), filename]
+  ExceptT $ Substrate.call "rsync" ["-ivz", remoteFilename, filename]
 
 -- TODO consider alternate procedure (safer?)
 -- 1. remote loop-setup
@@ -135,32 +161,6 @@ performSync :: (Substrate.Substrate m) => VaultRuntimeInfo -> FilePath -> Except
 performSync localVRI remote = do
   lift $ Substrate.changeDir (repositoryDir localVRI)
   ExceptT $ Substrate.call "git" ["fetch", remote]
-
--- TODO write tests
-uploadVaultPartition :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
-uploadVaultPartition vi partition = do
-  lift $ Substrate.echo "Uploading..."
-  mapM_ (upload vi) [partition ++ ".vault", partition ++ ".log"]
-  lift $ Substrate.echo "Done."
-
--- TODO write tests
-downloadVaultPartition :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
-downloadVaultPartition vi partition = do
-  lift $ Substrate.echo "Downloading..."
-  mapM_ (download vi) [partition ++ ".vault", partition ++ ".log"]
-  lift $ Substrate.echo "Done."
-
--- TODO write tests
-upload :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
-upload vi filename = do
-  let remoteFilename = mkpath [(remoteStore vi), (name vi), filename]
-  ExceptT $ Substrate.call "rsync" ["-ivz", filename, remoteFilename]
-
--- TODO write tests
-download :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
-download vi filename = do
-  let remoteFilename = mkpath [(remoteStore vi), (name vi), filename]
-  ExceptT $ Substrate.call "rsync" ["-ivz", remoteFilename, filename]
 
 mkpath :: [String] -> String
 mkpath = concat . (intersperse "/")
