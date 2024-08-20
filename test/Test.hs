@@ -6,6 +6,7 @@ import qualified TestBase (allTests)
 import qualified TestClose (allTests)
 import qualified TestInit (allTests)
 import qualified TestMkPartition (allTests)
+import qualified TestMultiOperations (allTests)
 import qualified TestOpen (allTests)
 import qualified TestOperations_Edit (allTests)
 import qualified TestOperations_ShellPartition (allTests)
@@ -32,5 +33,6 @@ allTests =
       TestOperations_ShellPartition.allTests,
       TestOperations_Sync.allTests,
       TestOperations_Up.allTests,
-      TestMkPartition.allTests
+      TestMkPartition.allTests,
+      TestMultiOperations.allTests
     ]

@@ -3,6 +3,7 @@
 module MockSubstrate where
 
 import Control.Exception.Base
+import Control.Monad.Except
 import Control.Monad.State
 import System.Exit
 import qualified Vaults.Base as Base
@@ -18,7 +19,8 @@ data Mock = Mock
     nExecs :: Int,
     execRecorded :: [(String, [String])],
     execResults :: [Substrate.ExecResult],
-    createdDirs :: [String],
+    createdDirs :: [FilePath],
+    existingSubdirs :: [FilePath],
     writtenFiles :: [(FilePath, FilePath, String)],
     lastWrittenFile :: (FilePath, FilePath, String),
     callExceptions :: [Either String ()]
@@ -119,6 +121,7 @@ instance Substrate.Substrate (State Mock) where
   dirExists = mock_dirExists
   fileExists = mock_fileExists
   getDir = mock_getDir
+  listSubdirs = mock_listSubdirs
   createDir = mock_createDir
   changeDir = mock_changeDir
   lookupEnv = mock_lookupEnv
@@ -170,10 +173,15 @@ mock_fileExists fpath = do
       let fpaths = map getfpath wfiles
       return (elem fpath fpaths)
 
-mock_getDir :: State Mock String
+mock_getDir :: State Mock FilePath
 mock_getDir = do
   modify $ recordExec ("getDir", [])
   gets currentDir
+
+mock_listSubdirs :: State Mock [FilePath]
+mock_listSubdirs = do
+  modify $ recordExec ("listSubdirs", [])
+  gets existingSubdirs
 
 mock_createDir :: FilePath -> State Mock ()
 mock_createDir dir = do
@@ -263,6 +271,7 @@ emptyMock =
       execRecorded = [],
       execResults = [],
       createdDirs = [],
+      existingSubdirs = [],
       writtenFiles = [],
       lastWrittenFile = ("", "", ""),
       callExceptions = []

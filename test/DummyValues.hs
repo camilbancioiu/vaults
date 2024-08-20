@@ -1,5 +1,6 @@
 module DummyValues where
 
+import Control.Monad.Except
 import Data.List
 import qualified MockSubstrate
 import System.Exit
@@ -261,3 +262,10 @@ failedExecResult =
 
 mkpath :: [String] -> String
 mkpath = concat . (intersperse "/")
+
+dummyOperation ::
+  (Sub.Substrate m) =>
+  Base.VaultInfo ->
+  ExceptT String m ()
+dummyOperation vi = do
+  return (Sub.call "dummy" [Base.name vi])
