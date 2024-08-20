@@ -54,6 +54,3 @@ handleVaultOperation operation = do
         DiffLog -> Operations.doDiffLog vi
 
   runExceptT $ doOperation
-
-doError :: (Substrate.Substrate m) => String -> VaultInfo -> ExceptT String m ()
-doError msg _ = throwError msg
