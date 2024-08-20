@@ -101,9 +101,15 @@ doUploadVault vi = uploadVaultPartition vi (localname vi)
 -- TODO write tests
 uploadVaultPartition :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
 uploadVaultPartition vi partition = do
-  lift $ Substrate.echo "Uploading partition " ++ partition ++ "..."
+  echoUploadPartition vi partition
   mapM_ (upload vi) [partition ++ ".vault", partition ++ ".log"]
-  lift $ Substrate.echo "Done."
+  echoDone
+
+echoUploadPartition :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
+echoUploadPartition vi partition = do
+  let vaultname = name vi
+  let strings = ["Uploading vault", vaultname, "-", partition, "..."]
+  lift $ Substrate.echo $ concat strings
 
 -- TODO write tests
 upload :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
@@ -118,9 +124,18 @@ doDownloadVault vi = mapM_ (downloadVaultPartition vi) (remotes vi)
 -- TODO write tests
 downloadVaultPartition :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
 downloadVaultPartition vi partition = do
-  lift $ Substrate.echo "Downloading partition " ++ partition ++ "..."
+  echoDownloadPartition vi partition
   mapM_ (download vi) [partition ++ ".vault", partition ++ ".log"]
-  lift $ Substrate.echo "Done."
+  echoDone
+
+echoDownloadPartition :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
+echoDownloadPartition vi partition = do
+  let vaultname = name vi
+  let strings = ["Downloading vault", vaultname, "-", partition, "..."]
+  echoDone
+
+echoDone :: (Substrate.Substrate m) => ExceptT String m ()
+echoDone = lift $ Substrate.echo "Done."
 
 -- TODO write tests
 download :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
