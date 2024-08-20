@@ -8,9 +8,6 @@ import MockSubstrate
 import Test.HUnit
 import qualified Vaults.Operations as Operations
 
--- TODO test with shell
--- TODO test where the shell crashes
-
 allTests :: Test
 allTests =
   TestList
@@ -35,8 +32,6 @@ test_editSuccessful =
       let mockAfterExec = snd result
       assertEqual "vault opened, edited, closed" (Right ()) (fst result)
 
-      -- No need to assert on a call to cd (cd needs a shell anyway); working
-      -- dir is changed via Substrate.changeDir.
       let expectedCommands =
             D.preOpenPartitionCmds
               ++ (D.openPartitionCmds D.localOp)

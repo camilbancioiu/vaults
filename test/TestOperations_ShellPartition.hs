@@ -9,6 +9,8 @@ import Test.HUnit
 import Vaults.Open
 import qualified Vaults.Operations as Operations
 
+-- TODO test where the shell crashes
+
 allTests :: Test
 allTests =
   TestList
@@ -18,15 +20,13 @@ allTests =
 
 test_prerequisites :: Test
 test_prerequisites =
-  TestList
-    [ TestLabel "open without a partition filename fails" $
-        TestCase $ do
-          let mock = emptyMock
-          let result = runState (runExceptT $ openPartition "") mock
-          let mockAfterExec = snd result
-          assertOpError "partition filename is required" result
-          assertNoExecCalls mockAfterExec
-    ]
+  TestLabel "open without a partition filename fails" $
+    TestCase $ do
+      let mock = emptyMock
+      let result = runState (runExceptT $ openPartition "") mock
+      let mockAfterExec = snd result
+      assertOpError "partition filename is required" result
+      assertNoExecCalls mockAfterExec
 
 test_shellPartition :: Test
 test_shellPartition =

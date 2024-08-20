@@ -20,7 +20,6 @@ doInitVault vaultName localName = do
 doMakePartition :: (Substrate.Substrate m) => String -> Int -> VaultInfo -> ExceptT String m ()
 doMakePartition = makePartition
 
--- TODO write tests (see test/TestOperations_Edit.hs)
 doEditVault :: (Substrate.Substrate m) => VaultInfo -> ExceptT String m ()
 doEditVault vi = do
   vri <- openVault $ (localname vi) ++ ".vault"
@@ -44,7 +43,7 @@ callEditor = do
   lift $ Substrate.setEnv envkey envvalue
   ExceptT $ Substrate.call editorExec editorParams
 
--- TODO write tests (see test/TestOperations_Edit.hs)
+-- TODO write extra tests (see test/TestOperations_Shell.hs)
 doShellVault :: (Substrate.Substrate m) => VaultInfo -> ExceptT String m ()
 doShellVault vi = do
   vri <- openVault $ (localname vi) ++ ".vault"
@@ -94,28 +93,28 @@ doDiffLog vi = do
       lift $ Substrate.echo e
       throwError e
 
--- TODO write tests
+-- TODO write extra tests? (see test/TestOperations_Up.hs)
 doUploadVault :: (Substrate.Substrate m) => VaultInfo -> ExceptT String m ()
 doUploadVault vi = uploadVaultPartition vi (localname vi)
 
--- TODO write tests
+-- TODO write extra tests? (see test/TestOperations_Up.hs)
 uploadVaultPartition :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
 uploadVaultPartition vi partition = do
   echoUploadPartition vi partition
   mapM_ (upload vi) [partition ++ ".vault", partition ++ ".log"]
   echoDone
 
+-- TODO write extra tests? (see test/TestOperations_Up.hs)
+upload :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
+upload vi filename = do
+  let remoteFilename = mkpath [(remoteStore vi), (name vi), filename]
+  ExceptT $ Substrate.call "rsync" ["-ivz", filename, remoteFilename]
+
 echoUploadPartition :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
 echoUploadPartition vi partition = do
   let vaultname = name vi
   let strings = ["Uploading vault", vaultname, "-", partition, "..."]
   lift $ Substrate.echo $ concat strings
-
--- TODO write tests
-upload :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
-upload vi filename = do
-  let remoteFilename = mkpath [(remoteStore vi), (name vi), filename]
-  ExceptT $ Substrate.call "rsync" ["-ivz", filename, remoteFilename]
 
 -- TODO write tests
 doDownloadVault :: (Substrate.Substrate m) => VaultInfo -> ExceptT String m ()
