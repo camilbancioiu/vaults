@@ -4,44 +4,50 @@ import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Trans
 import qualified Vaults.Base as Base
+import qualified Vaults.Operations as Operations
 import qualified Vaults.Substrate as Substrate
 
 doUploadMultiVault :: (Substrate.Substrate m) => ExceptT String m ()
-doUploadMultiVault = do
-  return ()
+doUploadMultiVault = iterateVaultDirs Operations.doUploadVault
 
-iterateVaultSubdirs ::
+doDownloadMultiVault :: (Substrate.Substrate m) => ExceptT String m ()
+doDownloadMultiVault = iterateVaultDirs Operations.doDownloadVault
+
+doDiffLogMultiVault :: (Substrate.Substrate m) => ExceptT String m ()
+doDiffLogMultiVault = iterateVaultDirs Operations.doDiffLog
+
+iterateVaultDirs ::
   (Substrate.Substrate m) =>
   (Base.VaultInfo -> ExceptT String m ()) ->
   ExceptT String m ()
-iterateVaultSubdirs doOperation = do
-  getVaultSubdirs >>= mapM_ (visitVaultSubdir doOperation)
+iterateVaultDirs doOperation = do
+  getVaultDirs >>= mapM_ (visitVaultDir doOperation)
 
-visitVaultSubdir ::
+visitVaultDir ::
   (Substrate.Substrate m) =>
   (Base.VaultInfo -> ExceptT String m ()) ->
   FilePath ->
   ExceptT String m ()
-visitVaultSubdir doOperation subdir = do
+visitVaultDir doOperation dir = do
   parentDir <- lift $ Substrate.getDir
-  vi <- lift $ prepareOperation subdir
+  vi <- lift $ prepareOperation dir
   doOperation vi
   lift $ Substrate.changeDir parentDir
   return ()
 
 prepareOperation :: (Substrate.Substrate m) => FilePath -> m Base.VaultInfo
-prepareOperation subdir = do
-  Substrate.changeDir subdir
+prepareOperation dir = do
+  Substrate.changeDir dir
   vi <- Base.loadVaultInfo
   Substrate.echo $
     "Performing operation on vault " ++ (Base.name vi)
   return vi
 
-getVaultSubdirs :: (Substrate.Substrate m) => ExceptT String m [FilePath]
-getVaultSubdirs = (lift $ Substrate.listSubdirs) >>= filterM isVaultSubdir
+getVaultDirs :: (Substrate.Substrate m) => ExceptT String m [FilePath]
+getVaultDirs = (lift $ Substrate.listDirs) >>= filterM isVaultDir
 
-isVaultSubdir :: (Substrate.Substrate m) => FilePath -> ExceptT String m Bool
-isVaultSubdir subdir =
+isVaultDir :: (Substrate.Substrate m) => FilePath -> ExceptT String m Bool
+isVaultDir dir =
   (lift $ Substrate.dirExists vpath) >>= return
   where
-    vpath = subdir ++ "/.vault"
+    vpath = dir ++ "/.vault"

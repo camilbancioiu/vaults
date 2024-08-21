@@ -86,7 +86,7 @@ doDiffLog vi = do
   -- `diff` returns code 0 when files are identical and 1 when they differ;
   -- for error it returns 2.
   case Substrate.exitCode result of
-    ExitSuccess -> return ()
+    ExitSuccess -> lift $ Substrate.echo "Log files are identical."
     ExitFailure 1 -> lift $ Substrate.echo (Substrate.output result)
     ExitFailure 2 -> do
       let e = Substrate.errorOutput result

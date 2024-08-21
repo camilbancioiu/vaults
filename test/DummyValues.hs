@@ -130,14 +130,15 @@ changeToRepoDir op = ("changeDir", [(mountpoint op) ++ "/repo"])
 setEnvCmd :: String -> (FilePath, [String])
 setEnvCmd varname = ("setEnv", [varname])
 
-preOpenPartitionCmds =
-  [ ("dirExists", [".vault"]),
-    ("readFile", [".vault/name"]),
+readVaultInfoCmds =
+  [ ("readFile", [".vault/name"]),
     ("readFile", [".vault/local"]),
     ("readFile", [".vault/remotes"]),
-    ("readFile", [".vault/remoteStore"]),
-    ("getDir", [])
+    ("readFile", [".vault/remoteStore"])
   ]
+
+preOpenPartitionCmds =
+  [("dirExists", [".vault"])] ++ readVaultInfoCmds ++ [("getDir", [])]
 
 postOpenPartitionCmds :: DummyOp -> [(FilePath, [String])]
 postOpenPartitionCmds op =
