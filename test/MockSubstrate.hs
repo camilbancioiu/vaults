@@ -289,9 +289,3 @@ mockWithVaultAndRepoDir =
   mockWithVaultDir
     { hasRepoDir = True
     }
-
-mockWithEnvVar :: (String, String) -> Mock
-mockWithEnvVar var =
-  emptyMock
-    { envVars = [var]
-    }
