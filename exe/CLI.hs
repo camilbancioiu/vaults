@@ -10,9 +10,12 @@ data Operation
   | ShellVault
   | ShellPartition String
   | UploadVault
+  | UploadMultiVault
   | DownloadVault
+  | DownloadMultiVault
   | SyncVault String
   | DiffLog
+  | DiffLogMultiVault
   deriving (Show)
 
 operationsParser :: ParserInfo Operation
@@ -26,9 +29,12 @@ operations =
       <> opShellVault
       <> opShellPartition
       <> opUploadVault
+      <> opUploadMultiVault
       <> opDownloadVault
+      <> opDownloadMultiVault
       <> opSyncVault
       <> opDiffLog
+      <> opDiffLogMultiVault
 
 opInitVault = command "init" (info opInitVaultParser (progDesc "init vault"))
 
@@ -60,9 +66,17 @@ opUploadVault = command "up" (info opUploadVaultParser (progDesc "upload vault")
 
 opUploadVaultParser = pure UploadVault
 
+opUploadMultiVault = command "mup" (info opUploadMultiVaultParser (progDesc "upload multiple vaults"))
+
+opUploadMultiVaultParser = pure UploadMultiVault
+
 opDownloadVault = command "down" (info opDownloadVaultParser (progDesc "download vault"))
 
 opDownloadVaultParser = pure DownloadVault
+
+opDownloadMultiVault = command "mdown" (info opDownloadMultiVaultParser (progDesc "download multiple vaults"))
+
+opDownloadMultiVaultParser = pure DownloadMultiVault
 
 opSyncVault = command "sync" (info opSyncVaultParser (progDesc "sync vault"))
 
@@ -71,3 +85,7 @@ opSyncVaultParser = SyncVault <$> argument str (metavar "PARTITION")
 opDiffLog = command "diff" (info opDiffLogParser (progDesc "diff vault log"))
 
 opDiffLogParser = pure DiffLog
+
+opDiffLogMultiVault = command "mdiff" (info opDiffLogMultiVaultParser (progDesc "diff logs of multiple vaults"))
+
+opDiffLogMultiVaultParser = pure DiffLogMultiVault

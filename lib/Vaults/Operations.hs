@@ -86,7 +86,7 @@ doDiffLog vi = do
   -- `diff` returns code 0 when files are identical and 1 when they differ;
   -- for error it returns 2.
   case Substrate.exitCode result of
-    ExitSuccess -> return ()
+    ExitSuccess -> lift $ Substrate.echo "Log files are identical."
     ExitFailure 1 -> lift $ Substrate.echo (Substrate.output result)
     ExitFailure 2 -> do
       let e = Substrate.errorOutput result
@@ -113,7 +113,7 @@ upload vi filename = do
 echoUploadPartition :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
 echoUploadPartition vi partition = do
   let vaultname = name vi
-  let strings = ["Uploading vault", vaultname, "-", partition, "..."]
+  let strings = ["Uploading vault partition ", vaultname, "-", partition, "..."]
   lift $ Substrate.echo $ concat strings
 
 -- TODO write tests
@@ -130,8 +130,8 @@ downloadVaultPartition vi partition = do
 echoDownloadPartition :: (Substrate.Substrate m) => VaultInfo -> FilePath -> ExceptT String m ()
 echoDownloadPartition vi partition = do
   let vaultname = name vi
-  let strings = ["Downloading vault", vaultname, "-", partition, "..."]
-  echoDone
+  let strings = ["Downloading vault partition ", vaultname, "-", partition, "..."]
+  lift $ Substrate.echo $ concat strings
 
 echoDone :: (Substrate.Substrate m) => ExceptT String m ()
 echoDone = lift $ Substrate.echo "Done."

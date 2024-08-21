@@ -1,6 +1,9 @@
 module DummyValues where
 
+import Control.Monad.Except
+import Control.Monad.State
 import Data.List
+import MockSubstrate
 import qualified MockSubstrate
 import System.Exit
 import qualified Vaults.Base as Base
@@ -127,14 +130,15 @@ changeToRepoDir op = ("changeDir", [(mountpoint op) ++ "/repo"])
 setEnvCmd :: String -> (FilePath, [String])
 setEnvCmd varname = ("setEnv", [varname])
 
-preOpenPartitionCmds =
-  [ ("dirExists", [".vault"]),
-    ("readFile", [".vault/name"]),
+readVaultInfoCmds =
+  [ ("readFile", [".vault/name"]),
     ("readFile", [".vault/local"]),
     ("readFile", [".vault/remotes"]),
-    ("readFile", [".vault/remoteStore"]),
-    ("getDir", [])
+    ("readFile", [".vault/remoteStore"])
   ]
+
+preOpenPartitionCmds =
+  [("dirExists", [".vault"])] ++ readVaultInfoCmds ++ [("getDir", [])]
 
 postOpenPartitionCmds :: DummyOp -> [(FilePath, [String])]
 postOpenPartitionCmds op =
@@ -261,3 +265,10 @@ failedExecResult =
 
 mkpath :: [String] -> String
 mkpath = concat . (intersperse "/")
+
+dummyOperation ::
+  Base.VaultInfo ->
+  ExceptT String (State Mock) ()
+dummyOperation vi = do
+  let mockOp = mock_call "dummy" [Base.name vi]
+  lift mockOp >> return ()

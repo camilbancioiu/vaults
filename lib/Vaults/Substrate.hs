@@ -20,6 +20,7 @@ class (Monad m) => Substrate m where
   writeFile :: FilePath -> String -> m ()
   fileExists :: FilePath -> m Bool
   getDir :: m FilePath
+  listDirs :: m [FilePath]
   dirExists :: FilePath -> m Bool
   createDir :: FilePath -> m ()
   changeDir :: FilePath -> m ()

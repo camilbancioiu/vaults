@@ -18,9 +18,7 @@ testSingleUpload_success =
   TestLabel "upload single vault successfuly" $
     TestCase $ do
       let operation = Operations.doUploadVault mockVaultInfo
-      let mock = addMockExecResults results mockWithVaultAndRepoDir
-            where
-              results = []
+      let mock = addMockExecResults [] mockWithVaultAndRepoDir
 
       let (result, mockAfterExec) = runState (runExceptT $ operation) mock
 
