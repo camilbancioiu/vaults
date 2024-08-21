@@ -9,6 +9,7 @@ import SubstrateIO
 import System.Process
 import Vaults.Base
 import Vaults.Close
+import qualified Vaults.MultiOperations as MultiOperations
 import Vaults.Open
 import qualified Vaults.Operations as Operations
 import qualified Vaults.Substrate as Substrate
@@ -30,10 +31,14 @@ main = do
 handleNonVaultOperation :: Operation -> IO (Either String ())
 handleNonVaultOperation operation = do
   putStrLn $ "Performing non-vault operation " ++ (show operation)
-  case operation of
-    InitVault vname local -> runExceptT $ Operations.doInitVault vname local
-    ShellPartition partition -> runExceptT $ Operations.doShellPartition partition
-    _ -> return $ Left ("operation needs .vault: " ++ (show operation))
+  let doOperation = case operation of
+        InitVault vname local -> Operations.doInitVault vname local
+        ShellPartition partition -> Operations.doShellPartition partition
+        UploadMultiVault -> MultiOperations.doUploadMultiVault
+        DownloadMultiVault -> MultiOperations.doDownloadMultiVault
+        DiffLogMultiVault -> MultiOperations.doDiffLogMultiVault
+        _ -> doError "Operation needs .vault: " operation
+  runExceptT $ doOperation
 
 handleVaultOperation :: Operation -> IO (Either String ())
 handleVaultOperation operation = do
@@ -52,5 +57,8 @@ handleVaultOperation operation = do
         DownloadVault -> Operations.doDownloadVault vi
         SyncVault remote -> Operations.doSyncVault remote vi
         DiffLog -> Operations.doDiffLog vi
-
+        _ -> doError "Operation unsupported: " operation
   runExceptT $ doOperation
+
+doError :: (Substrate.Substrate m) => String -> Operation -> ExceptT String m ()
+doError msg operation = throwError $ concat [msg, show operation]

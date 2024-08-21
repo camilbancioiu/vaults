@@ -40,7 +40,7 @@ prepareOperation dir = do
   Substrate.changeDir dir
   vi <- Base.loadVaultInfo
   Substrate.echo $
-    "Performing operation on vault " ++ (Base.name vi)
+    "\n=== Performing operation on vault " ++ (Base.name vi) ++ " ==="
   return vi
 
 getVaultDirs :: (Substrate.Substrate m) => ExceptT String m [FilePath]
