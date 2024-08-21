@@ -143,19 +143,7 @@ download vi filename = do
   ExceptT $ Substrate.call "rsync" ["-ivz", remoteFilename, filename]
 
 -- TODO consider alternate procedure (safer?)
--- 1. remote loop-setup
--- 1. local loop-setup
--- 2. remote unlock
--- 2. local unlock
--- 3. remote mount
--- 3. local mount
--- 4. git fetch
--- 5. local unmount
--- 5. remote unmount
--- 6. local lock
--- 6. remote lock
--- 7. local loop-delete
--- 7. remote loop-delete
+-- see lib/Vaults/alternate-sync.txt
 doSyncVault :: (Substrate.Substrate m) => FilePath -> VaultInfo -> ExceptT String m ()
 doSyncVault remote vi = do
   remoteVRI <- openVault $ remote ++ ".vault"
