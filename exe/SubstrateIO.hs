@@ -2,10 +2,11 @@ module SubstrateIO where
 
 import Control.Concurrent
 import Control.Exception
-import System.Directory
-import System.Environment
-import System.Exit
-import System.Process
+import Control.Monad
+import qualified System.Directory
+import qualified System.Environment
+import qualified System.Exit
+import qualified System.Process
 import qualified Vaults.Substrate as Substrate
 
 -- TODO consider wrapping all methods in ExceptT
@@ -18,6 +19,7 @@ instance Substrate.Substrate IO where
   getDir = System.Directory.getCurrentDirectory
   changeDir = System.Directory.setCurrentDirectory
   createDir = System.Directory.createDirectory
+  listDirs = listIODirectories
   lookupEnv = System.Environment.lookupEnv
   setEnv = System.Environment.setEnv
   unsetEnv = System.Environment.unsetEnv
@@ -38,7 +40,7 @@ callIOProcess cmd args = do
 
 execIOProcess :: String -> [String] -> String -> IO Substrate.ExecResult
 execIOProcess cmd args sin = do
-  let pcmd = (proc cmd args)
+  let pcmd = (System.Process.proc cmd args)
   result <- System.Process.readCreateProcessWithExitCode pcmd sin
   let (exc, sout, serr) = result
   return
@@ -50,3 +52,8 @@ execIOProcess cmd args sin = do
 
 callIOSync :: IO (Either String ())
 callIOSync = callIOProcess "sync" []
+
+listIODirectories :: IO [FilePath]
+listIODirectories =
+  System.Directory.listDirectory "."
+    >>= filterM System.Directory.doesDirectoryExist

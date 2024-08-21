@@ -10,14 +10,15 @@ import qualified Vaults.MultiOperations as MultiOperations
 allTests :: Test
 allTests =
   TestList
-    [test_iterateSubdirs]
+    [test_iterateDirs]
 
-test_iterateSubdirs :: Test
-test_iterateSubdirs =
+test_iterateDirs :: Test
+test_iterateDirs =
   TestLabel "iterate into subdirectories and run operation" $
     TestCase $ do
-      let operation = MultiOperations.iterateVaultSubdirs D.dummyOperation
-      let mock = mockWithVaultDir
+      let operation = MultiOperations.iterateVaultDirs D.dummyOperation
+      let mock = mockMultiVault
+
       let result = runState (runExceptT $ operation) mock
       let mockAfterExec = snd result
 
@@ -26,7 +27,29 @@ test_iterateSubdirs =
         (Right ())
         (fst result)
 
+      let expectedCommands =
+            [ ("listDirs", []),
+              ("dirExists", ["red/.vault"]),
+              ("dirExists", ["green/.vault"]),
+              ("dirExists", ["blue/.vault"]),
+              ("dirExists", ["black/.vault"]),
+              ("dirExists", ["white/.vault"])
+            ]
+              ++ (perVaultCmds "red")
+              ++ (perVaultCmds "green")
+              ++ (perVaultCmds "blue")
+
       assertEqual
         "commands"
-        []
+        expectedCommands
         (execRecorded mockAfterExec)
+
+perVaultCmds :: String -> [(FilePath, [String])]
+perVaultCmds vault =
+  [ ("getDir", []),
+    ("changeDir", [vault])
+  ]
+    ++ D.readVaultInfoCmds
+    ++ [ ("dummy", [vault]),
+         ("changeDir", ["vaults"])
+       ]

@@ -5,6 +5,7 @@ module MockSubstrate where
 import Control.Exception.Base
 import Control.Monad.Except
 import Control.Monad.State
+import Data.Maybe
 import System.Exit
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
@@ -16,11 +17,13 @@ data Mock = Mock
     hasRepoDir :: Bool,
     hasNVIMConfig :: Bool,
     envVars :: [(String, String)],
+    multiVaultInfo :: [(FilePath, Base.VaultInfo)],
     nExecs :: Int,
     execRecorded :: [(String, [String])],
     execResults :: [Substrate.ExecResult],
     createdDirs :: [FilePath],
-    existingSubdirs :: [FilePath],
+    existingDirs :: [FilePath],
+    listingDirs :: [FilePath],
     writtenFiles :: [(FilePath, FilePath, String)],
     lastWrittenFile :: (FilePath, FilePath, String),
     callExceptions :: [Either String ()]
@@ -121,7 +124,7 @@ instance Substrate.Substrate (State Mock) where
   dirExists = mock_dirExists
   fileExists = mock_fileExists
   getDir = mock_getDir
-  listSubdirs = mock_listSubdirs
+  listDirs = mock_listDirs
   createDir = mock_createDir
   changeDir = mock_changeDir
   lookupEnv = mock_lookupEnv
@@ -133,18 +136,25 @@ instance Substrate.Substrate (State Mock) where
   echo = mock_echo
   sync = mock_sync
 
--- TODO replace mockVaultInfo with a member of Mock
--- TODO which can be configured by the calling test
--- needs to read from writtenFiles as well
+-- TODO needs to read from writtenFiles as well?
 mock_readFile :: FilePath -> State Mock String
 mock_readFile fpath = do
   modify $ recordExec ("readFile", [fpath])
+  vi <- getCurrentVaultInfo
   case fpath of
-    ".vault/name" -> return (Base.name mockVaultInfo)
-    ".vault/local" -> return (Base.localname mockVaultInfo)
-    ".vault/remotes" -> return (unlines $ Base.remotes mockVaultInfo)
-    ".vault/remoteStore" -> return (Base.remoteStore mockVaultInfo)
+    ".vault/name" -> return (Base.name vi)
+    ".vault/local" -> return (Base.localname vi)
+    ".vault/remotes" -> return (unlines $ Base.remotes vi)
+    ".vault/remoteStore" -> return (Base.remoteStore vi)
     _ -> return "not found"
+
+getCurrentVaultInfo :: State Mock Base.VaultInfo
+getCurrentVaultInfo = do
+  cdir <- gets currentDir
+  mvi <- gets multiVaultInfo
+  case lookup cdir mvi of
+    Nothing -> return mockVaultInfo
+    Just vi -> return vi
 
 mock_writeFile :: FilePath -> String -> State Mock ()
 mock_writeFile fpath contents = do
@@ -158,11 +168,11 @@ mock_dirExists dir = do
     ".vault" -> gets hasVaultDir
     "repo" -> gets hasRepoDir
     _ -> do
-      dirs <- gets createdDirs
-      return (elem dir dirs)
+      exdirs <- gets existingDirs
+      cdirs <- gets createdDirs
+      return $ elem dir (exdirs ++ cdirs)
 
 mock_fileExists :: FilePath -> State Mock Bool
-mock_fileExists "./.config/nvim/init.vim" = gets hasNVIMConfig
 mock_fileExists fpath = do
   modify $ recordExec ("fileExists", [fpath])
   case fpath of
@@ -178,10 +188,10 @@ mock_getDir = do
   modify $ recordExec ("getDir", [])
   gets currentDir
 
-mock_listSubdirs :: State Mock [FilePath]
-mock_listSubdirs = do
-  modify $ recordExec ("listSubdirs", [])
-  gets existingSubdirs
+mock_listDirs :: State Mock [FilePath]
+mock_listDirs = do
+  modify $ recordExec ("listDirs", [])
+  gets listingDirs
 
 mock_createDir :: FilePath -> State Mock ()
 mock_createDir dir = do
@@ -261,17 +271,19 @@ mockVaultRuntimeInfo =
 emptyMock :: Mock
 emptyMock =
   Mock
-    { currentDir = "/home/user",
+    { currentDir = "/home/user/vaults/mockVault",
       prevDir = "/",
       hasVaultDir = False,
       hasRepoDir = False,
       hasNVIMConfig = False,
       envVars = [],
+      multiVaultInfo = [],
       nExecs = 0,
       execRecorded = [],
       execResults = [],
       createdDirs = [],
-      existingSubdirs = [],
+      existingDirs = [],
+      listingDirs = [],
       writtenFiles = [],
       lastWrittenFile = ("", "", ""),
       callExceptions = []
@@ -280,12 +292,33 @@ emptyMock =
 mockWithVaultDir :: Mock
 mockWithVaultDir =
   emptyMock
-    { currentDir = "/home/user/vaults/mockVault",
-      hasVaultDir = True
+    { hasVaultDir = True
     }
 
 mockWithVaultAndRepoDir :: Mock
 mockWithVaultAndRepoDir =
   mockWithVaultDir
     { hasRepoDir = True
+    }
+
+mockMultiVault :: Mock
+mockMultiVault =
+  emptyMock
+    { currentDir = "vaults",
+      existingDirs =
+        [ "red",
+          "red/.vault",
+          "green",
+          "green/.vault",
+          "blue",
+          "blue/.vault",
+          "black",
+          "white"
+        ],
+      listingDirs = ["red", "green", "blue", "black", "white"],
+      multiVaultInfo =
+        [ ("red", mockVaultInfo {Base.name = "red"}),
+          ("blue", mockVaultInfo {Base.name = "blue"}),
+          ("green", mockVaultInfo {Base.name = "green"})
+        ]
     }
