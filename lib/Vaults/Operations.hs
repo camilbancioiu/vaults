@@ -24,14 +24,18 @@ doEditVault :: (Substrate.Substrate m) => VaultInfo -> ExceptT String m ()
 doEditVault vi = do
   vri <- openVault $ (localname vi) ++ ".vault"
   lift $ Substrate.echo "Vault opened, starting editor..."
+  editVault vri
+  closeVault vri
+  lift $ Substrate.echo "Vault closed."
+
+editVault :: (Substrate.Substrate m) => VaultRuntimeInfo -> ExceptT String m ()
+editVault vri = do
   ( do
       lift $ Substrate.changeDir (repositoryDir vri)
       callEditor
     )
     `catchError` (\e -> closeVault vri >> throwError e)
   lift $ Substrate.echo "Editor closed."
-  closeVault vri
-  lift $ Substrate.echo "Vault closed."
 
 callEditor :: (Substrate.Substrate m) => ExceptT String m ()
 callEditor = do
@@ -157,6 +161,22 @@ syncLocalPartition vi remoteVRI remote = do
   localVRI <- openVault $ (localname vi) ++ ".vault"
   (performSync localVRI remote)
     `catchError` (\e -> closeVault localVRI >> throwError e)
+  closeVault localVRI
+
+doSyncEditVault :: (Substrate.Substrate m) => FilePath -> VaultInfo -> ExceptT String m ()
+doSyncEditVault remote vi = do
+  remoteVRI <- openVault $ remote ++ ".vault"
+  (syncEditLocalPartition vi remoteVRI remote)
+    `catchError` (\e -> closeVault remoteVRI >> throwError e)
+
+syncEditLocalPartition :: (Substrate.Substrate m) => VaultInfo -> VaultRuntimeInfo -> FilePath -> ExceptT String m ()
+syncEditLocalPartition vi remoteVRI remote = do
+  lift $ Substrate.changeDir (srcDir remoteVRI)
+  localVRI <- openVault $ (localname vi) ++ ".vault"
+  (performSync localVRI remote)
+    `catchError` (\e -> closeVault localVRI >> throwError e)
+  closeVault remoteVRI
+  editVault localVRI
   closeVault localVRI
 
 performSync :: (Substrate.Substrate m) => VaultRuntimeInfo -> FilePath -> ExceptT String m ()
