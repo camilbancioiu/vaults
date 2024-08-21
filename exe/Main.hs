@@ -56,6 +56,7 @@ handleVaultOperation operation = do
         UploadVault -> Operations.doUploadVault vi
         DownloadVault -> Operations.doDownloadVault vi
         SyncVault remote -> Operations.doSyncVault remote vi
+        SyncEditVault remote -> Operations.doSyncEditVault remote vi
         DiffLog -> Operations.doDiffLog vi
         _ -> doError "Operation unsupported: " operation
   runExceptT $ doOperation

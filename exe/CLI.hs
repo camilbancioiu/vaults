@@ -14,6 +14,7 @@ data Operation
   | DownloadVault
   | DownloadMultiVault
   | SyncVault String
+  | SyncEditVault String
   | DiffLog
   | DiffLogMultiVault
   deriving (Show)
@@ -33,6 +34,7 @@ operations =
       <> opDownloadVault
       <> opDownloadMultiVault
       <> opSyncVault
+      <> opSyncEditVault
       <> opDiffLog
       <> opDiffLogMultiVault
 
@@ -81,6 +83,10 @@ opDownloadMultiVaultParser = pure DownloadMultiVault
 opSyncVault = command "sync" (info opSyncVaultParser (progDesc "sync vault"))
 
 opSyncVaultParser = SyncVault <$> argument str (metavar "PARTITION")
+
+opSyncEditVault = command "sync-edit" (info opSyncEditVaultParser (progDesc "sync-edit vault"))
+
+opSyncEditVaultParser = SyncEditVault <$> argument str (metavar "PARTITION")
 
 opDiffLog = command "diff" (info opDiffLogParser (progDesc "diff vault log"))
 
