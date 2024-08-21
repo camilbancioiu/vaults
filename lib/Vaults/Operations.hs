@@ -79,12 +79,18 @@ doDiffLog :: (Substrate.Substrate m) => VaultInfo -> ExceptT String m ()
 doDiffLog vi = do
   let localLog = (localname vi) ++ ".log"
   let remoteLogs = map (++ ".log") (remotes vi)
-  let diffArgs = ["-u", "--from-file=" ++ localLog] ++ remoteLogs
+  mapM_ (runDiffLog localLog) remoteLogs
 
+runDiffLog :: (Substrate.Substrate m) => FilePath -> FilePath -> ExceptT String m ()
+runDiffLog localLog remoteLog = do
+  let diffArgs = ["-u", localLog, remoteLog]
   result <- lift $ Substrate.exec "diff" diffArgs ""
+  echoDiffResult result
 
-  -- `diff` returns code 0 when files are identical and 1 when they differ;
-  -- for error it returns 2.
+-- `diff` returns code 0 when files are identical and 1 when they differ;
+-- for error it returns 2.
+echoDiffResult :: (Substrate.Substrate m) => Substrate.ExecResult -> ExceptT String m ()
+echoDiffResult result = do
   case Substrate.exitCode result of
     ExitSuccess -> lift $ Substrate.echo "Log files are identical."
     ExitFailure 1 -> lift $ Substrate.echo (Substrate.output result)
