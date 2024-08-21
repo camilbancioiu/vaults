@@ -1,8 +1,9 @@
 module DummyValues where
 
-import Control.Monad.State
 import Control.Monad.Except
+import Control.Monad.State
 import Data.List
+import MockSubstrate
 import qualified MockSubstrate
 import System.Exit
 import qualified Vaults.Base as Base
@@ -266,7 +267,7 @@ mkpath = concat . (intersperse "/")
 
 dummyOperation ::
   Base.VaultInfo ->
-  ExceptT String (State MockSubstrate.Mock) ()
+  ExceptT String (State Mock) ()
 dummyOperation vi = do
-  _ <- lift $ Sub.call "dummy" [Base.name vi]
-  return ()
+  let mockOp = mock_call "dummy" [Base.name vi]
+  lift mockOp >> return ()
