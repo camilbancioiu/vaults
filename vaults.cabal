@@ -20,14 +20,15 @@ library
   exposed-modules:     Vaults.Base, Vaults.Substrate, Vaults.Udisksctl,
                        Vaults.Init, Vaults.MkPartition, Vaults.MkRepo,
                        Vaults.Open, Vaults.Close,
-                       Vaults.Operations, Vaults.CustomCfg
+                       Vaults.Operations, Vaults.MultiOperations,
+                       Vaults.CustomCfg
   -- other-modules:
   -- other-extensions:
   default-language:    Haskell2010
   build-depends:       base, directory, filepath, process, mtl, extra
 
 executable vault
-  hs-source-dirs:      exec
+  hs-source-dirs:      exe
   main-is:             Main.hs
   -- other-extensions:
   build-depends:       base, vaults, filepath, optparse-applicative,
@@ -42,14 +43,17 @@ test-suite vaults-test
   main-is:             Test.hs
   other-modules:       MockSubstrate, DummyValues, Assertions,
                        TestBase,
-                       TestUdisksctl,
-                       TestMkPartition,
-                       TestInit,
-                       TestOpen,
                        TestClose,
+                       TestInit,
+                       TestMkPartition,
+                       TestMkRepo
+                       TestMultiOperations
+                       TestOpen,
                        TestOperations_Edit,
                        TestOperations_ShellPartition,
                        TestOperations_Sync,
-                       TestMkRepo
+                       TestOperations_SyncEdit,
+                       TestOperations_Up,
+                       TestUdisksctl,
   build-depends:       base, vaults,
                        HUnit, mtl
