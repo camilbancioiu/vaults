@@ -7,18 +7,14 @@ import System.Exit
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 
--- local localhost=$(hostname)
--- local fname="$localhost.vault"
--- local fslabel="$vaultname-$localhost"
--- dd if=/dev/urandom of=$fname bs=1M count=$mb || { return 1; }
--- sudo cryptsetup --verify-passphrase luksFormat $fname || { return 1; }
--- sudo cryptsetup open --type luks $fname $vaultname || { return 1; }
--- sudo mkfs.ext4 -L $fslabel /dev/mapper/$vaultname || { return 1; }
--- sleep 2
--- sudo cryptsetup close $vaultname || { return 1; }
 -- TODO upon failure, delete the created partition
 
-makePartition :: (Substrate.Substrate m) => String -> Int -> Base.VaultInfo -> ExceptT String m ()
+makePartition ::
+  (Substrate.Substrate m) =>
+  String ->
+  Int ->
+  Base.VaultInfo ->
+  ExceptT String m ()
 makePartition partition partitionSize vi = do
   when
     (length partition == 0)
@@ -71,7 +67,9 @@ makePartition partition partitionSize vi = do
         vaultName
       ]
 
-getHostname :: (Substrate.Substrate m) => ExceptT String m String
+getHostname ::
+  (Substrate.Substrate m) =>
+  ExceptT String m String
 getHostname = do
   result <- lift $ Substrate.exec "hostname" [] ""
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get hostname")

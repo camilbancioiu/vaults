@@ -7,7 +7,10 @@ import System.Exit
 import qualified Vaults.Substrate as Substrate
 
 -- TODO validate parameter fname
-createLoopDevice :: (Substrate.Substrate m) => FilePath -> ExceptT String m FilePath
+createLoopDevice ::
+  (Substrate.Substrate m) =>
+  FilePath ->
+  ExceptT String m FilePath
 createLoopDevice fname = do
   result <- runUdisksctlCommand ["loop-setup", "-f", fname]
   let parsedDevFile = parseOutputLoopSetup (Substrate.output result)
@@ -16,7 +19,10 @@ createLoopDevice fname = do
     Right devFile -> return devFile
 
 -- TODO validate parameter devFile
-unlockDevice :: (Substrate.Substrate m) => FilePath -> ExceptT String m FilePath
+unlockDevice ::
+  (Substrate.Substrate m) =>
+  FilePath ->
+  ExceptT String m FilePath
 unlockDevice devFile = do
   result <- runUdisksctlCommand ["unlock", "-b", devFile]
   let parsedMapperDev = parseOutputUnlock (Substrate.output result)
@@ -25,7 +31,10 @@ unlockDevice devFile = do
     Right mapperDev -> return mapperDev
 
 -- TODO mount as readonly
-mountDevice :: (Substrate.Substrate m) => FilePath -> ExceptT String m FilePath
+mountDevice ::
+  (Substrate.Substrate m) =>
+  FilePath ->
+  ExceptT String m FilePath
 mountDevice mapperDev = do
   result <- runUdisksctlCommand ["mount", "-b", mapperDev]
   let parsedMountpoint = parseOutputMount (Substrate.output result)
@@ -34,24 +43,36 @@ mountDevice mapperDev = do
     Right mountpoint -> return mountpoint
 
 -- TODO validate parameter mapperDev
-unmountDevice :: (Substrate.Substrate m) => FilePath -> ExceptT String m ()
+unmountDevice ::
+  (Substrate.Substrate m) =>
+  FilePath ->
+  ExceptT String m ()
 unmountDevice mapperDev = do
   _ <- runUdisksctlCommand ["unmount", "-b", mapperDev]
   return ()
 
 -- TODO validate parameter mapperDev
-lockDevice :: (Substrate.Substrate m) => FilePath -> ExceptT String m ()
+lockDevice ::
+  (Substrate.Substrate m) =>
+  FilePath ->
+  ExceptT String m ()
 lockDevice loopDev = do
   _ <- runUdisksctlCommand ["lock", "-b", loopDev]
   return ()
 
 -- TODO validate parameter devFile
-deleteLoopDevice :: (Substrate.Substrate m) => FilePath -> ExceptT String m ()
+deleteLoopDevice ::
+  (Substrate.Substrate m) =>
+  FilePath ->
+  ExceptT String m ()
 deleteLoopDevice devFile = do
   _ <- runUdisksctlCommand ["loop-delete", "-b", devFile]
   return ()
 
-runUdisksctlCommand :: (Substrate.Substrate m) => [String] -> ExceptT String m Substrate.ExecResult
+runUdisksctlCommand ::
+  (Substrate.Substrate m) =>
+  [String] ->
+  ExceptT String m Substrate.ExecResult
 runUdisksctlCommand params =
   do
     result <- lift $ Substrate.exec "udisksctl" params ""
@@ -60,7 +81,10 @@ runUdisksctlCommand params =
       (throwError (makeErrorMsg params result))
     return result
 
-makeErrorMsg :: [String] -> Substrate.ExecResult -> String
+makeErrorMsg ::
+  [String] ->
+  Substrate.ExecResult ->
+  String
 makeErrorMsg params result =
   if Substrate.exitCode result == ExitSuccess
     then "success"
@@ -75,7 +99,11 @@ parseOutputUnlock = parseUdisksctlOutput True 4
 
 parseOutputMount = parseUdisksctlOutput False 4
 
-parseUdisksctlOutput :: Bool -> Int -> String -> Either String FilePath
+parseUdisksctlOutput ::
+  Bool ->
+  Int ->
+  String ->
+  Either String FilePath
 parseUdisksctlOutput endDot nElements outputString = do
   let elements = words outputString
   when (length elements /= nElements) invalidOutput
@@ -92,5 +120,6 @@ parseUdisksctlOutput endDot nElements outputString = do
       when (last lastElement == '.') invalidOutput
       return lastElement
 
-invalidOutput :: Either String a
+invalidOutput ::
+  Either String a
 invalidOutput = (Left "invalid udisksctl output")

@@ -35,13 +35,14 @@ data VaultRuntimeInfo = VaultRuntimeInfo
   }
   deriving (Eq, Show, Read)
 
-loadVaultInfo :: (Substrate.Substrate m) => m VaultInfo
+loadVaultInfo ::
+  (Substrate.Substrate m) =>
+  m VaultInfo
 loadVaultInfo = do
   vname <- Substrate.readFile ".vault/name"
   vlocalname <- Substrate.readFile ".vault/local"
   vremotes <- Substrate.readFile ".vault/remotes"
   vremoteStore <- Substrate.readFile ".vault/remoteStore"
-
   return
     VaultInfo
       { name = stripTrailingNewline vname,
@@ -50,18 +51,27 @@ loadVaultInfo = do
         remoteStore = stripTrailingNewline vremoteStore
       }
 
-stripTrailingNewline :: String -> String
+stripTrailingNewline ::
+  String ->
+  String
 stripTrailingNewline s = takeWhile (/= '\n') s
 
-isVaultDir :: (Substrate.Substrate m) => m Bool
+isVaultDir ::
+  (Substrate.Substrate m) =>
+  m Bool
 isVaultDir = Substrate.dirExists ".vault"
 
-ensureIsVaultDir :: (Substrate.Substrate m) => ExceptT String m ()
+ensureIsVaultDir ::
+  (Substrate.Substrate m) =>
+  ExceptT String m ()
 ensureIsVaultDir = do
   isV <- lift $ isVaultDir
   unless isV (throwError "non-vault folder")
 
-getPartitionLocation :: VaultInfo -> FilePath -> PartitionLocation
+getPartitionLocation ::
+  VaultInfo ->
+  FilePath ->
+  PartitionLocation
 getPartitionLocation vi fname =
   case stripSuffix ".vault" fname of
     Nothing -> UnknownPartition

@@ -4,7 +4,11 @@ import Control.Monad.Except
 import Control.Monad.Trans
 import qualified Vaults.Substrate as Substrate
 
-initVault :: (Substrate.Substrate m) => String -> String -> ExceptT String m ()
+initVault ::
+  (Substrate.Substrate m) =>
+  String ->
+  String ->
+  ExceptT String m ()
 initVault vaultName localName = do
   lift $ Substrate.createDir ".vault"
   lift $ Substrate.writeFile ".vault/name" vaultName

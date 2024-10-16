@@ -35,7 +35,10 @@ visitVaultDir doOperation dir = do
   lift $ Substrate.changeDir parentDir
   return ()
 
-prepareOperation :: (Substrate.Substrate m) => FilePath -> m Base.VaultInfo
+prepareOperation ::
+  (Substrate.Substrate m) =>
+  FilePath ->
+  m Base.VaultInfo
 prepareOperation dir = do
   Substrate.changeDir dir
   vi <- Base.loadVaultInfo
@@ -43,10 +46,15 @@ prepareOperation dir = do
     "\n=== Performing operation on vault " ++ (Base.name vi) ++ " ==="
   return vi
 
-getVaultDirs :: (Substrate.Substrate m) => ExceptT String m [FilePath]
+getVaultDirs ::
+  (Substrate.Substrate m) =>
+  ExceptT String m [FilePath]
 getVaultDirs = (lift $ Substrate.listDirs) >>= filterM isVaultDir
 
-isVaultDir :: (Substrate.Substrate m) => FilePath -> ExceptT String m Bool
+isVaultDir ::
+  (Substrate.Substrate m) =>
+  FilePath ->
+  ExceptT String m Bool
 isVaultDir dir =
   (lift $ Substrate.dirExists vpath) >>= return
   where
