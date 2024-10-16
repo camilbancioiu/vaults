@@ -52,6 +52,7 @@ editVault vri = do
     `catchError` (\e -> closeVault vri >> throwError e)
   lift $ Substrate.echo "Editor closed."
 
+-- TODO replace Cfg.defaultEditCfg with actual cfg read from the opened vault
 callEditor ::
   (Substrate.Substrate m) =>
   ExceptT String m ()
