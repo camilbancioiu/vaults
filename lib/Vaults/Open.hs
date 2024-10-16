@@ -15,7 +15,10 @@ import qualified Vaults.Udisksctl as U
 -- TODO handle isForcedOpening?
 -- TODO when partLoc == Base.RemotePartition, mount read-only
 -- TODO create separate flow for non-repo vaults
-openVault :: (Substrate.Substrate m) => FilePath -> ExceptT String m Base.VaultRuntimeInfo
+openVault ::
+  (Substrate.Substrate m) =>
+  FilePath ->
+  ExceptT String m Base.VaultRuntimeInfo
 openVault partition = do
   Base.ensureIsVaultDir
 
@@ -29,7 +32,10 @@ openVault partition = do
   let vriWithPartLoc = vri {Base.partitionLocation = partLoc}
   return vriWithPartLoc
 
-openPartition :: (Substrate.Substrate m) => String -> ExceptT String m Base.VaultRuntimeInfo
+openPartition ::
+  (Substrate.Substrate m) =>
+  String ->
+  ExceptT String m Base.VaultRuntimeInfo
 openPartition partition = do
   when (length partition == 0) (throwError "partition filename is required")
 
@@ -55,7 +61,10 @@ openPartition partition = do
 
   return vri
 
-guardedUnlockDevice :: (Substrate.Substrate m) => FilePath -> ExceptT String m FilePath
+guardedUnlockDevice ::
+  (Substrate.Substrate m) =>
+  FilePath ->
+  ExceptT String m FilePath
 guardedUnlockDevice loopDev = do
   catchError
     (U.unlockDevice loopDev)
@@ -64,7 +73,11 @@ guardedUnlockDevice loopDev = do
         throwError e
     )
 
-guardedMountDevice :: (Substrate.Substrate m) => FilePath -> FilePath -> ExceptT String m FilePath
+guardedMountDevice ::
+  (Substrate.Substrate m) =>
+  FilePath ->
+  FilePath ->
+  ExceptT String m FilePath
 guardedMountDevice loopDev mapperDev = do
   catchError
     (U.mountDevice mapperDev)
@@ -74,7 +87,10 @@ guardedMountDevice loopDev mapperDev = do
         throwError e
     )
 
-resolveRepoDir :: (Substrate.Substrate m) => FilePath -> ExceptT String m FilePath
+resolveRepoDir ::
+  (Substrate.Substrate m) =>
+  FilePath ->
+  ExceptT String m FilePath
 resolveRepoDir mountpoint = do
   -- TODO if ensureIsVaultDir, then the folder repo/.git must exist
   -- TODO ensure correct behavior for the missing repo folder

@@ -30,7 +30,10 @@ data Mock = Mock
   }
   deriving (Show)
 
-setCurrentDir :: String -> Mock -> Mock
+setCurrentDir ::
+  String ->
+  Mock ->
+  Mock
 setCurrentDir dir mock =
   mock
     { currentDir = dir,
@@ -39,7 +42,10 @@ setCurrentDir dir mock =
   where
     previousMockDir = currentDir mock
 
-addCreatedDir :: String -> Mock -> Mock
+addCreatedDir ::
+  String ->
+  Mock ->
+  Mock
 addCreatedDir dir mock =
   mock
     { createdDirs = dir : prevCreatedDirs
@@ -47,7 +53,11 @@ addCreatedDir dir mock =
   where
     prevCreatedDirs = createdDirs mock
 
-addWrittenFile :: FilePath -> String -> Mock -> Mock
+addWrittenFile ::
+  FilePath ->
+  String ->
+  Mock ->
+  Mock
 addWrittenFile fpath contents mock =
   mock
     { writtenFiles = prevWrittenFiles ++ [addedFile],
@@ -58,7 +68,11 @@ addWrittenFile fpath contents mock =
     prevWrittenFiles = writtenFiles mock
     cwd = currentDir mock
 
-addMockEnvVar :: String -> String -> Mock -> Mock
+addMockEnvVar ::
+  String ->
+  String ->
+  Mock ->
+  Mock
 addMockEnvVar key val mock =
   mock
     { envVars = newEnvVars
@@ -66,7 +80,10 @@ addMockEnvVar key val mock =
   where
     newEnvVars = (key, val) : (envVars mock)
 
-removeMockEnvVar :: String -> Mock -> Mock
+removeMockEnvVar ::
+  String ->
+  Mock ->
+  Mock
 removeMockEnvVar key mock =
   mock
     { envVars = newEnvVars
@@ -74,13 +91,18 @@ removeMockEnvVar key mock =
   where
     newEnvVars = filter ((key /=) . fst) (envVars mock)
 
-incExecs :: Mock -> Mock
+incExecs ::
+  Mock ->
+  Mock
 incExecs mock =
   mock
     { nExecs = (nExecs mock) + 1
     }
 
-recordExec :: (String, [String]) -> Mock -> Mock
+recordExec ::
+  (String, [String]) ->
+  Mock ->
+  Mock
 recordExec execCom mock =
   mock
     { execRecorded = newExecRecorded
@@ -88,11 +110,17 @@ recordExec execCom mock =
   where
     newExecRecorded = (execRecorded mock) ++ [execCom]
 
-addMockExecResult :: Substrate.ExecResult -> Mock -> Mock
+addMockExecResult ::
+  Substrate.ExecResult ->
+  Mock ->
+  Mock
 addMockExecResult er mock =
   addMockExecResults [er] mock
 
-addMockExecResults :: [Substrate.ExecResult] -> Mock -> Mock
+addMockExecResults ::
+  [Substrate.ExecResult] ->
+  Mock ->
+  Mock
 addMockExecResults ers mock =
   mock
     { execResults = newExecResults
@@ -100,19 +128,26 @@ addMockExecResults ers mock =
   where
     newExecResults = (execResults mock) ++ ers
 
-dropHeadMockExecResult :: Mock -> Mock
+dropHeadMockExecResult ::
+  Mock ->
+  Mock
 dropHeadMockExecResult mock =
   mock
     { execResults = tail (execResults mock)
     }
 
-addMockExceptions :: [Either String ()] -> Mock -> Mock
+addMockExceptions ::
+  [Either String ()] ->
+  Mock ->
+  Mock
 addMockExceptions mexs mock =
   mock
     { callExceptions = (callExceptions mock) ++ mexs
     }
 
-dropHeadMockExceptions :: Mock -> Mock
+dropHeadMockExceptions ::
+  Mock ->
+  Mock
 dropHeadMockExceptions mock =
   mock
     { callExceptions = tail (callExceptions mock)
@@ -137,7 +172,9 @@ instance Substrate.Substrate (State Mock) where
   sync = mock_sync
 
 -- TODO needs to read from writtenFiles as well?
-mock_readFile :: FilePath -> State Mock String
+mock_readFile ::
+  FilePath ->
+  State Mock String
 mock_readFile fpath = do
   modify $ recordExec ("readFile", [fpath])
   vi <- getCurrentVaultInfo
@@ -148,7 +185,8 @@ mock_readFile fpath = do
     ".vault/remoteStore" -> return (Base.remoteStore vi)
     _ -> return "not found"
 
-getCurrentVaultInfo :: State Mock Base.VaultInfo
+getCurrentVaultInfo ::
+  State Mock Base.VaultInfo
 getCurrentVaultInfo = do
   cdir <- gets currentDir
   mvi <- gets multiVaultInfo
@@ -156,12 +194,17 @@ getCurrentVaultInfo = do
     Nothing -> return mockVaultInfo
     Just vi -> return vi
 
-mock_writeFile :: FilePath -> String -> State Mock ()
+mock_writeFile ::
+  FilePath ->
+  String ->
+  State Mock ()
 mock_writeFile fpath contents = do
   modify $ recordExec ("writeFile", [fpath])
   modify (addWrittenFile fpath contents)
 
-mock_dirExists :: FilePath -> State Mock Bool
+mock_dirExists ::
+  FilePath ->
+  State Mock Bool
 mock_dirExists dir = do
   modify $ recordExec ("dirExists", [dir])
   case dir of
@@ -172,7 +215,9 @@ mock_dirExists dir = do
       cdirs <- gets createdDirs
       return $ elem dir (exdirs ++ cdirs)
 
-mock_fileExists :: FilePath -> State Mock Bool
+mock_fileExists ::
+  FilePath ->
+  State Mock Bool
 mock_fileExists fpath = do
   modify $ recordExec ("fileExists", [fpath])
   case fpath of
@@ -183,43 +228,60 @@ mock_fileExists fpath = do
       let fpaths = map getfpath wfiles
       return (elem fpath fpaths)
 
-mock_getDir :: State Mock FilePath
+mock_getDir ::
+  State Mock FilePath
 mock_getDir = do
   modify $ recordExec ("getDir", [])
   gets currentDir
 
-mock_listDirs :: State Mock [FilePath]
+mock_listDirs ::
+  State Mock [FilePath]
 mock_listDirs = do
   modify $ recordExec ("listDirs", [])
   gets listingDirs
 
-mock_createDir :: FilePath -> State Mock ()
+mock_createDir ::
+  FilePath ->
+  State Mock ()
 mock_createDir dir = do
   modify $ recordExec ("createDir", [])
   modify $ addCreatedDir dir
 
-mock_changeDir :: String -> State Mock ()
+mock_changeDir ::
+  String ->
+  State Mock ()
 mock_changeDir dir = do
   modify $ recordExec ("changeDir", [dir])
   modify $ setCurrentDir dir
 
-mock_lookupEnv :: String -> State Mock (Maybe String)
+mock_lookupEnv ::
+  String ->
+  State Mock (Maybe String)
 mock_lookupEnv key = do
   modify $ recordExec ("lookupEnv", [key])
   mock <- get
   return (lookup key $ envVars mock)
 
-mock_setEnv :: String -> String -> State Mock ()
+mock_setEnv ::
+  String ->
+  String ->
+  State Mock ()
 mock_setEnv key val = do
   modify $ recordExec ("setEnv", [key])
   modify (addMockEnvVar key val)
 
-mock_unsetEnv :: String -> State Mock ()
+mock_unsetEnv ::
+  String ->
+  State Mock ()
 mock_unsetEnv key = do
   modify $ recordExec ("unsetEnv", [key])
   modify (removeMockEnvVar key)
 
-mock_exec :: String -> [String] -> String -> State Mock Substrate.ExecResult
+mock_exec ::
+  String ->
+  [String] ->
+  String ->
+  State Mock Substrate.ExecResult
 mock_exec executable params _ = do
   modify $ recordExec (executable, params)
   modify incExecs
@@ -227,7 +289,10 @@ mock_exec executable params _ = do
   modify dropHeadMockExecResult
   return er
 
-mock_call :: FilePath -> [String] -> State Mock (Either String ())
+mock_call ::
+  FilePath ->
+  [String] ->
+  State Mock (Either String ())
 mock_call executable params = do
   modify $ recordExec (executable, params)
   modify incExecs
@@ -237,13 +302,18 @@ mock_call executable params = do
     else do
       return $ head mexcepts
 
-mock_delay :: Int -> State Mock ()
+mock_delay ::
+  Int ->
+  State Mock ()
 mock_delay _ = modify $ recordExec ("delay", [])
 
-mock_echo :: String -> State Mock ()
+mock_echo ::
+  String ->
+  State Mock ()
 mock_echo _ = return ()
 
-mock_sync :: State Mock (Either String ())
+mock_sync ::
+  State Mock (Either String ())
 mock_sync = do
   modify $ recordExec ("sync", [])
   return $ Right ()
@@ -268,7 +338,6 @@ mockVaultRuntimeInfo =
       Base.partitionLocation = Base.LocalPartition
     }
 
-emptyMock :: Mock
 emptyMock =
   Mock
     { currentDir = "/home/user/vaults/mockVault",
@@ -289,19 +358,16 @@ emptyMock =
       callExceptions = []
     }
 
-mockWithVaultDir :: Mock
 mockWithVaultDir =
   emptyMock
     { hasVaultDir = True
     }
 
-mockWithVaultAndRepoDir :: Mock
 mockWithVaultAndRepoDir =
   mockWithVaultDir
     { hasRepoDir = True
     }
 
-mockMultiVault :: Mock
 mockMultiVault =
   emptyMock
     { currentDir = "vaults",

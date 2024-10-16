@@ -1,6 +1,7 @@
 module Vaults.CustomCfg where
 
-data EditOpCfg = EditCfg
+data EditOpCfg
+  = EditCfg
   { editor :: FilePath,
     editorCLIParams :: [String],
     envVar :: (String, String),

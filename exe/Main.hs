@@ -28,7 +28,9 @@ main = do
     Left errMsg -> putStrLn errMsg
     Right _ -> return ()
 
-handleNonVaultOperation :: Operation -> IO (Either String ())
+handleNonVaultOperation ::
+  Operation ->
+  IO (Either String ())
 handleNonVaultOperation operation = do
   putStrLn $ "Performing non-vault operation " ++ (show operation)
   let doOperation = case operation of
@@ -40,7 +42,9 @@ handleNonVaultOperation operation = do
         _ -> doError "Operation needs .vault: " operation
   runExceptT $ doOperation
 
-handleVaultOperation :: Operation -> IO (Either String ())
+handleVaultOperation ::
+  Operation ->
+  IO (Either String ())
 handleVaultOperation operation = do
   vi <- loadVaultInfo
   putStrLn $
@@ -61,5 +65,9 @@ handleVaultOperation operation = do
         _ -> doError "Operation unsupported: " operation
   runExceptT $ doOperation
 
-doError :: (Substrate.Substrate m) => String -> Operation -> ExceptT String m ()
+doError ::
+  (Substrate.Substrate m) =>
+  String ->
+  Operation ->
+  ExceptT String m ()
 doError msg operation = throwError $ concat [msg, show operation]

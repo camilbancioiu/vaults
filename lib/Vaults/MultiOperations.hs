@@ -7,13 +7,19 @@ import qualified Vaults.Base as Base
 import qualified Vaults.Operations as Operations
 import qualified Vaults.Substrate as Substrate
 
-doUploadMultiVault :: (Substrate.Substrate m) => ExceptT String m ()
+doUploadMultiVault ::
+  (Substrate.Substrate m) =>
+  ExceptT String m ()
 doUploadMultiVault = iterateVaultDirs Operations.doUploadVault
 
-doDownloadMultiVault :: (Substrate.Substrate m) => ExceptT String m ()
+doDownloadMultiVault ::
+  (Substrate.Substrate m) =>
+  ExceptT String m ()
 doDownloadMultiVault = iterateVaultDirs Operations.doDownloadVault
 
-doDiffLogMultiVault :: (Substrate.Substrate m) => ExceptT String m ()
+doDiffLogMultiVault ::
+  (Substrate.Substrate m) =>
+  ExceptT String m ()
 doDiffLogMultiVault = iterateVaultDirs Operations.doDiffLog
 
 iterateVaultDirs ::
@@ -35,7 +41,10 @@ visitVaultDir doOperation dir = do
   lift $ Substrate.changeDir parentDir
   return ()
 
-prepareOperation :: (Substrate.Substrate m) => FilePath -> m Base.VaultInfo
+prepareOperation ::
+  (Substrate.Substrate m) =>
+  FilePath ->
+  m Base.VaultInfo
 prepareOperation dir = do
   Substrate.changeDir dir
   vi <- Base.loadVaultInfo
@@ -43,10 +52,15 @@ prepareOperation dir = do
     "\n=== Performing operation on vault " ++ (Base.name vi) ++ " ==="
   return vi
 
-getVaultDirs :: (Substrate.Substrate m) => ExceptT String m [FilePath]
+getVaultDirs ::
+  (Substrate.Substrate m) =>
+  ExceptT String m [FilePath]
 getVaultDirs = (lift $ Substrate.listDirs) >>= filterM isVaultDir
 
-isVaultDir :: (Substrate.Substrate m) => FilePath -> ExceptT String m Bool
+isVaultDir ::
+  (Substrate.Substrate m) =>
+  FilePath ->
+  ExceptT String m Bool
 isVaultDir dir =
   (lift $ Substrate.dirExists vpath) >>= return
   where
