@@ -19,7 +19,8 @@ data Operation
   | DiffLogMultiVault
   deriving (Show)
 
-operationsParser :: ParserInfo Operation
+operationsParser ::
+  ParserInfo Operation
 operationsParser = info operations (progDesc "operation")
 
 operations =
