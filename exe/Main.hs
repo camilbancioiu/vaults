@@ -14,8 +14,7 @@ import Vaults.Open
 import qualified Vaults.Operations as Operations
 import qualified Vaults.Substrate as Substrate
 
-main ::
-  IO ()
+main :: IO ()
 main = do
   operation <- execParser operationsParser
 
