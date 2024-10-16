@@ -7,13 +7,19 @@ import qualified Vaults.Base as Base
 import qualified Vaults.Operations as Operations
 import qualified Vaults.Substrate as Substrate
 
-doUploadMultiVault :: (Substrate.Substrate m) => ExceptT String m ()
+doUploadMultiVault ::
+  (Substrate.Substrate m) =>
+  ExceptT String m ()
 doUploadMultiVault = iterateVaultDirs Operations.doUploadVault
 
-doDownloadMultiVault :: (Substrate.Substrate m) => ExceptT String m ()
+doDownloadMultiVault ::
+  (Substrate.Substrate m) =>
+  ExceptT String m ()
 doDownloadMultiVault = iterateVaultDirs Operations.doDownloadVault
 
-doDiffLogMultiVault :: (Substrate.Substrate m) => ExceptT String m ()
+doDiffLogMultiVault ::
+  (Substrate.Substrate m) =>
+  ExceptT String m ()
 doDiffLogMultiVault = iterateVaultDirs Operations.doDiffLog
 
 iterateVaultDirs ::

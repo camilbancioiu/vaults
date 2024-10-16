@@ -120,6 +120,5 @@ parseUdisksctlOutput endDot nElements outputString = do
       when (last lastElement == '.') invalidOutput
       return lastElement
 
-invalidOutput ::
-  Either String a
+invalidOutput :: Either String a
 invalidOutput = (Left "invalid udisksctl output")
