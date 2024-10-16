@@ -12,45 +12,49 @@ import Vaults.Close
 allTests :: Test
 allTests =
   TestList
-    [ test_closeVault
+    [ test_closeVault,
+      test_commitLogFails
     ]
+
+test_commitLogFails :: Test
+test_commitLogFails =
+  TestLabel "exporting commit log fails; closing vault succeeds" $
+    TestCase $ do
+      let mock = addMockExecResults results mockWithVaultAndRepoDir
+            where
+              results =
+                [ D.gitLogExec False,
+                  D.unmountExec True,
+                  D.lockExec True,
+                  D.loopDeleteExec True
+                ]
+                  <*> (pure D.localOp2)
+      let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
+      let mockAfterExec = snd result
+
+      let expectedCommands =
+            [D.gitLogCmd]
+              ++ D.preClosePartitionCmds
+              ++ (D.closePartitionCmds D.localOp2)
+      assertEqual
+        "unmounted, locked, deleted loop"
+        expectedCommands
+        (execRecorded mockAfterExec)
+      assertEqual
+        "dir returned to srcDir"
+        "/home/user/vaults/mockVault"
+        (currentDir mockAfterExec)
+      assertEqual
+        "git log not saved"
+        ("", "", "")
+        (lastWrittenFile mockAfterExec)
+      assertAllExecsConsumed mockAfterExec
 
 test_closeVault :: Test
 test_closeVault =
   TestList
     [ -- TODO closing fails
 
-      TestLabel "exporting commit log fails; closing vault succeeds" $
-        TestCase $ do
-          let mock = addMockExecResults results mockWithVaultAndRepoDir
-                where
-                  results =
-                    [ D.gitLogExec False,
-                      D.unmountExec True,
-                      D.lockExec True,
-                      D.loopDeleteExec True
-                    ]
-                      <*> (pure D.localOp2)
-          let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
-          let mockAfterExec = snd result
-
-          let expectedCommands =
-                [D.gitLogCmd]
-                  ++ D.preClosePartitionCmds
-                  ++ (D.closePartitionCmds D.localOp2)
-          assertEqual
-            "unmounted, locked, deleted loop"
-            expectedCommands
-            (execRecorded mockAfterExec)
-          assertEqual
-            "dir returned to srcDir"
-            "/home/user/vaults/mockVault"
-            (currentDir mockAfterExec)
-          assertEqual
-            "git log not saved"
-            ("", "", "")
-            (lastWrittenFile mockAfterExec)
-          assertAllExecsConsumed mockAfterExec,
       TestLabel "closing vault succeeds" $
         TestCase $ do
           let mock = addMockExecResults results mockWithVaultAndRepoDir
