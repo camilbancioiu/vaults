@@ -58,12 +58,21 @@ callEditor ::
   ExceptT String m ()
 callEditor = do
   let cfg = Cfg.defaultEditCfg
-  let envkey = fst $ Cfg.envVar cfg
-  let envvalue = snd $ Cfg.envVar cfg
+  let envvars = Cfg.envVars cfg
   let editorExec = Cfg.editor cfg
   let editorParams = Cfg.editorCLIParams cfg
-  lift $ Substrate.setEnv envkey envvalue
+  setEditingEnvVars envvars
   ExceptT $ Substrate.call editorExec editorParams
+
+setEditingEnvVars ::
+  (Substrate.Substrate m) =>
+  [(String, String)] ->
+  ExceptT String m ()
+setEditingEnvVars (var : vars) = do
+  let envkey = fst var
+  let envvalue = snd var
+  lift $ Substrate.setEnv envkey envvalue
+  unless (null vars) (setEditingEnvVars vars)
 
 -- TODO write extra tests (see test/TestOperations_Shell.hs)
 doShellVault ::

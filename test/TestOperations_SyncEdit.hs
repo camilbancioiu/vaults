@@ -58,6 +58,7 @@ test_syncEditSuccessful =
               ++ D.closePartitionCmds D.remoteOp
               ++ [ D.changeToRepoDir D.localOp,
                    D.setEnvCmd "VIMRUNTIME",
+                   D.setEnvCmd "VIMPRIVATE",
                    D.editCmd D.localOp,
                    D.gitLogCmd
                  ]
