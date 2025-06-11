@@ -17,6 +17,9 @@ defaultEditCfg =
           "source .config/nvim/init.vim",
           "."
         ],
+      -- env var VIMPRIVATE doesn't do anything; vaults are individually
+      -- preconfigured with the privacy options for nvim; it's here mostly for
+      -- testing;
       envVars =
         [ ("VIMRUNTIME", ".config/nvim"),
           ("VIMPRIVATE", "1")
