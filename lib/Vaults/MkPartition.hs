@@ -22,7 +22,11 @@ makePartition partition partitionSize vi = do
 
   let partitionFilename = partition ++ ".vault"
   let vaultName = Base.name vi
+
   hostname <- getHostname
+  owningUser <- getUsername
+  owningGroup <- getGroupname
+
   let filesystemLabel = vaultName ++ "-" ++ hostname
   let mountpoint = "/dev/mapper/" ++ filesystemLabel
   ExceptT $
@@ -60,6 +64,23 @@ makePartition partition partitionSize vi = do
         mountpoint
       ]
 
+  ExceptT $
+    Substrate.call
+      "sudo"
+      [ "chown",
+        "-R",
+        owningUser,
+        mountpoint
+      ]
+  ExceptT $
+    Substrate.call
+      "sudo"
+      [ "chgrp",
+        "-R",
+        owningGroup,
+        mountpoint
+      ]
+
   lift $ Substrate.delay 2000000
   ExceptT $
     Substrate.call
@@ -77,3 +98,21 @@ getHostname = do
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get hostname")
   let hostname = Substrate.output result
   return hostname
+
+getUsername ::
+  (Substrate.Substrate m) =>
+  ExceptT String m String
+getUsername = do
+  result <- lift $ Substrate.exec "id" ["--user", "--name"] ""
+  when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get username")
+  let username = Substrate.output result
+  return username
+
+getGroupname ::
+  (Substrate.Substrate m) =>
+  ExceptT String m String
+getGroupname = do
+  result <- lift $ Substrate.exec "id" ["--group", "--name"] ""
+  when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get groupname")
+  let groupname = Substrate.output result
+  return groupname

@@ -27,26 +27,43 @@ test_MkPartitionSuccess =
       let filesystemLabel = vaultname ++ "-" ++ hostname
       let mountpoint = "/dev/mapper/" ++ filesystemLabel
 
+      let owningUser = "theUser"
+      let owningGroup = "groupOfTheUser"
+
       let operation = Operations.doMakePartition hostname 64 mockVaultInfo
-      let mock = addMockExecResult result mockWithVaultDir
+      let mock = addMockExecResults results mockWithVaultDir
             where
-              result =
-                Substrate.ExecResult
-                  { Substrate.exitCode = ExitSuccess,
-                    Substrate.output = hostname,
-                    Substrate.errorOutput = ""
-                  }
+              results =
+                [ Substrate.ExecResult
+                    { Substrate.exitCode = ExitSuccess,
+                      Substrate.output = hostname,
+                      Substrate.errorOutput = ""
+                    },
+                  Substrate.ExecResult
+                    { Substrate.exitCode = ExitSuccess,
+                      Substrate.output = owningUser,
+                      Substrate.errorOutput = ""
+                    },
+                  Substrate.ExecResult
+                    { Substrate.exitCode = ExitSuccess,
+                      Substrate.output = owningGroup,
+                      Substrate.errorOutput = ""
+                    }
+                ]
+
       let result = runState (runExceptT $ operation) mock
       let mockAfterExec = snd result
       assertEqual "" (Right ()) (fst result)
 
       let expectedCommands =
             [ ("hostname", []),
+              ("id", ["--user", "--name"]),
+              ("id", ["--group", "--name"]),
               ( "dd",
                 [ "bs=1M",
                   "count=64",
                   "if=/dev/urandom",
-                  "of=local.vault"
+                  "of=" ++ partitionFile
                 ]
               ),
               ( "sudo",
@@ -72,13 +89,10 @@ test_MkPartitionSuccess =
                   mountpoint
                 ]
               ),
+              ("sudo", ["chown", "-R", owningUser, mountpoint]),
+              ("sudo", ["chgrp", "-R", owningGroup, mountpoint]),
               ("delay", []),
-              ( "sudo",
-                [ "cryptsetup",
-                  "close",
-                  filesystemLabel
-                ]
-              )
+              ("sudo", ["cryptsetup", "close", filesystemLabel])
             ]
       assertEqual
         "expected commands"
