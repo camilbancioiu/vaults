@@ -24,6 +24,7 @@ makePartition partition partitionSize vi = do
   let vaultName = Base.name vi
   hostname <- getHostname
   let filesystemLabel = vaultName ++ "-" ++ hostname
+  let mountpoint = "/dev/mapper/" ++ filesystemLabel
   ExceptT $
     Substrate.call
       "dd"
@@ -48,7 +49,7 @@ makePartition partition partitionSize vi = do
         "--type",
         "luks",
         partitionFilename,
-        vaultName
+        filesystemLabel
       ]
   ExceptT $
     Substrate.call
@@ -56,15 +57,16 @@ makePartition partition partitionSize vi = do
       [ "mkfs.ext4",
         "-L",
         filesystemLabel,
-        "/dev/mapper/" ++ vaultName
+        mountpoint
       ]
+
   lift $ Substrate.delay 2000000
   ExceptT $
     Substrate.call
       "sudo"
       [ "cryptsetup",
         "close",
-        vaultName
+        filesystemLabel
       ]
 
 getHostname ::

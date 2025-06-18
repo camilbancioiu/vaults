@@ -21,13 +21,19 @@ test_MkPartitionSuccess :: Test
 test_MkPartitionSuccess =
   TestLabel "make partition succeeds" $
     TestCase $ do
-      let operation = Operations.doMakePartition "local" 64 mockVaultInfo
+      let vaultname = "mockVault"
+      let hostname = "local"
+      let partitionFile = "local.vault"
+      let filesystemLabel = vaultname ++ "-" ++ hostname
+      let mountpoint = "/dev/mapper/" ++ filesystemLabel
+
+      let operation = Operations.doMakePartition hostname 64 mockVaultInfo
       let mock = addMockExecResult result mockWithVaultDir
             where
               result =
                 Substrate.ExecResult
                   { Substrate.exitCode = ExitSuccess,
-                    Substrate.output = "local",
+                    Substrate.output = hostname,
                     Substrate.errorOutput = ""
                   }
       let result = runState (runExceptT $ operation) mock
@@ -47,7 +53,7 @@ test_MkPartitionSuccess =
                 [ "cryptsetup",
                   "--verify-passphrase",
                   "luksFormat",
-                  "local.vault"
+                  partitionFile
                 ]
               ),
               ( "sudo",
@@ -55,22 +61,22 @@ test_MkPartitionSuccess =
                   "open",
                   "--type",
                   "luks",
-                  "local.vault",
-                  "mockVault"
+                  partitionFile,
+                  filesystemLabel
                 ]
               ),
               ( "sudo",
                 [ "mkfs.ext4",
                   "-L",
-                  "mockVault-local",
-                  "/dev/mapper/mockVault"
+                  filesystemLabel,
+                  mountpoint
                 ]
               ),
               ("delay", []),
               ( "sudo",
                 [ "cryptsetup",
                   "close",
-                  "mockVault"
+                  filesystemLabel
                 ]
               )
             ]
