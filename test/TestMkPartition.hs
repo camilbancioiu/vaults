@@ -25,8 +25,8 @@ test_MkPartitionSuccess =
       let hostname = "local"
       let partitionFile = "local.vault"
       let filesystemLabel = vaultname ++ "-" ++ hostname
-      let mountpoint = "/dev/mapper/" ++ filesystemLabel
 
+      let owningUserNL = "theUser\n"
       let owningUser = "theUser"
       let owningGroup = "groupOfTheUser"
 
@@ -41,14 +41,16 @@ test_MkPartitionSuccess =
                     },
                   Substrate.ExecResult
                     { Substrate.exitCode = ExitSuccess,
-                      Substrate.output = owningUser,
+                      Substrate.output = owningUserNL,
                       Substrate.errorOutput = ""
                     },
                   Substrate.ExecResult
                     { Substrate.exitCode = ExitSuccess,
                       Substrate.output = owningGroup,
                       Substrate.errorOutput = ""
-                    }
+                    },
+                  D.mountExec True D.localOp,
+                  D.unmountExec True D.localOp
                 ]
 
       let result = runState (runExceptT $ operation) mock
@@ -86,11 +88,13 @@ test_MkPartitionSuccess =
                 [ "mkfs.ext4",
                   "-L",
                   filesystemLabel,
-                  mountpoint
+                  D.mapperDev D.localOp
                 ]
               ),
-              ("sudo", ["chown", "-R", owningUser, mountpoint]),
-              ("sudo", ["chgrp", "-R", owningGroup, mountpoint]),
+              D.mountCmd D.localOp,
+              ("sudo", ["chown", "-R", owningUser, D.mountpoint D.localOp]),
+              ("sudo", ["chgrp", "-R", owningGroup, D.mountpoint D.localOp]),
+              D.unmountCmd D.localOp,
               ("delay", []),
               ("sudo", ["cryptsetup", "close", filesystemLabel])
             ]

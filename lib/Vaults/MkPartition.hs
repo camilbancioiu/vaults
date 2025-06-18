@@ -6,6 +6,7 @@ import Control.Monad.Trans
 import System.Exit
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
+import qualified Vaults.Udisksctl as Udisksctl
 
 -- TODO upon failure, delete the created partition
 
@@ -28,7 +29,7 @@ makePartition partition partitionSize vi = do
   owningGroup <- getGroupname
 
   let filesystemLabel = vaultName ++ "-" ++ hostname
-  let mountpoint = "/dev/mapper/" ++ filesystemLabel
+  let mapperDev = "/dev/mapper/" ++ filesystemLabel
   ExceptT $
     Substrate.call
       "dd"
@@ -61,8 +62,10 @@ makePartition partition partitionSize vi = do
       [ "mkfs.ext4",
         "-L",
         filesystemLabel,
-        mountpoint
+        mapperDev
       ]
+
+  mountpoint <- Udisksctl.mountDevice mapperDev
 
   ExceptT $
     Substrate.call
@@ -81,6 +84,8 @@ makePartition partition partitionSize vi = do
         mountpoint
       ]
 
+  Udisksctl.unmountDevice mapperDev
+
   lift $ Substrate.delay 2000000
   ExceptT $
     Substrate.call
@@ -97,7 +102,7 @@ getHostname = do
   result <- lift $ Substrate.exec "hostname" [] ""
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get hostname")
   let hostname = Substrate.output result
-  return hostname
+  return (Base.stripTrailingNewline hostname)
 
 getUsername ::
   (Substrate.Substrate m) =>
@@ -106,7 +111,7 @@ getUsername = do
   result <- lift $ Substrate.exec "id" ["--user", "--name"] ""
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get username")
   let username = Substrate.output result
-  return username
+  return (Base.stripTrailingNewline username)
 
 getGroupname ::
   (Substrate.Substrate m) =>
@@ -115,4 +120,4 @@ getGroupname = do
   result <- lift $ Substrate.exec "id" ["--group", "--name"] ""
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get groupname")
   let groupname = Substrate.output result
-  return groupname
+  return (Base.stripTrailingNewline groupname)
