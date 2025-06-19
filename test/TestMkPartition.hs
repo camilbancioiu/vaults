@@ -98,7 +98,7 @@ test_MkPartitionSuccess =
               ("delay", []),
               ("sudo", ["cryptsetup", "close", filesystemLabel])
             ]
-      assertEqual
+      assertEqualLists
         "expected commands"
         expectedCommands
         (execRecorded mockAfterExec)

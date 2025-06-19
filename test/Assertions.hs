@@ -1,5 +1,6 @@
 module Assertions where
 
+import Data.Foldable
 import Data.Maybe
 import MockSubstrate
 import Test.HUnit
@@ -45,3 +46,20 @@ assertAllExecsConsumed mock =
     "all execs consumed"
     0
     (length $ execResults mock)
+
+assertEqualLists ::
+  (Eq a, Show a) =>
+  String ->
+  [a] ->
+  [a] ->
+  IO ()
+assertEqualLists message expected actual =
+  let tuples = zip expected actual
+   in traverse_ (assertEqualInTuple message) tuples
+
+assertEqualInTuple ::
+  (Eq a, Show a) =>
+  String ->
+  (a, a) ->
+  Assertion
+assertEqualInTuple message (expected, actual) = assertEqual message expected actual
