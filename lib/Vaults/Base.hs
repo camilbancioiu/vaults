@@ -87,7 +87,7 @@ getHostname = do
   result <- lift $ Substrate.exec "hostname" [] ""
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get hostname")
   let hostname = Substrate.output result
-  return (stripTrailingNewline hostname)
+  return hostname
 
 getUsername ::
   (Substrate.Substrate m) =>
@@ -96,7 +96,7 @@ getUsername = do
   result <- lift $ Substrate.exec "id" ["--user", "--name"] ""
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get username")
   let username = Substrate.output result
-  return (stripTrailingNewline username)
+  return username
 
 getGroupname ::
   (Substrate.Substrate m) =>
@@ -105,7 +105,7 @@ getGroupname = do
   result <- lift $ Substrate.exec "id" ["--group", "--name"] ""
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get groupname")
   let groupname = Substrate.output result
-  return (stripTrailingNewline groupname)
+  return groupname
 
 getCurrentBranch ::
   (Substrate.Substrate m) =>
@@ -114,7 +114,7 @@ getCurrentBranch = do
   result <- lift $ Substrate.exec "git" ["branch", "--show-current"] ""
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get current branch")
   let currentBranch = Substrate.output result
-  return (stripTrailingNewline currentBranch)
+  return currentBranch
 
 stripTrailingNewline ::
   String ->
