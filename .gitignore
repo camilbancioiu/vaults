@@ -1,6 +1,6 @@
 dist-newstyle
 tags
-dummyvault/*.vault
-dummyvault/*.log
-dummyvault/*.backup
+dummyvault/**/*.vault
+dummyvault/**/*.log
+dummyvault/**/*.backup
 dummyvault2/
