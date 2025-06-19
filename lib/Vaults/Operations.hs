@@ -304,12 +304,9 @@ getCurrentBranch ::
   ExceptT String m String
 getCurrentBranch = do
   result <- lift $ Substrate.exec "git" ["branch", "--show-current"] ""
-  case Substrate.exitCode result of
-    ExitSuccess -> return (Substrate.output result)
-    ExitFailure _ -> do
-      let e = Substrate.errorOutput result
-      lift $ Substrate.echo e
-      throwError e
+  when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get current branch")
+  let currentBranch = Substrate.output result
+  return (Base.stripTrailingNewline currentBranch)
 
 mkpath ::
   [String] ->
