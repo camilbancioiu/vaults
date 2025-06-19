@@ -280,6 +280,12 @@ syncEditLocalPartition vi remoteVRI remote = do
   editVault localVRI
   closeVault localVRI
 
+-- TODO test merge conflicts
+-- should fail gracefully:
+-- -- git fetch remains
+-- -- git merge fails
+-- -- vault closes automatically
+-- merge conflicts can be resolved via operations Edit or Shell
 performSync ::
   (Substrate.Substrate m) =>
   VaultRuntimeInfo ->
