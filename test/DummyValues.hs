@@ -10,8 +10,7 @@ import qualified Vaults.Base as Base
 import qualified Vaults.CustomCfg as Cfg
 import qualified Vaults.Substrate as Sub
 
-data DummyOp
-  = DummyOp
+data DummyOp = DummyOp
   { partitionFile :: FilePath,
     loopDev :: FilePath,
     mapperDev :: FilePath,
@@ -23,7 +22,7 @@ localOp =
   DummyOp
     { partitionFile = "local.vault",
       loopDev = "/dev/loop42",
-      mapperDev = "/dev/dm-4",
+      mapperDev = "/dev/mapper/mockVault-local",
       mountpoint = "/mnt/point",
       commitLog = "38a3\nfb22\n8c2a\n02ad\n"
     }
