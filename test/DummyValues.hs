@@ -142,7 +142,7 @@ gitMergeCmd ::
   String ->
   DummyOp ->
   (FilePath, [String])
-gitMergeCmd remote op = ("git", ["merge", "--no-ff", remoteBranch])
+gitMergeCmd remote op = ("git", ["merge", remoteBranch])
   where
     remoteBranch = remote ++ "/" ++ (currentBranch op)
 

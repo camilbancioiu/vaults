@@ -297,7 +297,7 @@ performSync localVRI remote = do
 
   localBranch <- getCurrentBranch
   let remoteBranch = remote ++ "/" ++ localBranch
-  ExceptT $ Substrate.call "git" ["merge", "--no-ff", remoteBranch]
+  ExceptT $ Substrate.call "git" ["merge", remoteBranch]
 
 mkpath ::
   [String] ->
