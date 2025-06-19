@@ -30,7 +30,8 @@ makePartition partition partitionSize vi = do
 
   let filesystemLabel = vaultName ++ "-" ++ hostname
   let mapperDev = "/dev/mapper/" ++ filesystemLabel
-  ExceptT $
+
+  lift $
     Substrate.call
       "dd"
       [ "bs=1M",
@@ -38,7 +39,7 @@ makePartition partition partitionSize vi = do
         "if=/dev/urandom",
         "of=" ++ partitionFilename
       ]
-  ExceptT $
+  lift $
     Substrate.call
       "sudo"
       [ "cryptsetup",
@@ -46,7 +47,7 @@ makePartition partition partitionSize vi = do
         "luksFormat",
         partitionFilename
       ]
-  ExceptT $
+  lift $
     Substrate.call
       "sudo"
       [ "cryptsetup",
@@ -56,7 +57,7 @@ makePartition partition partitionSize vi = do
         partitionFilename,
         filesystemLabel
       ]
-  ExceptT $
+  lift $
     Substrate.call
       "sudo"
       [ "mkfs.ext4",
@@ -67,7 +68,7 @@ makePartition partition partitionSize vi = do
 
   mountpoint <- Udisksctl.mountDevice mapperDev
 
-  ExceptT $
+  lift $
     Substrate.call
       "sudo"
       [ "chown",
@@ -75,7 +76,7 @@ makePartition partition partitionSize vi = do
         owningUser,
         mountpoint
       ]
-  ExceptT $
+  lift $
     Substrate.call
       "sudo"
       [ "chgrp",
@@ -87,7 +88,7 @@ makePartition partition partitionSize vi = do
   Udisksctl.unmountDevice mapperDev
 
   lift $ Substrate.delay 2000000
-  ExceptT $
+  lift $
     Substrate.call
       "sudo"
       [ "cryptsetup",
