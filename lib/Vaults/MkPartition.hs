@@ -41,7 +41,7 @@ makePartition partition partitionSize vi = do
       ]
   lift $ Substrate.echo "Created randomness-filled partition file."
 
-  lift $ Substrate.echo "Creating encrypted LUKS partition..."
+  lift $ Substrate.echo "Creating encrypted partition..."
   lift $
     Substrate.call
       "sudo"
@@ -50,6 +50,8 @@ makePartition partition partitionSize vi = do
         "luksFormat",
         partitionFilename
       ]
+
+  lift $ Substrate.echo "Opening encrypted partition..."
   lift $
     Substrate.call
       "sudo"
@@ -60,6 +62,8 @@ makePartition partition partitionSize vi = do
         partitionFilename,
         filesystemLabel
       ]
+
+  lift $ Substrate.echo "Creating EXT4 filesystem inside encrypted partition..."
   lift $
     Substrate.call
       "sudo"
@@ -68,10 +72,8 @@ makePartition partition partitionSize vi = do
         filesystemLabel,
         mapperDev
       ]
-  lift $ Substrate.echo "Creating EXT4 filesystem inside encrypted partition..."
 
   mountpoint <- Udisksctl.mountDevice mapperDev
-
   lift $ Substrate.echo "EXT4 filesystem mounted."
 
   lift $
@@ -106,7 +108,7 @@ makePartition partition partitionSize vi = do
         filesystemLabel
       ]
 
-  lift $ Substrate.echo "Partition closed. Complete."
+  lift $ Substrate.echo "Partition locked. Complete."
 
 getHostname ::
   (Substrate.Substrate m) =>
