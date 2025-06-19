@@ -46,6 +46,7 @@ test_syncSuccessful =
                   D.loopSetupExec True D.localOp,
                   D.unlockExec True D.localOp,
                   D.mountExec True D.localOp,
+                  D.gitBranchShowCurrentExec True D.localOp,
                   D.gitLogExec True D.localOp,
                   D.unmountExec True D.localOp,
                   D.lockExec True D.localOp,
@@ -75,6 +76,8 @@ test_syncSuccessful =
               ++ D.postOpenPartitionCmds D.localOp
               ++ [D.changeToRepoDir D.localOp]
               ++ [ D.gitFetchCmd "remoteA" D.localOp,
+                   D.gitBranchShowCurrentCmd D.localOp,
+                   D.gitMergeCmd "remoteA" D.localOp,
                    D.gitLogCmd
                  ]
               ++ D.preClosePartitionCmds
@@ -82,7 +85,7 @@ test_syncSuccessful =
               ++ [("writeFile", ["local.log"])]
               ++ D.preClosePartitionCmds
               ++ D.closePartitionCmds D.remoteOp
-      assertEqual
+      assertEqualLists
         "commands"
         expectedCommands
         (execRecorded mockAfterExec)
@@ -324,6 +327,7 @@ test_sync_LocalFailed_GitLog =
                   D.loopSetupExec True D.localOp,
                   D.unlockExec True D.localOp,
                   D.mountExec True D.localOp,
+                  D.gitBranchShowCurrentExec True D.localOp,
                   D.gitLogExec False D.localOp,
                   D.unmountExec True D.localOp,
                   D.lockExec True D.localOp,
@@ -354,13 +358,15 @@ test_sync_LocalFailed_GitLog =
               ++ D.postOpenPartitionCmds D.localOp
               ++ [D.changeToRepoDir D.localOp]
               ++ [ D.gitFetchCmd "remoteA" D.localOp,
+                   D.gitBranchShowCurrentCmd D.localOp,
+                   D.gitMergeCmd "remoteA" D.localOp,
                    D.gitLogCmd
                  ]
               ++ D.preClosePartitionCmds
               ++ D.closePartitionCmds D.localOp
               ++ D.preClosePartitionCmds
               ++ D.closePartitionCmds D.remoteOp
-      assertEqual
+      assertEqualLists
         "commands"
         expectedCommands
         (execRecorded mockAfterExec)
@@ -380,6 +386,7 @@ test_sync_LocalFailed_Unmount =
                   D.loopSetupExec True D.localOp,
                   D.unlockExec True D.localOp,
                   D.mountExec True D.localOp,
+                  D.gitBranchShowCurrentExec True D.localOp,
                   D.gitLogExec True D.localOp,
                   D.unmountExec False D.localOp,
                   D.unmountExec True D.remoteOp,
@@ -408,6 +415,8 @@ test_sync_LocalFailed_Unmount =
               ++ D.postOpenPartitionCmds D.localOp
               ++ [D.changeToRepoDir D.localOp]
               ++ [ D.gitFetchCmd "remoteA" D.localOp,
+                   D.gitBranchShowCurrentCmd D.localOp,
+                   D.gitMergeCmd "remoteA" D.localOp,
                    D.gitLogCmd
                  ]
               ++ D.preClosePartitionCmds
@@ -435,6 +444,7 @@ test_sync_LocalFailed_Lock =
                   D.loopSetupExec True D.localOp,
                   D.unlockExec True D.localOp,
                   D.mountExec True D.localOp,
+                  D.gitBranchShowCurrentExec True D.localOp,
                   D.gitLogExec True D.localOp,
                   D.unmountExec True D.localOp,
                   D.lockExec False D.localOp,
@@ -464,6 +474,8 @@ test_sync_LocalFailed_Lock =
               ++ D.postOpenPartitionCmds D.localOp
               ++ [D.changeToRepoDir D.localOp]
               ++ [ D.gitFetchCmd "remoteA" D.localOp,
+                   D.gitBranchShowCurrentCmd D.localOp,
+                   D.gitMergeCmd "remoteA" D.localOp,
                    D.gitLogCmd
                  ]
               ++ D.preClosePartitionCmds
@@ -493,6 +505,7 @@ test_sync_LocalFailed_LoopDelete =
                   D.loopSetupExec True D.localOp,
                   D.unlockExec True D.localOp,
                   D.mountExec True D.localOp,
+                  D.gitBranchShowCurrentExec True D.localOp,
                   D.gitLogExec True D.localOp,
                   D.unmountExec True D.localOp,
                   D.lockExec True D.localOp,
@@ -523,6 +536,8 @@ test_sync_LocalFailed_LoopDelete =
               ++ D.postOpenPartitionCmds D.localOp
               ++ [D.changeToRepoDir D.localOp]
               ++ [ D.gitFetchCmd "remoteA" D.localOp,
+                   D.gitBranchShowCurrentCmd D.localOp,
+                   D.gitMergeCmd "remoteA" D.localOp,
                    D.gitLogCmd
                  ]
               ++ D.preClosePartitionCmds
@@ -549,6 +564,7 @@ test_sync_RemoteFailed_Unmount =
                   D.loopSetupExec True D.localOp,
                   D.unlockExec True D.localOp,
                   D.mountExec True D.localOp,
+                  D.gitBranchShowCurrentExec True D.localOp,
                   D.gitLogExec True D.localOp,
                   D.unmountExec True D.localOp,
                   D.lockExec True D.localOp,
@@ -577,6 +593,8 @@ test_sync_RemoteFailed_Unmount =
               ++ D.postOpenPartitionCmds D.localOp
               ++ [D.changeToRepoDir D.localOp]
               ++ [ D.gitFetchCmd "remoteA" D.localOp,
+                   D.gitBranchShowCurrentCmd D.localOp,
+                   D.gitMergeCmd "remoteA" D.localOp,
                    D.gitLogCmd
                  ]
               ++ D.preClosePartitionCmds
@@ -605,6 +623,7 @@ test_sync_RemoteFailed_Lock =
                   D.loopSetupExec True D.localOp,
                   D.unlockExec True D.localOp,
                   D.mountExec True D.localOp,
+                  D.gitBranchShowCurrentExec True D.localOp,
                   D.gitLogExec True D.localOp,
                   D.unmountExec True D.localOp,
                   D.lockExec True D.localOp,
@@ -634,6 +653,8 @@ test_sync_RemoteFailed_Lock =
               ++ D.postOpenPartitionCmds D.localOp
               ++ [D.changeToRepoDir D.localOp]
               ++ [ D.gitFetchCmd "remoteA" D.localOp,
+                   D.gitBranchShowCurrentCmd D.localOp,
+                   D.gitMergeCmd "remoteA" D.localOp,
                    D.gitLogCmd
                  ]
               ++ D.preClosePartitionCmds
@@ -664,6 +685,7 @@ test_sync_RemoteFailed_LoopDelete =
                   D.loopSetupExec True D.localOp,
                   D.unlockExec True D.localOp,
                   D.mountExec True D.localOp,
+                  D.gitBranchShowCurrentExec True D.localOp,
                   D.gitLogExec True D.localOp,
                   D.unmountExec True D.localOp,
                   D.lockExec True D.localOp,
@@ -692,8 +714,10 @@ test_sync_RemoteFailed_LoopDelete =
                    D.mountCmd D.localOp
                  ]
               ++ D.postOpenPartitionCmds D.localOp
-              ++ [D.changeToRepoDir D.localOp]
-              ++ [ D.gitFetchCmd "remoteA" D.localOp,
+              ++ [ D.changeToRepoDir D.localOp,
+                   D.gitFetchCmd "remoteA" D.localOp,
+                   D.gitBranchShowCurrentCmd D.localOp,
+                   D.gitMergeCmd "remoteA" D.localOp,
                    D.gitLogCmd
                  ]
               ++ D.preClosePartitionCmds

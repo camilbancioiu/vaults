@@ -289,6 +289,22 @@ performSync localVRI remote = do
   lift $ Substrate.changeDir (repositoryDir localVRI)
   ExceptT $ Substrate.call "git" ["fetch", remote]
 
+  localBranch <- getCurrentBranch
+  let remoteBranch = remote ++ "/" ++ localBranch
+  ExceptT $ Substrate.call "git" ["merge", "--no-ff", remoteBranch]
+
+getCurrentBranch ::
+  (Substrate.Substrate m) =>
+  ExceptT String m String
+getCurrentBranch = do
+  result <- lift $ Substrate.exec "git" ["branch", "--show-current"] ""
+  case Substrate.exitCode result of
+    ExitSuccess -> return (Substrate.output result)
+    ExitFailure _ -> do
+      let e = Substrate.errorOutput result
+      lift $ Substrate.echo e
+      throwError e
+
 mkpath ::
   [String] ->
   String
