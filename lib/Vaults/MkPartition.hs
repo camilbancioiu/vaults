@@ -39,6 +39,9 @@ makePartition partition partitionSize vi = do
         "if=/dev/urandom",
         "of=" ++ partitionFilename
       ]
+  lift $ Substrate.echo "Created randomness-filled partition file."
+
+  lift $ Substrate.echo "Creating encrypted LUKS partition..."
   lift $
     Substrate.call
       "sudo"
@@ -65,8 +68,11 @@ makePartition partition partitionSize vi = do
         filesystemLabel,
         mapperDev
       ]
+  lift $ Substrate.echo "Creating EXT4 filesystem inside encrypted partition..."
 
   mountpoint <- Udisksctl.mountDevice mapperDev
+
+  lift $ Substrate.echo "EXT4 filesystem mounted."
 
   lift $
     Substrate.call
@@ -76,6 +82,7 @@ makePartition partition partitionSize vi = do
         owningUser,
         mountpoint
       ]
+  lift $ Substrate.echo $ "Set owner " ++ owningUser ++ "."
   lift $
     Substrate.call
       "sudo"
@@ -84,10 +91,13 @@ makePartition partition partitionSize vi = do
         owningGroup,
         mountpoint
       ]
+  lift $ Substrate.echo $ "Set group " ++ owningGroup ++ "."
 
   Udisksctl.unmountDevice mapperDev
+  lift $ Substrate.echo "Unmounted."
 
   lift $ Substrate.delay 2000000
+
   lift $
     Substrate.call
       "sudo"
@@ -95,6 +105,8 @@ makePartition partition partitionSize vi = do
         "close",
         filesystemLabel
       ]
+
+  lift $ Substrate.echo "Partition closed. Complete."
 
 getHostname ::
   (Substrate.Substrate m) =>
