@@ -7,6 +7,7 @@ import qualified System.Directory
 import qualified System.Environment
 import qualified System.Exit
 import qualified System.Process
+import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 
 -- TODO consider wrapping all methods in ExceptT
@@ -53,7 +54,7 @@ execIOProcess cmd args sin = do
   return
     Substrate.ExecResult
       { Substrate.exitCode = exc,
-        Substrate.output = sout,
+        Substrate.output = Base.stripTrailingNewline sout,
         Substrate.errorOutput = serr
       }
 

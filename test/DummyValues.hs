@@ -15,7 +15,8 @@ data DummyOp = DummyOp
     loopDev :: FilePath,
     mapperDev :: FilePath,
     mountpoint :: FilePath,
-    commitLog :: String
+    commitLog :: String,
+    currentBranch :: String
   }
 
 localOp =
@@ -24,7 +25,8 @@ localOp =
       loopDev = "/dev/loop42",
       mapperDev = "/dev/mapper/mockVault-local",
       mountpoint = "/mnt/point",
-      commitLog = "38a3\nfb22\n8c2a\n02ad\n"
+      commitLog = "38a3\nfb22\n8c2a\n02ad\n",
+      currentBranch = "themain"
     }
 
 localOp2 =
@@ -33,7 +35,8 @@ localOp2 =
       loopDev = "/dev/loop9",
       mapperDev = "/dev/dm-2",
       mountpoint = "/run/media/user/localhostname/mockVault", -- TODO update URL format
-      commitLog = "38a3\nab22\n8f2a\n03ac\n"
+      commitLog = "38a3\nab22\n8f2a\n03ac\n",
+      currentBranch = "themain"
     }
 
 remoteOp =
@@ -42,7 +45,8 @@ remoteOp =
       loopDev = "/dev/loop84",
       mapperDev = "/dev/dm-8",
       mountpoint = "/mnt/point2",
-      commitLog = "38a3\nfb22\n8c2a\n02ad\n"
+      commitLog = "38a3\nfb22\n8c2a\n02ad\n",
+      currentBranch = "themain"
     }
 
 showFailedCmd ::
@@ -133,6 +137,19 @@ gitFetchCmd ::
   DummyOp ->
   (FilePath, [String])
 gitFetchCmd remote _ = ("git", ["fetch", remote])
+
+gitMergeCmd ::
+  String ->
+  DummyOp ->
+  (FilePath, [String])
+gitMergeCmd remote op = ("git", ["merge", remoteBranch])
+  where
+    remoteBranch = remote ++ "/" ++ (currentBranch op)
+
+gitBranchShowCurrentCmd ::
+  DummyOp ->
+  (FilePath, [String])
+gitBranchShowCurrentCmd _ = ("git", ["branch", "--show-current"])
 
 gitLogCmd :: (FilePath, [String])
 gitLogCmd = ("git", ["log", "--format=%H"])
@@ -296,10 +313,31 @@ gitRemoteExec success op =
     else
       successfulExecResult
         { Sub.output =
-            unlines
+            unlines -- TODO is unlines needed here?
               [ "remoteA\t/run/media/user/"
               ]
         }
+
+gitBranchShowCurrentExec ::
+  Bool ->
+  DummyOp ->
+  Sub.ExecResult
+gitBranchShowCurrentExec success op =
+  if not success
+    then failedExecResult
+    else
+      successfulExecResult
+        { Sub.output = currentBranch op
+        }
+
+gitMergeExec ::
+  Bool ->
+  DummyOp ->
+  Sub.ExecResult
+gitMergeExec success _ =
+  if not success
+    then failedExecResult
+    else successfulExecResult
 
 successfulExecResult :: Sub.ExecResult
 successfulExecResult =

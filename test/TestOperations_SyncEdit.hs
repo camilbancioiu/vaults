@@ -32,6 +32,7 @@ test_syncEditSuccessful =
                   D.loopSetupExec True D.localOp,
                   D.unlockExec True D.localOp,
                   D.mountExec True D.localOp,
+                  D.gitBranchShowCurrentExec True D.localOp,
                   D.gitLogExec True D.localOp,
                   D.unmountExec True D.localOp,
                   D.lockExec True D.localOp,
@@ -52,8 +53,11 @@ test_syncEditSuccessful =
               ++ D.preOpenPartitionCmds
               ++ (D.openPartitionCmds D.localOp)
               ++ D.postOpenPartitionCmds D.localOp
-              ++ [D.changeToRepoDir D.localOp]
-              ++ [D.gitFetchCmd "remoteA" D.localOp]
+              ++ [ D.changeToRepoDir D.localOp,
+                   D.gitFetchCmd "remoteA" D.localOp,
+                   D.gitBranchShowCurrentCmd D.localOp,
+                   D.gitMergeCmd "remoteA" D.localOp
+                 ]
               ++ D.preClosePartitionCmds
               ++ D.closePartitionCmds D.remoteOp
               ++ [ D.changeToRepoDir D.localOp,
@@ -66,7 +70,7 @@ test_syncEditSuccessful =
               ++ (D.closePartitionCmds D.localOp)
               ++ [("writeFile", ["local.log"])]
 
-      assertEqual
+      assertEqualLists
         "all commands executed"
         expectedCommands
         (execRecorded mockAfterExec)

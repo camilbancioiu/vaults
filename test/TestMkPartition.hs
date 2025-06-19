@@ -26,7 +26,6 @@ test_MkPartitionSuccess =
       let partitionFile = "local.vault"
       let filesystemLabel = vaultname ++ "-" ++ hostname
 
-      let owningUserNL = "theUser\n"
       let owningUser = "theUser"
       let owningGroup = "groupOfTheUser"
 
@@ -41,7 +40,7 @@ test_MkPartitionSuccess =
                     },
                   Substrate.ExecResult
                     { Substrate.exitCode = ExitSuccess,
-                      Substrate.output = owningUserNL,
+                      Substrate.output = owningUser,
                       Substrate.errorOutput = ""
                     },
                   Substrate.ExecResult
