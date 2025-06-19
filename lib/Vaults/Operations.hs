@@ -299,15 +299,6 @@ performSync localVRI remote = do
   let remoteBranch = remote ++ "/" ++ localBranch
   ExceptT $ Substrate.call "git" ["merge", "--no-ff", remoteBranch]
 
-getCurrentBranch ::
-  (Substrate.Substrate m) =>
-  ExceptT String m String
-getCurrentBranch = do
-  result <- lift $ Substrate.exec "git" ["branch", "--show-current"] ""
-  when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get current branch")
-  let currentBranch = Substrate.output result
-  return (Base.stripTrailingNewline currentBranch)
-
 mkpath ::
   [String] ->
   String

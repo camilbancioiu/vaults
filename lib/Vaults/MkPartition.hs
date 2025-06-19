@@ -24,9 +24,9 @@ makePartition partition partitionSize vi = do
   let partitionFilename = partition ++ ".vault"
   let vaultName = Base.name vi
 
-  hostname <- getHostname
-  owningUser <- getUsername
-  owningGroup <- getGroupname
+  hostname <- Base.getHostname
+  owningUser <- Base.getUsername
+  owningGroup <- Base.getGroupname
 
   let filesystemLabel = vaultName ++ "-" ++ hostname
   let mapperDev = "/dev/mapper/" ++ filesystemLabel
@@ -109,30 +109,3 @@ makePartition partition partitionSize vi = do
       ]
 
   lift $ Substrate.echo "Partition locked. Complete."
-
-getHostname ::
-  (Substrate.Substrate m) =>
-  ExceptT String m String
-getHostname = do
-  result <- lift $ Substrate.exec "hostname" [] ""
-  when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get hostname")
-  let hostname = Substrate.output result
-  return (Base.stripTrailingNewline hostname)
-
-getUsername ::
-  (Substrate.Substrate m) =>
-  ExceptT String m String
-getUsername = do
-  result <- lift $ Substrate.exec "id" ["--user", "--name"] ""
-  when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get username")
-  let username = Substrate.output result
-  return (Base.stripTrailingNewline username)
-
-getGroupname ::
-  (Substrate.Substrate m) =>
-  ExceptT String m String
-getGroupname = do
-  result <- lift $ Substrate.exec "id" ["--group", "--name"] ""
-  when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get groupname")
-  let groupname = Substrate.output result
-  return (Base.stripTrailingNewline groupname)
