@@ -13,6 +13,22 @@ import Vaults.MkPartition
 import Vaults.Open
 import qualified Vaults.Substrate as Substrate
 
+data Operation
+  = InitVault String String
+  | MakePartition String Int
+  | EditVault
+  | ShellVault
+  | ShellPartition String
+  | UploadVault
+  | UploadMultiVault
+  | DownloadVault
+  | DownloadMultiVault
+  | SyncVault String
+  | SyncEditVault String
+  | DiffLog
+  | DiffLogMultiVault
+  deriving (Show)
+
 doInitVault ::
   (Substrate.Substrate m) =>
   String ->

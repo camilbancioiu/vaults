@@ -1,27 +1,21 @@
 module CLI where
 
+import qualified CLIHelp
 import Options.Applicative
 import System.FilePath.Posix
-
-data Operation
-  = InitVault String String
-  | MakePartition String Int
-  | EditVault
-  | ShellVault
-  | ShellPartition String
-  | UploadVault
-  | UploadMultiVault
-  | DownloadVault
-  | DownloadMultiVault
-  | SyncVault String
-  | SyncEditVault String
-  | DiffLog
-  | DiffLogMultiVault
-  deriving (Show)
+import Vaults.Operations
 
 operationsParser ::
   ParserInfo Operation
-operationsParser = info operations (progDesc "operation")
+operationsParser =
+  info
+    (operations <**> helper)
+    ( fullDesc
+        <> header "Vaults"
+        <> progDesc "Create and manage encrypted, distributed, git-centric vault files."
+    )
+
+helpMod op = fullDesc <> header (CLIHelp.header op) <> progDesc (CLIHelp.progDesc op)
 
 operations =
   subparser $
@@ -39,60 +33,60 @@ operations =
       <> opDiffLog
       <> opDiffLogMultiVault
 
-opInitVault = command "init" (info opInitVaultParser (progDesc "init vault"))
+opInitVault = command "init" (info (opInitVaultParser <**> helper) (helpMod "init"))
 
 opInitVaultParser =
   InitVault
     <$> argument str (metavar "VAULT_NAME")
     <*> argument str (metavar "LOCAL_PARTITION_NAME")
 
-opMakePartition = command "mkpart" (info opMakePartitionParser (progDesc "make partition"))
+opMakePartition = command "mkpart" (info (opMakePartitionParser <**> helper) (helpMod "mkpart"))
 
 opMakePartitionParser =
   MakePartition
     <$> argument str (metavar "PARTITION_NAME")
     <*> argument auto (metavar "PARTITION_SIZE")
 
-opEditVault = command "edit" (info opEditVaultParser (progDesc "edit vault"))
+opEditVault = command "edit" (info (opEditVaultParser <**> helper) (helpMod "edit"))
 
 opEditVaultParser = pure EditVault
 
-opShellVault = command "shell" (info opShellVaultParser (progDesc "edit vault"))
+opShellVault = command "shell" (info (opShellVaultParser <**> helper) (helpMod "shell"))
 
 opShellVaultParser = pure ShellVault
 
-opShellPartition = command "shell-partition" (info opShellPartitionParser (progDesc "edit partition"))
+opShellPartition = command "shell-partition" (info (opShellPartitionParser <**> helper) (helpMod "shell-partition"))
 
 opShellPartitionParser = ShellPartition <$> argument str (metavar "PARTITION")
 
-opUploadVault = command "up" (info opUploadVaultParser (progDesc "upload vault"))
+opUploadVault = command "up" (info (opUploadVaultParser <**> helper) (helpMod "up"))
 
 opUploadVaultParser = pure UploadVault
 
-opUploadMultiVault = command "mup" (info opUploadMultiVaultParser (progDesc "upload multiple vaults"))
+opUploadMultiVault = command "mup" (info (opUploadMultiVaultParser <**> helper) (helpMod "mup"))
 
 opUploadMultiVaultParser = pure UploadMultiVault
 
-opDownloadVault = command "down" (info opDownloadVaultParser (progDesc "download vault"))
+opDownloadVault = command "down" (info (opDownloadVaultParser <**> helper) (helpMod "down"))
 
 opDownloadVaultParser = pure DownloadVault
 
-opDownloadMultiVault = command "mdown" (info opDownloadMultiVaultParser (progDesc "download multiple vaults"))
+opDownloadMultiVault = command "mdown" (info (opDownloadMultiVaultParser <**> helper) (helpMod "mdown"))
 
 opDownloadMultiVaultParser = pure DownloadMultiVault
 
-opSyncVault = command "sync" (info opSyncVaultParser (progDesc "sync vault"))
+opSyncVault = command "sync" (info (opSyncVaultParser <**> helper) (helpMod "sync"))
 
 opSyncVaultParser = SyncVault <$> argument str (metavar "PARTITION")
 
-opSyncEditVault = command "sync-edit" (info opSyncEditVaultParser (progDesc "sync-edit vault"))
+opSyncEditVault = command "sync-edit" (info (opSyncEditVaultParser <**> helper) (helpMod "sync-edit"))
 
 opSyncEditVaultParser = SyncEditVault <$> argument str (metavar "PARTITION")
 
-opDiffLog = command "diff" (info opDiffLogParser (progDesc "diff vault log"))
+opDiffLog = command "diff" (info (opDiffLogParser <**> helper) (helpMod "diff"))
 
 opDiffLogParser = pure DiffLog
 
-opDiffLogMultiVault = command "mdiff" (info opDiffLogMultiVaultParser (progDesc "diff logs of multiple vaults"))
+opDiffLogMultiVault = command "mdiff" (info (opDiffLogMultiVaultParser <**> helper) (helpMod "mdiff"))
 
 opDiffLogMultiVaultParser = pure DiffLogMultiVault

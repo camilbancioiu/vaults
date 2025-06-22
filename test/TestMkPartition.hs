@@ -22,23 +22,18 @@ test_MkPartitionSuccess =
   TestLabel "make partition succeeds" $
     TestCase $ do
       let vaultname = "mockVault"
-      let hostname = "local"
+      let partitionName = "local"
       let partitionFile = "local.vault"
-      let filesystemLabel = vaultname ++ "-" ++ hostname
+      let filesystemLabel = vaultname ++ "-" ++ partitionName
 
       let owningUser = "theUser"
       let owningGroup = "groupOfTheUser"
 
-      let operation = Operations.doMakePartition hostname 64 mockVaultInfo
+      let operation = Operations.doMakePartition partitionName 64 mockVaultInfo
       let mock = addMockExecResults results mockWithVaultDir
             where
               results =
                 [ Substrate.ExecResult
-                    { Substrate.exitCode = ExitSuccess,
-                      Substrate.output = hostname,
-                      Substrate.errorOutput = ""
-                    },
-                  Substrate.ExecResult
                     { Substrate.exitCode = ExitSuccess,
                       Substrate.output = owningUser,
                       Substrate.errorOutput = ""
@@ -57,8 +52,7 @@ test_MkPartitionSuccess =
       assertEqual "" (Right ()) (fst result)
 
       let expectedCommands =
-            [ ("hostname", []),
-              ("id", ["--user", "--name"]),
+            [ ("id", ["--user", "--name"]),
               ("id", ["--group", "--name"]),
               ( "dd",
                 [ "bs=1M",
