@@ -181,14 +181,17 @@ readVaultInfoCmds =
   ]
 
 preOpenPartitionCmds =
-  [("dirExists", [".vault"])] ++ readVaultInfoCmds ++ [("getDir", [])]
+  [("dirExists", [".vault"])]
+    ++ readVaultInfoCmds
+    ++ [("getDir", [])]
 
 postOpenPartitionCmds ::
   DummyOp ->
   [(FilePath, [String])]
 postOpenPartitionCmds op =
   [ ("changeDir", [mountpoint op]),
-    ("dirExists", ["repo"])
+    ("dirExists", ["repo"]),
+    ("tmux", ["rename-window", "mockVault"])
   ]
 
 preClosePartitionCmds :: [(FilePath, [String])]

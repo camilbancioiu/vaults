@@ -29,6 +29,8 @@ openVault partition = do
   when (partLoc == Base.UnknownPartition) (throwError $ "unknown vault partition " ++ partition)
 
   vri <- openPartition partition
+  setTmuxWindowName (Base.name vi)
+
   let vriWithPartLoc = vri {Base.partitionLocation = partLoc}
   return vriWithPartLoc
 
@@ -86,6 +88,18 @@ guardedMountDevice loopDev mapperDev = do
         U.deleteLoopDevice loopDev
         throwError e
     )
+
+setTmuxWindowName ::
+  (Substrate.Substrate m) =>
+  String ->
+  ExceptT String m ()
+setTmuxWindowName name =
+  do
+    (ExceptT $ Substrate.call "tmux" ["rename-window", name])
+    `catchError` ( \e -> do
+                     lift $ Substrate.echo "could not rename tmux window"
+                     return ()
+                 )
 
 resolveRepoDir ::
   (Substrate.Substrate m) =>
