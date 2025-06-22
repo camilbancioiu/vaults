@@ -8,6 +8,8 @@ import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 import qualified Vaults.Udisksctl as Udisksctl
 
+minPartitionSize = 64
+
 -- TODO upon failure, delete the created partition
 
 makePartition ::
@@ -21,14 +23,17 @@ makePartition partition partitionSize vi = do
     (length partition == 0)
     (throwError "partition filename is required")
 
+  when
+    (partitionSize < 64)
+    (throwError $ "partition size must be greater or equal to " ++ (show minPartitionSize))
+
   let partitionFilename = partition ++ ".vault"
   let vaultName = Base.name vi
 
-  hostname <- Base.getHostname
   owningUser <- Base.getUsername
   owningGroup <- Base.getGroupname
 
-  let filesystemLabel = vaultName ++ "-" ++ hostname
+  let filesystemLabel = vaultName ++ "-" ++ partition
   let mapperDev = "/dev/mapper/" ++ filesystemLabel
 
   lift $

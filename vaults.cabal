@@ -33,7 +33,7 @@ executable vault
   -- other-extensions:
   build-depends:       base, vaults, filepath, optparse-applicative,
                        process, directory, mtl
-  other-modules:       SubstrateIO, CLI
+  other-modules:       SubstrateIO, CLI, CLIHelp
   default-language:    Haskell2010
 
 test-suite vaults-test

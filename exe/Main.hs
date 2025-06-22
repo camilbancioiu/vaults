@@ -29,21 +29,21 @@ main = do
     Right _ -> return ()
 
 handleNonVaultOperation ::
-  Operation ->
+  Operations.Operation ->
   IO (Either String ())
 handleNonVaultOperation operation = do
   putStrLn $ "Performing non-vault operation " ++ (show operation)
   let doOperation = case operation of
-        InitVault vname local -> Operations.doInitVault vname local
-        ShellPartition partition -> Operations.doShellPartition partition
-        UploadMultiVault -> MultiOperations.doUploadMultiVault
-        DownloadMultiVault -> MultiOperations.doDownloadMultiVault
-        DiffLogMultiVault -> MultiOperations.doDiffLogMultiVault
+        Operations.InitVault vname local -> Operations.doInitVault vname local
+        Operations.ShellPartition partition -> Operations.doShellPartition partition
+        Operations.UploadMultiVault -> MultiOperations.doUploadMultiVault
+        Operations.DownloadMultiVault -> MultiOperations.doDownloadMultiVault
+        Operations.DiffLogMultiVault -> MultiOperations.doDiffLogMultiVault
         _ -> doError "Operation needs .vault: " operation
   runExceptT $ doOperation
 
 handleVaultOperation ::
-  Operation ->
+  Operations.Operation ->
   IO (Either String ())
 handleVaultOperation operation = do
   vi <- loadVaultInfo
@@ -53,21 +53,21 @@ handleVaultOperation operation = do
       ++ " on vault "
       ++ (name vi)
   let doOperation = case operation of
-        MakePartition part sz -> Operations.doMakePartition part sz vi
-        EditVault -> Operations.doEditVault vi
-        ShellVault -> Operations.doShellVault vi
-        ShellPartition partition -> Operations.doShellPartition partition
-        UploadVault -> Operations.doUploadVault vi
-        DownloadVault -> Operations.doDownloadVault vi
-        SyncVault remote -> Operations.doSyncVault remote vi
-        SyncEditVault remote -> Operations.doSyncEditVault remote vi
-        DiffLog -> Operations.doDiffLog vi
+        Operations.MakePartition part sz -> Operations.doMakePartition part sz vi
+        Operations.EditVault -> Operations.doEditVault vi
+        Operations.ShellVault -> Operations.doShellVault vi
+        Operations.ShellPartition partition -> Operations.doShellPartition partition
+        Operations.UploadVault -> Operations.doUploadVault vi
+        Operations.DownloadVault -> Operations.doDownloadVault vi
+        Operations.SyncVault remote -> Operations.doSyncVault remote vi
+        Operations.SyncEditVault remote -> Operations.doSyncEditVault remote vi
+        Operations.DiffLog -> Operations.doDiffLog vi
         _ -> doError "Operation unsupported: " operation
   runExceptT $ doOperation
 
 doError ::
   (Substrate.Substrate m) =>
   String ->
-  Operation ->
+  Operations.Operation ->
   ExceptT String m ()
 doError msg operation = throwError $ concat [msg, show operation]
