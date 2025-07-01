@@ -63,3 +63,5 @@ saveCommitLog ::
 saveCommitLog vri commitLog = do
   let logFilename = (Base.partitionName vri) ++ ".log"
   lift $ Substrate.writeFile logFilename commitLog
+  lift $ Substrate.echo $ "Writing commit log to file " ++ logFilename
+  lift $ Substrate.echo commitLog

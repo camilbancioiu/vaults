@@ -1,5 +1,6 @@
 module TestMultiOperations where
 
+import Assertions
 import Control.Monad.Except
 import Control.Monad.State
 import qualified DummyValues as D
@@ -23,7 +24,7 @@ test_iterateDirs =
       let mockAfterExec = snd result
 
       assertEqual
-        "not really implemented"
+        "successful iteration"
         (Right ())
         (fst result)
 
@@ -39,7 +40,7 @@ test_iterateDirs =
               ++ (perVaultCmds "green")
               ++ (perVaultCmds "blue")
 
-      assertEqual
+      assertEqualLists
         "commands"
         expectedCommands
         (execRecorded mockAfterExec)

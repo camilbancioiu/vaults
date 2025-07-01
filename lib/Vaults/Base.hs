@@ -119,4 +119,4 @@ getCurrentBranch = do
 stripTrailingNewline ::
   String ->
   String
-stripTrailingNewline s = takeWhile (/= '\n') s
+stripTrailingNewline s = reverse $ dropWhile (== '\n') (reverse s)
