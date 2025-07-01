@@ -14,22 +14,21 @@ import qualified Vaults.Operations as Operations
 allTests :: Test
 allTests =
   TestList
-    [ test_prerequisites,
-      test_shellPartition
+    [ test_shellPartition_without_partition_file,
+      test_shellPartition_ok
     ]
 
-test_prerequisites :: Test
-test_prerequisites =
-  TestLabel "open without a partition filename fails" $
-    TestCase $ do
-      let mock = emptyMock
-      let result = runState (runExceptT $ openPartition "") mock
-      let mockAfterExec = snd result
-      assertOpError "partition filename is required" result
-      assertNoExecCalls mockAfterExec
+test_shellPartition_without_partition_file :: Test
+test_shellPartition_without_partition_file =
+  TestCase $ do
+    let mock = emptyMock
+    let result = runState (runExceptT $ openPartition "") mock
+    let mockAfterExec = snd result
+    assertOpError "partition filename is required" result
+    assertNoExecCalls mockAfterExec
 
-test_shellPartition :: Test
-test_shellPartition =
+test_shellPartition_ok :: Test
+test_shellPartition_ok =
   TestLabel "open shell in mounted partition, then close shell" $
     TestCase $ do
       let operation = Operations.doShellPartition "local.vault"
