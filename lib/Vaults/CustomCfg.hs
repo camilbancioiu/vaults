@@ -3,7 +3,7 @@ module Vaults.CustomCfg where
 data EditOpCfg = EditCfg
   { editor :: FilePath,
     editorCLIParams :: [String],
-    envVar :: (String, String),
+    envVars :: [(String, String)],
     autoCommitOnClose :: Bool
   }
   deriving (Show, Read)
@@ -17,6 +17,12 @@ defaultEditCfg =
           "source .config/nvim/init.vim",
           "."
         ],
-      envVar = ("VIMRUNTIME", ".config/nvim"),
+      -- env var VIMPRIVATE doesn't do anything; vaults are individually
+      -- preconfigured with the privacy options for nvim; it's here mostly for
+      -- testing;
+      envVars =
+        [ ("VIMRUNTIME", ".config/nvim"),
+          ("VIMPRIVATE", "1")
+        ],
       autoCommitOnClose = True
     }

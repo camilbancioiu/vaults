@@ -9,7 +9,7 @@ import Test.HUnit
 import Vaults.Open
 import qualified Vaults.Operations as Operations
 
--- TODO test where the shell crashes
+-- TODO add test where the shell crashes
 
 allTests :: Test
 allTests =

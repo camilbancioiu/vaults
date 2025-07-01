@@ -1,97 +1,101 @@
 module CLI where
 
+import qualified CLIHelp
 import Options.Applicative
 import System.FilePath.Posix
+import Vaults.Operations
 
-data Operation
-  = InitVault String String
-  | MakePartition String Int
-  | EditVault
-  | ShellVault
-  | ShellPartition String
-  | UploadVault
-  | UploadMultiVault
-  | DownloadVault
-  | DownloadMultiVault
-  | SyncVault String
-  | SyncEditVault String
-  | DiffLog
-  | DiffLogMultiVault
-  deriving (Show)
+operationsParser ::
+  ParserInfo Operation
+operationsParser =
+  info
+    (operations <**> helper)
+    ( fullDesc
+        <> header "Vaults"
+        <> progDesc "Create and manage encrypted, distributed, git-centric vault files."
+    )
 
-operationsParser :: ParserInfo Operation
-operationsParser = info operations (progDesc "operation")
+helpPrefix = "● "
+
+helpMod :: String -> InfoMod a
+helpMod op = fullDesc <> header (CLIHelp.header op) <> progDesc (helpPrefix ++ (CLIHelp.progDesc op))
 
 operations =
   subparser $
-    opInitVault
-      <> opMakePartition
-      <> opEditVault
-      <> opShellVault
-      <> opShellPartition
-      <> opUploadVault
-      <> opUploadMultiVault
-      <> opDownloadVault
-      <> opDownloadMultiVault
-      <> opSyncVault
-      <> opSyncEditVault
-      <> opDiffLog
-      <> opDiffLogMultiVault
+    opInitVaultCommand
+      <> opMakePartitionCommand
+      <> opEditVaultCommand
+      <> opShellVaultCommand
+      <> opShellPartitionCommand
+      <> opUploadVaultCommand
+      <> opUploadMultiVaultCommand
+      <> opDownloadVaultCommand
+      <> opDownloadMultiVaultCommand
+      <> opSyncVaultCommand
+      <> opSyncEditVaultCommand
+      <> opDiffLogCommand
+      <> opDiffLogMultiVaultCommand
 
-opInitVault = command "init" (info opInitVaultParser (progDesc "init vault"))
+opInitVaultCommand = command "init" (info (opInitVaultParser <**> helper) (helpMod "init"))
+
+opMakePartitionCommand = command "mkpart" (info (opMakePartitionParser <**> helper) (helpMod "mkpart"))
+
+opEditVaultCommand = command "edit" (info (opEditVaultParser <**> helper) (helpMod "edit"))
+
+opShellVaultCommand = command "shell" (info (opShellVaultParser <**> helper) (helpMod "shell"))
+
+opShellPartitionCommand = command "shell-partition" (info (opShellPartitionParser <**> helper) (helpMod "shell-partition"))
+
+opUploadVaultCommand = command "up" (info (opUploadVaultParser <**> helper) (helpMod "up"))
+
+opUploadMultiVaultCommand = command "mup" (info (opUploadMultiVaultParser <**> helper) (helpMod "mup"))
+
+opDownloadVaultCommand = command "down" (info (opDownloadVaultParser <**> helper) (helpMod "down"))
+
+opDownloadMultiVaultCommand = command "mdown" (info (opDownloadMultiVaultParser <**> helper) (helpMod "mdown"))
+
+opSyncVaultCommand = command "sync" (info (opSyncVaultParser <**> helper) (helpMod "sync"))
+
+opSyncEditVaultCommand = command "sync-edit" (info (opSyncEditVaultParser <**> helper) (helpMod "sync-edit"))
+
+opDiffLogCommand = command "diff" (info (opDiffLogParser <**> helper) (helpMod "diff"))
+
+opDiffLogMultiVaultCommand = command "mdiff" (info (opDiffLogMultiVaultParser <**> helper) (helpMod "mdiff"))
 
 opInitVaultParser =
   InitVault
     <$> argument str (metavar "VAULT_NAME")
     <*> argument str (metavar "LOCAL_PARTITION_NAME")
 
-opMakePartition = command "mkpart" (info opMakePartitionParser (progDesc "make partition"))
-
 opMakePartitionParser =
   MakePartition
     <$> argument str (metavar "PARTITION_NAME")
     <*> argument auto (metavar "PARTITION_SIZE")
 
-opEditVault = command "edit" (info opEditVaultParser (progDesc "edit vault"))
-
 opEditVaultParser = pure EditVault
-
-opShellVault = command "shell" (info opShellVaultParser (progDesc "edit vault"))
 
 opShellVaultParser = pure ShellVault
 
-opShellPartition = command "shell-partition" (info opShellPartitionParser (progDesc "edit partition"))
-
-opShellPartitionParser = ShellPartition <$> argument str (metavar "PARTITION")
-
-opUploadVault = command "up" (info opUploadVaultParser (progDesc "upload vault"))
+opShellPartitionParser =
+  ShellPartition
+    <$> argument str (metavar "PARTITION")
 
 opUploadVaultParser = pure UploadVault
 
-opUploadMultiVault = command "mup" (info opUploadMultiVaultParser (progDesc "upload multiple vaults"))
-
 opUploadMultiVaultParser = pure UploadMultiVault
-
-opDownloadVault = command "down" (info opDownloadVaultParser (progDesc "download vault"))
 
 opDownloadVaultParser = pure DownloadVault
 
-opDownloadMultiVault = command "mdown" (info opDownloadMultiVaultParser (progDesc "download multiple vaults"))
-
 opDownloadMultiVaultParser = pure DownloadMultiVault
 
-opSyncVault = command "sync" (info opSyncVaultParser (progDesc "sync vault"))
+opSyncVaultParser =
+  SyncVault
+    <$> argument str (metavar "PARTITION")
 
-opSyncVaultParser = SyncVault <$> argument str (metavar "PARTITION")
-
-opSyncEditVault = command "sync-edit" (info opSyncEditVaultParser (progDesc "sync-edit vault"))
-
-opSyncEditVaultParser = SyncEditVault <$> argument str (metavar "PARTITION")
-
-opDiffLog = command "diff" (info opDiffLogParser (progDesc "diff vault log"))
+opSyncEditVaultParser =
+  SyncEditVault
+    <$> argument str (metavar "PARTITION")
 
 opDiffLogParser = pure DiffLog
-
-opDiffLogMultiVault = command "mdiff" (info opDiffLogMultiVaultParser (progDesc "diff logs of multiple vaults"))
 
 opDiffLogMultiVaultParser = pure DiffLogMultiVault

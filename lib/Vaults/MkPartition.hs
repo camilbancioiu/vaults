@@ -6,29 +6,37 @@ import Control.Monad.Trans
 import System.Exit
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
+import qualified Vaults.Udisksctl as Udisksctl
 
--- local localhost=$(hostname)
--- local fname="$localhost.vault"
--- local fslabel="$vaultname-$localhost"
--- dd if=/dev/urandom of=$fname bs=1M count=$mb || { return 1; }
--- sudo cryptsetup --verify-passphrase luksFormat $fname || { return 1; }
--- sudo cryptsetup open --type luks $fname $vaultname || { return 1; }
--- sudo mkfs.ext4 -L $fslabel /dev/mapper/$vaultname || { return 1; }
--- sleep 2
--- sudo cryptsetup close $vaultname || { return 1; }
+minPartitionSize = 64
+
 -- TODO upon failure, delete the created partition
 
-makePartition :: (Substrate.Substrate m) => String -> Int -> Base.VaultInfo -> ExceptT String m ()
+makePartition ::
+  (Substrate.Substrate m) =>
+  String ->
+  Int ->
+  Base.VaultInfo ->
+  ExceptT String m ()
 makePartition partition partitionSize vi = do
   when
     (length partition == 0)
     (throwError "partition filename is required")
 
+  when
+    (partitionSize < 64)
+    (throwError $ "partition size must be greater or equal to " ++ (show minPartitionSize))
+
   let partitionFilename = partition ++ ".vault"
   let vaultName = Base.name vi
-  hostname <- getHostname
-  let filesystemLabel = vaultName ++ "-" ++ hostname
-  ExceptT $
+
+  owningUser <- Base.getUsername
+  owningGroup <- Base.getGroupname
+
+  let filesystemLabel = vaultName ++ "-" ++ partition
+  let mapperDev = "/dev/mapper/" ++ filesystemLabel
+
+  lift $
     Substrate.call
       "dd"
       [ "bs=1M",
@@ -36,7 +44,10 @@ makePartition partition partitionSize vi = do
         "if=/dev/urandom",
         "of=" ++ partitionFilename
       ]
-  ExceptT $
+  lift $ Substrate.echo "Created randomness-filled partition file."
+
+  lift $ Substrate.echo "Creating encrypted partition..."
+  lift $
     Substrate.call
       "sudo"
       [ "cryptsetup",
@@ -44,7 +55,9 @@ makePartition partition partitionSize vi = do
         "luksFormat",
         partitionFilename
       ]
-  ExceptT $
+
+  lift $ Substrate.echo "Opening encrypted partition..."
+  lift $
     Substrate.call
       "sudo"
       [ "cryptsetup",
@@ -52,28 +65,52 @@ makePartition partition partitionSize vi = do
         "--type",
         "luks",
         partitionFilename,
-        vaultName
+        filesystemLabel
       ]
-  ExceptT $
+
+  lift $ Substrate.echo "Creating EXT4 filesystem inside encrypted partition..."
+  lift $
     Substrate.call
       "sudo"
       [ "mkfs.ext4",
         "-L",
         filesystemLabel,
-        "/dev/mapper/" ++ vaultName
+        mapperDev
       ]
+
+  mountpoint <- Udisksctl.mountDevice mapperDev
+  lift $ Substrate.echo "EXT4 filesystem mounted."
+
+  lift $
+    Substrate.call
+      "sudo"
+      [ "chown",
+        "-R",
+        owningUser,
+        mountpoint
+      ]
+  lift $ Substrate.echo $ "Set owner " ++ owningUser ++ "."
+  lift $
+    Substrate.call
+      "sudo"
+      [ "chgrp",
+        "-R",
+        owningGroup,
+        mountpoint
+      ]
+  lift $ Substrate.echo $ "Set group " ++ owningGroup ++ "."
+
+  Udisksctl.unmountDevice mapperDev
+  lift $ Substrate.echo "Unmounted."
+
   lift $ Substrate.delay 2000000
-  ExceptT $
+
+  lift $
     Substrate.call
       "sudo"
       [ "cryptsetup",
         "close",
-        vaultName
+        filesystemLabel
       ]
 
-getHostname :: (Substrate.Substrate m) => ExceptT String m String
-getHostname = do
-  result <- lift $ Substrate.exec "hostname" [] ""
-  when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get hostname")
-  let hostname = Substrate.output result
-  return hostname
+  lift $ Substrate.echo "Partition locked. Complete."

@@ -38,6 +38,7 @@ test_editSuccessful =
               ++ D.postOpenPartitionCmds D.localOp
               ++ [D.changeToRepoDir D.localOp]
               ++ [ D.setEnvCmd "VIMRUNTIME",
+                   D.setEnvCmd "VIMPRIVATE",
                    D.editCmd D.localOp,
                    D.gitLogCmd
                  ]
@@ -79,6 +80,7 @@ test_editorCrashes =
               ++ D.postOpenPartitionCmds D.localOp
               ++ [D.changeToRepoDir D.localOp]
               ++ [ D.setEnvCmd "VIMRUNTIME",
+                   D.setEnvCmd "VIMPRIVATE",
                    D.editCmd D.localOp,
                    D.gitLogCmd
                  ]

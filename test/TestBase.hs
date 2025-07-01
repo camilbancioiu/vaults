@@ -11,7 +11,8 @@ allTests =
   TestList
     [ test_isVaultDir,
       test_loadVaultInfo,
-      test_getPartitionLocation
+      test_getPartitionLocation,
+      test_stripTrailingNewline
     ]
 
 test_isVaultDir :: Test
@@ -45,3 +46,9 @@ test_getPartitionLocation = TestCase $ do
   Base.UnknownPartition @=? Base.getPartitionLocation vi "remoteC.vault"
   Base.RemotePartition @=? Base.getPartitionLocation vi "remoteA.vault"
   Base.RemotePartition @=? Base.getPartitionLocation vi "remoteB.vault"
+
+test_stripTrailingNewline :: Test
+test_stripTrailingNewline = TestCase $ do
+  "one two" @=? Base.stripTrailingNewline "one two\n"
+  "one two" @=? Base.stripTrailingNewline "one two\n\n"
+  "one two\nthree" @=? Base.stripTrailingNewline "one two\nthree\n"

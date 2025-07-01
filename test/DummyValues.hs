@@ -15,16 +15,18 @@ data DummyOp = DummyOp
     loopDev :: FilePath,
     mapperDev :: FilePath,
     mountpoint :: FilePath,
-    commitLog :: String
+    commitLog :: String,
+    currentBranch :: String
   }
 
 localOp =
   DummyOp
     { partitionFile = "local.vault",
       loopDev = "/dev/loop42",
-      mapperDev = "/dev/dm-4",
+      mapperDev = "/dev/mapper/mockVault-local",
       mountpoint = "/mnt/point",
-      commitLog = "38a3\nfb22\n8c2a\n02ad\n"
+      commitLog = "38a3\nfb22\n8c2a\n02ad\n",
+      currentBranch = "themain"
     }
 
 localOp2 =
@@ -33,7 +35,8 @@ localOp2 =
       loopDev = "/dev/loop9",
       mapperDev = "/dev/dm-2",
       mountpoint = "/run/media/user/localhostname/mockVault", -- TODO update URL format
-      commitLog = "38a3\nab22\n8f2a\n03ac\n"
+      commitLog = "38a3\nab22\n8f2a\n03ac\n",
+      currentBranch = "themain"
     }
 
 remoteOp =
@@ -42,16 +45,22 @@ remoteOp =
       loopDev = "/dev/loop84",
       mapperDev = "/dev/dm-8",
       mountpoint = "/mnt/point2",
-      commitLog = "38a3\nfb22\n8c2a\n02ad\n"
+      commitLog = "38a3\nfb22\n8c2a\n02ad\n",
+      currentBranch = "themain"
     }
 
-showFailedCmd :: (FilePath, [String]) -> String
+showFailedCmd ::
+  (FilePath, [String]) ->
+  String
 showFailedCmd ("git", "log" : _) =
   "git log failed: "
 showFailedCmd (_, cmd@(subcmd : params)) =
   subcmd ++ " failed: \ncommand: " ++ (show cmd)
 
-makeVRI :: DummyOp -> FilePath -> Base.VaultRuntimeInfo
+makeVRI ::
+  DummyOp ->
+  FilePath ->
+  Base.VaultRuntimeInfo
 makeVRI op repoDir =
   Base.VaultRuntimeInfo
     { Base.srcDir = Base.srcDir MockSubstrate.mockVaultRuntimeInfo,
@@ -64,7 +73,9 @@ makeVRI op repoDir =
       Base.partitionLocation = Base.LocalPartition
     }
 
-editCmd :: DummyOp -> (FilePath, [String])
+editCmd ::
+  DummyOp ->
+  (FilePath, [String])
 editCmd _ =
   ( "nvim",
     [ "--clean",
@@ -91,26 +102,54 @@ openPartitionExecOk = [loopSetupExec True, unlockExec True, mountExec True]
 
 closePartitionExecOk = [unmountExec True, lockExec True, loopDeleteExec True]
 
-loopSetupCmd :: DummyOp -> (FilePath, [String])
+loopSetupCmd ::
+  DummyOp ->
+  (FilePath, [String])
 loopSetupCmd op = ("udisksctl", ["loop-setup", "-f", partitionFile op])
 
-unlockCmd :: DummyOp -> (FilePath, [String])
+unlockCmd ::
+  DummyOp ->
+  (FilePath, [String])
 unlockCmd op = ("udisksctl", ["unlock", "-b", loopDev op])
 
-mountCmd :: DummyOp -> (FilePath, [String])
+mountCmd ::
+  DummyOp ->
+  (FilePath, [String])
 mountCmd op = ("udisksctl", ["mount", "-b", mapperDev op])
 
-unmountCmd :: DummyOp -> (FilePath, [String])
+unmountCmd ::
+  DummyOp ->
+  (FilePath, [String])
 unmountCmd op = ("udisksctl", ["unmount", "-b", mapperDev op])
 
-lockCmd :: DummyOp -> (FilePath, [String])
+lockCmd ::
+  DummyOp ->
+  (FilePath, [String])
 lockCmd op = ("udisksctl", ["lock", "-b", loopDev op])
 
-loopDeleteCmd :: DummyOp -> (FilePath, [String])
+loopDeleteCmd ::
+  DummyOp ->
+  (FilePath, [String])
 loopDeleteCmd op = ("udisksctl", ["loop-delete", "-b", loopDev op])
 
-gitFetchCmd :: String -> DummyOp -> (FilePath, [String])
+gitFetchCmd ::
+  String ->
+  DummyOp ->
+  (FilePath, [String])
 gitFetchCmd remote _ = ("git", ["fetch", remote])
+
+gitMergeCmd ::
+  String ->
+  DummyOp ->
+  (FilePath, [String])
+gitMergeCmd remote op = ("git", ["merge", remoteBranch])
+  where
+    remoteBranch = remote ++ "/" ++ (currentBranch op)
+
+gitBranchShowCurrentCmd ::
+  DummyOp ->
+  (FilePath, [String])
+gitBranchShowCurrentCmd _ = ("git", ["branch", "--show-current"])
 
 gitLogCmd :: (FilePath, [String])
 gitLogCmd = ("git", ["log", "--format=%H"])
@@ -124,10 +163,14 @@ syncCmd = ("sync", [])
 changeToSrcDir :: (FilePath, [String])
 changeToSrcDir = ("changeDir", [Base.srcDir MockSubstrate.mockVaultRuntimeInfo])
 
-changeToRepoDir :: DummyOp -> (FilePath, [String])
+changeToRepoDir ::
+  DummyOp ->
+  (FilePath, [String])
 changeToRepoDir op = ("changeDir", [(mountpoint op) ++ "/repo"])
 
-setEnvCmd :: String -> (FilePath, [String])
+setEnvCmd ::
+  String ->
+  (FilePath, [String])
 setEnvCmd varname = ("setEnv", [varname])
 
 readVaultInfoCmds =
@@ -138,12 +181,17 @@ readVaultInfoCmds =
   ]
 
 preOpenPartitionCmds =
-  [("dirExists", [".vault"])] ++ readVaultInfoCmds ++ [("getDir", [])]
+  [("dirExists", [".vault"])]
+    ++ readVaultInfoCmds
+    ++ [("getDir", [])]
 
-postOpenPartitionCmds :: DummyOp -> [(FilePath, [String])]
+postOpenPartitionCmds ::
+  DummyOp ->
+  [(FilePath, [String])]
 postOpenPartitionCmds op =
   [ ("changeDir", [mountpoint op]),
-    ("dirExists", ["repo"])
+    ("dirExists", ["repo"]),
+    ("tmux", ["rename-window", "mockVault"])
   ]
 
 preClosePartitionCmds :: [(FilePath, [String])]
@@ -153,7 +201,9 @@ preClosePartitionCmds =
     delayCmd
   ]
 
-uploadPartitionCmds :: String -> [(FilePath, [String])]
+uploadPartitionCmds ::
+  String ->
+  [(FilePath, [String])]
 uploadPartitionCmds partition =
   let vi = MockSubstrate.mockVaultInfo
       partitionFile = partition ++ ".vault"
@@ -164,7 +214,10 @@ uploadPartitionCmds partition =
         ("rsync", ["-ivz", partitionLogFile, remotePartitionLogFile])
       ]
 
-loopSetupExec :: Bool -> DummyOp -> Sub.ExecResult
+loopSetupExec ::
+  Bool ->
+  DummyOp ->
+  Sub.ExecResult
 loopSetupExec success op =
   if not success
     then failedExecResult
@@ -178,13 +231,19 @@ loopSetupExec success op =
               ++ "."
         }
 
-loopDeleteExec :: Bool -> DummyOp -> Sub.ExecResult
+loopDeleteExec ::
+  Bool ->
+  DummyOp ->
+  Sub.ExecResult
 loopDeleteExec success op =
   if not success
     then failedExecResult
     else successfulExecResult
 
-unlockExec :: Bool -> DummyOp -> Sub.ExecResult
+unlockExec ::
+  Bool ->
+  DummyOp ->
+  Sub.ExecResult
 unlockExec success op =
   if not success
     then failedExecResult
@@ -198,7 +257,10 @@ unlockExec success op =
               ++ "."
         }
 
-mountExec :: Bool -> DummyOp -> Sub.ExecResult
+mountExec ::
+  Bool ->
+  DummyOp ->
+  Sub.ExecResult
 mountExec success op =
   if not success
     then failedExecResult
@@ -211,13 +273,19 @@ mountExec success op =
               ++ (mountpoint op)
         }
 
-unmountExec :: Bool -> DummyOp -> Sub.ExecResult
+unmountExec ::
+  Bool ->
+  DummyOp ->
+  Sub.ExecResult
 unmountExec success op =
   if not success
     then failedExecResult
     else successfulExecResult
 
-lockExec :: Bool -> DummyOp -> Sub.ExecResult
+lockExec ::
+  Bool ->
+  DummyOp ->
+  Sub.ExecResult
 lockExec success op =
   if not success
     then failedExecResult
@@ -226,7 +294,10 @@ lockExec success op =
         { Sub.output = "Locked " ++ (loopDev op) ++ "."
         }
 
-gitLogExec :: Bool -> DummyOp -> Sub.ExecResult
+gitLogExec ::
+  Bool ->
+  DummyOp ->
+  Sub.ExecResult
 gitLogExec success op =
   if not success
     then failedExecResult
@@ -235,17 +306,41 @@ gitLogExec success op =
         { Sub.output = commitLog op
         }
 
-gitRemoteExec :: Bool -> DummyOp -> Sub.ExecResult
+gitRemoteExec ::
+  Bool ->
+  DummyOp ->
+  Sub.ExecResult
 gitRemoteExec success op =
   if not success
     then failedExecResult
     else
       successfulExecResult
         { Sub.output =
-            unlines
+            unlines -- TODO is unlines needed here?
               [ "remoteA\t/run/media/user/"
               ]
         }
+
+gitBranchShowCurrentExec ::
+  Bool ->
+  DummyOp ->
+  Sub.ExecResult
+gitBranchShowCurrentExec success op =
+  if not success
+    then failedExecResult
+    else
+      successfulExecResult
+        { Sub.output = currentBranch op
+        }
+
+gitMergeExec ::
+  Bool ->
+  DummyOp ->
+  Sub.ExecResult
+gitMergeExec success _ =
+  if not success
+    then failedExecResult
+    else successfulExecResult
 
 successfulExecResult :: Sub.ExecResult
 successfulExecResult =
@@ -263,7 +358,9 @@ failedExecResult =
       Sub.errorOutput = ""
     }
 
-mkpath :: [String] -> String
+mkpath ::
+  [String] ->
+  String
 mkpath = concat . (intersperse "/")
 
 dummyOperation ::

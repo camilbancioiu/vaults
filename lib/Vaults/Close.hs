@@ -8,13 +8,15 @@ import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 import qualified Vaults.Udisksctl as U
 
-closeVault :: (Substrate.Substrate m) => Base.VaultRuntimeInfo -> ExceptT String m ()
+closeVault ::
+  (Substrate.Substrate m) =>
+  Base.VaultRuntimeInfo ->
+  ExceptT String m ()
 closeVault vri = do
   -- TODO refactor
   -- TODO if this is not a real vault with a git repo, do not extract the
   -- commit log
   let needCommitLog = (Base.partitionLocation vri) == Base.LocalPartition
-
   commitLog <-
     catchError
       ( do
@@ -25,12 +27,14 @@ closeVault vri = do
       (\e -> closePartition vri >> throwError e)
 
   closePartition vri
-
   if needCommitLog
     then saveCommitLog vri commitLog
     else return ()
 
-closePartition :: (Substrate.Substrate m) => Base.VaultRuntimeInfo -> ExceptT String m ()
+closePartition ::
+  (Substrate.Substrate m) =>
+  Base.VaultRuntimeInfo ->
+  ExceptT String m ()
 closePartition vri = do
   lift $ Substrate.changeDir (Base.srcDir vri)
   lift $ Substrate.sync
@@ -40,7 +44,9 @@ closePartition vri = do
   U.lockDevice (Base.loopDev vri)
   U.deleteLoopDevice (Base.loopDev vri)
 
-extractCommitLog :: (Substrate.Substrate m) => ExceptT String m String
+extractCommitLog ::
+  (Substrate.Substrate m) =>
+  ExceptT String m String
 extractCommitLog = do
   result <- lift $ Substrate.exec "git" ["log", "--format=%H"] ""
   when
@@ -49,7 +55,11 @@ extractCommitLog = do
   let commitLog = Substrate.output result
   return commitLog
 
-saveCommitLog :: (Substrate.Substrate m) => Base.VaultRuntimeInfo -> String -> ExceptT String m ()
+saveCommitLog ::
+  (Substrate.Substrate m) =>
+  Base.VaultRuntimeInfo ->
+  String ->
+  ExceptT String m ()
 saveCommitLog vri commitLog = do
   let logFilename = (Base.partitionName vri) ++ ".log"
   lift $ Substrate.writeFile logFilename commitLog

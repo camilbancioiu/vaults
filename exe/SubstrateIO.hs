@@ -7,6 +7,7 @@ import qualified System.Directory
 import qualified System.Environment
 import qualified System.Exit
 import qualified System.Process
+import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 
 -- TODO consider wrapping all methods in ExceptT
@@ -29,7 +30,10 @@ instance Substrate.Substrate IO where
   echo = putStrLn
   sync = callIOSync
 
-callIOProcess :: String -> [String] -> IO (Either String ())
+callIOProcess ::
+  String ->
+  [String] ->
+  IO (Either String ())
 callIOProcess cmd args = do
   catch
     ( do
@@ -38,7 +42,11 @@ callIOProcess cmd args = do
     )
     (\e -> return $ Left (show $ (e :: SomeException)))
 
-execIOProcess :: String -> [String] -> String -> IO Substrate.ExecResult
+execIOProcess ::
+  String ->
+  [String] ->
+  String ->
+  IO Substrate.ExecResult
 execIOProcess cmd args sin = do
   let pcmd = (System.Process.proc cmd args)
   result <- System.Process.readCreateProcessWithExitCode pcmd sin
@@ -46,14 +54,16 @@ execIOProcess cmd args sin = do
   return
     Substrate.ExecResult
       { Substrate.exitCode = exc,
-        Substrate.output = sout,
+        Substrate.output = Base.stripTrailingNewline sout,
         Substrate.errorOutput = serr
       }
 
-callIOSync :: IO (Either String ())
+callIOSync ::
+  IO (Either String ())
 callIOSync = callIOProcess "sync" []
 
-listIODirectories :: IO [FilePath]
+listIODirectories ::
+  IO [FilePath]
 listIODirectories =
   System.Directory.listDirectory "."
     >>= filterM System.Directory.doesDirectoryExist
