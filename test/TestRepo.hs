@@ -8,6 +8,7 @@ import qualified DummyValues as D
 import MockSubstrate
 import Test.HUnit
 import Vaults.Repo
+import qualified Vaults.Substrate as Substrate
 
 allTests :: Test
 allTests =
@@ -15,7 +16,8 @@ allTests =
     [ test_MissingRepoDir,
       test_UninitializedGit,
       test_getCurrentBranch,
-      test_parseGitRemote
+      test_parseGitRemote,
+      test_getRemotes
     ]
 
 test_MissingRepoDir :: Test
@@ -81,6 +83,29 @@ test_getCurrentBranch =
     assertEqual
       "verify current branch value"
       (Right (D.currentBranch D.localOp))
+      (fst result)
+
+test_getRemotes :: Test
+test_getRemotes =
+  TestCase $ do
+    let mock = addMockExecResult result mockWithVaultAndRepoDir
+          where
+            result =
+              D.successfulExecResult
+                { Substrate.output = dummyGitRemoteVOut
+                }
+    let result = runState (runExceptT getRemotes) mock
+    let mockAfterExec = snd result
+    let expectedCommands = [("git", ["remote", "--verbose"])]
+
+    assertEqualLists
+      "verify call to git remote"
+      expectedCommands
+      (execRecorded mockAfterExec)
+
+    assertEqual
+      "parsed git remotes"
+      (Right dummyGitRemotes)
       (fst result)
 
 test_parseGitRemote :: Test

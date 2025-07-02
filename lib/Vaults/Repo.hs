@@ -53,9 +53,22 @@ getCurrentBranch = do
   let currentBranch = Substrate.output result
   return currentBranch
 
+getRemotes ::
+  (Substrate.Substrate m) =>
+  ExceptT String m [GitRemote]
+getRemotes = do
+  result <- lift $ Substrate.exec "git" ["remote", "--verbose"] ""
+  when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get remotes")
+  let remotesOutput = Substrate.output result
+  let parsedRemotes = parseGitRemotes remotesOutput
+  return parsedRemotes
+
 parseGitRemotes :: String -> [GitRemote]
 parseGitRemotes gitOut =
   map parseGitRemote (lines gitOut)
 
 parseGitRemote :: String -> GitRemote
-parseGitRemote line = GitRemote "" ""
+parseGitRemote line =
+  GitRemote name url
+  where
+    (name, tab : url) = break (== '\t') line
