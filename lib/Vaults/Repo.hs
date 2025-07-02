@@ -53,3 +53,9 @@ getCurrentBranch = do
   let currentBranch = Substrate.output result
   return currentBranch
 
+parseGitRemotes :: String -> [GitRemote]
+parseGitRemotes gitOut =
+  map parseGitRemote (lines gitOut)
+
+parseGitRemote :: String -> GitRemote
+parseGitRemote line = GitRemote "" ""

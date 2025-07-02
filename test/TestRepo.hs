@@ -14,7 +14,8 @@ allTests =
   TestList
     [ test_MissingRepoDir,
       test_UninitializedGit,
-      test_getCurrentBranch
+      test_getCurrentBranch,
+      test_parseGitRemote
     ]
 
 test_MissingRepoDir :: Test
@@ -81,3 +82,27 @@ test_getCurrentBranch =
       "verify current branch value"
       (Right (D.currentBranch D.localOp))
       (fst result)
+
+test_parseGitRemote :: Test
+test_parseGitRemote =
+  TestCase $ do
+    let parsedRemotes = parseGitRemotes dummyGitRemoteVOut
+    assertEqualLists
+      "parsed Git remotes"
+      dummyGitRemotes
+      parsedRemotes
+
+dummyGitRemoteVOut :: String
+dummyGitRemoteVOut =
+  unlines
+    [ "remoteA\tssh://remoteA/some/directory",
+      "remoteB\t/usr/media/user/mockVault-remoteB",
+      "remoteC\t/usr/media/user/mockVault-remoteC"
+    ]
+
+dummyGitRemotes :: [GitRemote]
+dummyGitRemotes =
+  [ GitRemote "remoteA" "ssh://remoteA/some/directory",
+    GitRemote "remoteB" "/usr/media/user/mockVault-remoteB",
+    GitRemote "remoteC" "/usr/media/user/mockVault-remoteC"
+  ]
