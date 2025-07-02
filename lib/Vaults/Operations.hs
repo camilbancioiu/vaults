@@ -11,6 +11,7 @@ import qualified Vaults.CustomCfg as Cfg
 import Vaults.Init
 import Vaults.MkPartition
 import Vaults.Open
+import qualified Vaults.Repo as Repo
 import qualified Vaults.Substrate as Substrate
 
 data Operation
@@ -311,7 +312,7 @@ performSync localVRI remote = do
   lift $ Substrate.changeDir (repositoryDir localVRI)
   ExceptT $ Substrate.call "git" ["fetch", remote]
 
-  localBranch <- getCurrentBranch
+  localBranch <- Repo.getCurrentBranch
   let remoteBranch = remote ++ "/" ++ localBranch
   ExceptT $ Substrate.call "git" ["merge", remoteBranch]
 

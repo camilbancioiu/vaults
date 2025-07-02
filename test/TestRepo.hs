@@ -13,7 +13,8 @@ allTests :: Test
 allTests =
   TestList
     [ test_MissingRepoDir,
-      test_UninitializedGit
+      test_UninitializedGit,
+      test_getCurrentBranch
     ]
 
 test_MissingRepoDir :: Test
@@ -59,4 +60,24 @@ test_UninitializedGit =
     assertEqual
       "verify uninitialized git repo"
       (Left UninitializedGit)
+      (fst result)
+
+test_getCurrentBranch :: Test
+test_getCurrentBranch =
+  TestCase $ do
+    let mock = addMockExecResults results mockWithVaultAndRepoDir
+          where
+            results = [D.gitBranchShowCurrentExec True D.localOp]
+    let result = runState (runExceptT getCurrentBranch) mock
+    let mockAfterExec = snd result
+    let expectedCommands = [("git", ["branch", "--show-current"])]
+
+    assertEqualLists
+      "verify call to git branch"
+      expectedCommands
+      (execRecorded mockAfterExec)
+
+    assertEqual
+      "verify current branch value"
+      (Right (D.currentBranch D.localOp))
       (fst result)
