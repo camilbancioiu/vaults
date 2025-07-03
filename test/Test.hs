@@ -6,7 +6,6 @@ import qualified TestBase (allTests)
 import qualified TestClose (allTests)
 import qualified TestInit (allTests)
 import qualified TestMkPartition (allTests)
-import qualified TestMkRepo (allTests)
 import qualified TestMultiOperations (allTests)
 import qualified TestOpen (allTests)
 import qualified TestOperations_Edit (allTests)
@@ -31,7 +30,6 @@ allTests =
       TestClose.allTests,
       TestInit.allTests,
       TestMkPartition.allTests,
-      TestMkRepo.allTests,
       TestMultiOperations.allTests,
       TestOpen.allTests,
       TestRepo.allTests,
