@@ -107,15 +107,6 @@ getGroupname = do
   let groupname = Substrate.output result
   return groupname
 
-getCurrentBranch ::
-  (Substrate.Substrate m) =>
-  ExceptT String m String
-getCurrentBranch = do
-  result <- lift $ Substrate.exec "git" ["branch", "--show-current"] ""
-  when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get current branch")
-  let currentBranch = Substrate.output result
-  return currentBranch
-
 stripTrailingNewline ::
   String ->
   String

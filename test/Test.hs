@@ -14,6 +14,7 @@ import qualified TestOperations_ShellPartition (allTests)
 import qualified TestOperations_Sync (allTests)
 import qualified TestOperations_SyncEdit (allTests)
 import qualified TestOperations_Up (allTests)
+import qualified TestRepo (allTests)
 import qualified TestUdisksctl (allTests)
 
 main :: IO ()
@@ -31,12 +32,13 @@ allTests =
       TestInit.allTests,
       TestMkPartition.allTests,
       TestMkRepo.allTests,
-      TestMultiOperations.allTests
+      TestMultiOperations.allTests,
       TestOpen.allTests,
+      TestRepo.allTests,
       TestOperations_Edit.allTests,
       TestOperations_ShellPartition.allTests,
       TestOperations_Sync.allTests,
       TestOperations_SyncEdit.allTests,
       TestOperations_Up.allTests,
-      TestUdisksctl.allTests,
+      TestUdisksctl.allTests
     ]

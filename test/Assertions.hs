@@ -54,8 +54,11 @@ assertEqualLists ::
   [a] ->
   IO ()
 assertEqualLists message expected actual =
-  let tuples = zip expected actual
-   in traverse_ (assertEqualInTuple message) tuples
+  do
+    assertEqual message (length expected) (length actual)
+    traverse_ (assertEqualInTuple message) tuples
+  where
+    tuples = zip expected actual
 
 assertEqualInTuple ::
   (Eq a, Show a) =>

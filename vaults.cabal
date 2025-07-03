@@ -21,7 +21,7 @@ library
                        Vaults.Init, Vaults.MkPartition, Vaults.MkRepo,
                        Vaults.Open, Vaults.Close,
                        Vaults.Operations, Vaults.MultiOperations,
-                       Vaults.CustomCfg
+                       Vaults.CustomCfg, Vaults.Repo
   -- other-modules:
   -- other-extensions:
   default-language:    Haskell2010
@@ -44,16 +44,12 @@ test-suite vaults-test
   other-modules:       MockSubstrate, DummyValues, Assertions,
                        TestBase,
                        TestClose,
-                       TestInit,
-                       TestMkPartition,
-                       TestMkRepo
-                       TestMultiOperations
-                       TestOpen,
+                       TestRepo,
                        TestOperations_Edit,
                        TestOperations_ShellPartition,
                        TestOperations_Sync,
                        TestOperations_SyncEdit,
                        TestOperations_Up,
-                       TestUdisksctl,
+                       TestUdisksctl
   build-depends:       base, vaults,
                        HUnit, mtl
