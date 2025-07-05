@@ -4,6 +4,7 @@ import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Trans
 import System.Exit
+import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 
 data RepoIssue
@@ -21,10 +22,12 @@ data GitRemote = GitRemote
 
 verifyRepo ::
   (Substrate.Substrate m) =>
+  Base.VaultInfo ->
   ExceptT RepoIssue m ()
-verifyRepo = do
+verifyRepo vi = do
   checkRepoDir
   checkGitInitialized
+  checkRemotes vi
 
 checkRepoDir ::
   (Substrate.Substrate m) =>
@@ -43,6 +46,14 @@ checkGitInitialized = do
   if (Substrate.exitCode result) /= ExitSuccess
     then throwError UninitializedGit
     else return ()
+
+checkRemotes ::
+  (Substrate.Substrate m) =>
+  Base.VaultInfo ->
+  ExceptT RepoIssue m ()
+checkRemotes vi = do
+  existingRemotes <- join $ getRemotes
+  return ()
 
 getCurrentBranch ::
   (Substrate.Substrate m) =>

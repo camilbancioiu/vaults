@@ -7,6 +7,7 @@ import Control.Monad.Trans
 import qualified DummyValues as D
 import MockSubstrate
 import Test.HUnit
+import qualified Vaults.Base as Base
 import Vaults.Repo
 import qualified Vaults.Substrate as Substrate
 
@@ -15,6 +16,7 @@ allTests =
   TestList
     [ test_MissingRepoDir,
       test_UninitializedGit,
+      test_MissingGitRemotes,
       test_getCurrentBranch,
       test_parseGitRemote,
       test_getRemotes
@@ -24,7 +26,8 @@ test_MissingRepoDir :: Test
 test_MissingRepoDir =
   TestCase $ do
     let mock = emptyMock
-    let result = runState (runExceptT verifyRepo) mock
+    let vi = mockVaultInfo
+    let result = runState (runExceptT $ verifyRepo vi) mock
     let mockAfterExec = snd result
 
     let expectedCommands = [("dirExists", ["repo"])]
@@ -47,7 +50,8 @@ test_UninitializedGit =
             results =
               [ D.failedExecResult
               ]
-    let result = runState (runExceptT verifyRepo) mock
+    let vi = mockVaultInfo
+    let result = runState (runExceptT $ verifyRepo vi) mock
     let mockAfterExec = snd result
 
     let expectedCommands =
@@ -63,6 +67,39 @@ test_UninitializedGit =
     assertEqual
       "verify uninitialized git repo"
       (Left UninitializedGit)
+      (fst result)
+
+test_MissingGitRemotes :: Test
+test_MissingGitRemotes =
+  TestCase $ do
+    let mock = addMockExecResult er mockWithVaultAndRepoDir
+          where
+            er =
+              D.successfulExecResult
+                { Substrate.output = dummyGitRemoteVOut
+                }
+    let vi =
+          mockVaultInfo
+            { Base.remotes = ["remoteA", "remoteB", "remoteC"]
+            }
+    let result = runState (runExceptT $ verifyRepo vi) mock
+    let mockAfterExec = snd result
+    let expectedCommands =
+          [ ("dirExists", ["repo"]),
+            ("git", ["status"]),
+            ("git", ["remote", "--verbose"])
+          ]
+
+    assertEqual
+      "check repo commands"
+      expectedCommands
+      (execRecorded mockAfterExec)
+
+    let expectedMissingRemotes = [GitRemote "remoteC" "/usr/media/user/mockVault-remoteC"]
+
+    assertEqual
+      "verify missing git remotes"
+      (Left $ MissingGitRemotes expectedMissingRemotes)
       (fst result)
 
 test_getCurrentBranch :: Test
@@ -121,13 +158,11 @@ dummyGitRemoteVOut :: String
 dummyGitRemoteVOut =
   unlines
     [ "remoteA\tssh://remoteA/some/directory",
-      "remoteB\t/usr/media/user/mockVault-remoteB",
-      "remoteC\t/usr/media/user/mockVault-remoteC"
+      "remoteB\t/usr/media/user/mockVault-remoteB"
     ]
 
 dummyGitRemotes :: [GitRemote]
 dummyGitRemotes =
   [ GitRemote "remoteA" "ssh://remoteA/some/directory",
-    GitRemote "remoteB" "/usr/media/user/mockVault-remoteB",
-    GitRemote "remoteC" "/usr/media/user/mockVault-remoteC"
+    GitRemote "remoteB" "/usr/media/user/mockVault-remoteB"
   ]
