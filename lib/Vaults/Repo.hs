@@ -52,7 +52,7 @@ checkRemotes ::
   Base.VaultInfo ->
   ExceptT RepoIssue m ()
 checkRemotes vi = do
-  existingRemotes <- join $ getRemotes
+  existingRemotes <- runExceptT $ getRemotes
   return ()
 
 getCurrentBranch ::

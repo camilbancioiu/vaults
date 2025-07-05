@@ -94,7 +94,7 @@ test_MissingGitRemotes =
       "check repo commands"
       expectedCommands
       (execRecorded mockAfterExec)
-
+    -- TODO test with empty output from git remote
     let expectedMissingRemotes = [GitRemote "remoteC" "/usr/media/user/mockVault-remoteC"]
 
     assertEqual
