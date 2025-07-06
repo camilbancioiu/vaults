@@ -105,6 +105,9 @@ test_MissingGitRemotes =
       (fst result)
 
 test_makeExpectedRemotes :: Test
+test_makeExpectedRemotes =
+  TestCase $ do
+    
 
 test_getCurrentBranch :: Test
 test_getCurrentBranch =
