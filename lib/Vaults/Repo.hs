@@ -12,6 +12,7 @@ data RepoIssue
   | UninitializedGit
   | MissingGitRemotes [GitRemote]
   | MissingGitSafeDirs [GitRemote]
+  | UnknownIssue String
   deriving (Eq, Show)
 
 data GitRemote = GitRemote
@@ -43,17 +44,32 @@ checkGitInitialized ::
   ExceptT RepoIssue m ()
 checkGitInitialized = do
   result <- lift $ Substrate.exec "git" ["status"] ""
-  if (Substrate.exitCode result) /= ExitSuccess
-    then throwError UninitializedGit
-    else return ()
+  let code = Substrate.exitCode result
+  if code == ExitSuccess
+    then return ()
+    else if code == ExitFailure 128
+      then throwError UninitializedGit
+      else throwError (UnknownIssue (Substrate.errorOutput result))
 
 checkRemotes ::
   (Substrate.Substrate m) =>
   Base.VaultInfo ->
   ExceptT RepoIssue m ()
 checkRemotes vi = do
-  existingRemotes <- runExceptT $ getRemotes
+  existingRemotes <- getRemotes
+  let user = "user" -- TODO Base.getUsername
+  let expectedRemotes = makeExpectedRemotes vi user
   return ()
+
+makeExpectedRemotes :: Base.VaultInfo -> String -> [GitRemote]
+makeExpectedRemotes vi user =
+  map (makeRemoteByName vi user) (Base.remotes vi)
+
+makeRemoteByName :: Base.VaultInfo -> String -> String -> GitRemote
+makeRemoteByName vi user remoteName =
+  GitRemote name url
+  where url = "/usr/media/" ++ user ++ "/" ++ fsLabel ++ "/repo"
+        fsLabel = (Base.name vi) ++ "-" ++ remoteName
 
 getCurrentBranch ::
   (Substrate.Substrate m) =>
@@ -66,10 +82,11 @@ getCurrentBranch = do
 
 getRemotes ::
   (Substrate.Substrate m) =>
-  ExceptT String m [GitRemote]
+  ExceptT RepoIssue m [GitRemote]
 getRemotes = do
   result <- lift $ Substrate.exec "git" ["remote", "--verbose"] ""
-  when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get remotes")
+  when (Substrate.exitCode result /= ExitSuccess)
+       (throwError (UnknownIssue (Substrate.errorOutput result)))
   let remotesOutput = Substrate.output result
   let parsedRemotes = parseGitRemotes remotesOutput
   return parsedRemotes

@@ -3,13 +3,14 @@ module TestRepo where
 import Assertions
 import Control.Monad.Except
 import Control.Monad.State
+import System.Exit
 import Control.Monad.Trans
 import qualified DummyValues as D
 import MockSubstrate
 import Test.HUnit
 import qualified Vaults.Base as Base
 import Vaults.Repo
-import qualified Vaults.Substrate as Substrate
+import qualified Vaults.Substrate as Sub
 
 allTests :: Test
 allTests =
@@ -21,6 +22,10 @@ allTests =
       test_parseGitRemote,
       test_getRemotes
     ]
+
+failedGitExecResult = D.failedExecResult {
+  Sub.exitCode = ExitFailure 128
+}
 
 test_MissingRepoDir :: Test
 test_MissingRepoDir =
@@ -48,7 +53,7 @@ test_UninitializedGit =
     let mock = addMockExecResults results mockWithVaultAndRepoDir
           where
             results =
-              [ D.failedExecResult
+              [ failedGitExecResult
               ]
     let vi = mockVaultInfo
     let result = runState (runExceptT $ verifyRepo vi) mock
@@ -72,14 +77,11 @@ test_UninitializedGit =
 test_MissingGitRemotes :: Test
 test_MissingGitRemotes =
   TestCase $ do
-    let mock = addMockExecResult er mockWithVaultAndRepoDir
+    let mock = addMockExecResults ers mockWithVaultAndRepoDir
           where
-            er =
-              D.successfulExecResult
-                { Substrate.output = dummyGitRemoteVOut
-                }
-    let vi =
-          mockVaultInfo
+            ers = [ D.successfulExecResult,
+                    dummyGitRemoteExecResult ]
+    let vi = mockVaultInfo
             { Base.remotes = ["remoteA", "remoteB", "remoteC"]
             }
     let result = runState (runExceptT $ verifyRepo vi) mock
@@ -101,6 +103,8 @@ test_MissingGitRemotes =
       "verify missing git remotes"
       (Left $ MissingGitRemotes expectedMissingRemotes)
       (fst result)
+
+test_makeExpectedRemotes :: Test
 
 test_getCurrentBranch :: Test
 test_getCurrentBranch =
@@ -129,7 +133,7 @@ test_getRemotes =
           where
             result =
               D.successfulExecResult
-                { Substrate.output = dummyGitRemoteVOut
+                { Sub.output = dummyGitRemoteVOut
                 }
     let result = runState (runExceptT getRemotes) mock
     let mockAfterExec = snd result
@@ -153,6 +157,11 @@ test_parseGitRemote =
       "parsed Git remotes"
       dummyGitRemotes
       parsedRemotes
+
+dummyGitRemoteExecResult =
+  D.successfulExecResult
+    { Sub.output = dummyGitRemoteVOut
+    }
 
 dummyGitRemoteVOut :: String
 dummyGitRemoteVOut =

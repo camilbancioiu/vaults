@@ -326,6 +326,7 @@ mockVaultInfo =
       Base.remoteStore = "ssh://remoteStore"
     }
 
+-- TODO update mountpoint format
 mockVaultRuntimeInfo =
   Base.VaultRuntimeInfo
     { Base.srcDir = "/home/user/vaults/mockVault",
