@@ -8,6 +8,7 @@ import qualified MockSubstrate
 import System.Exit
 import qualified Vaults.Base as Base
 import qualified Vaults.CustomCfg as Cfg
+import qualified Vaults.Repo as Repo
 import qualified Vaults.Substrate as Sub
 
 data DummyOp = DummyOp
@@ -306,21 +307,6 @@ gitLogExec success op =
         { Sub.output = commitLog op
         }
 
-gitRemoteExec ::
-  Bool ->
-  DummyOp ->
-  Sub.ExecResult
-gitRemoteExec success op =
-  if not success
-    then failedExecResult
-    else
-      successfulExecResult
-        { Sub.output =
-            unlines -- TODO is unlines needed here?
-              [ "remoteA\t/run/media/user/"
-              ]
-        }
-
 gitBranchShowCurrentExec ::
   Bool ->
   DummyOp ->
@@ -341,6 +327,38 @@ gitMergeExec success _ =
   if not success
     then failedExecResult
     else successfulExecResult
+
+successfulRepoVerificationExecResults :: [Sub.ExecResult]
+successfulRepoVerificationExecResults =
+  [ successfulExecResult,
+    successfulExecResultWithOutput dummyGitRemoteVOut,
+    successfulExecResultWithOutput "user",
+    successfulExecResultWithOutput "user",
+    successfulExecResultWithOutput (unlines dummyGitSafeDirs)
+  ]
+
+gitRemoteExec :: Sub.ExecResult
+gitRemoteExec = successfulExecResultWithOutput dummyGitRemoteVOut
+
+dummyGitRemoteVOut :: String
+dummyGitRemoteVOut =
+  unlines
+    [ "remoteA\t/usr/media/user/mockVault-remoteA/repo",
+      "remoteB\t/usr/media/user/mockVault-remoteB/repo"
+    ]
+
+dummyGitRemoteNames :: [String]
+dummyGitRemoteNames = ["remoteA", "remoteB"]
+
+dummyGitRemotes :: [Repo.GitRemote]
+dummyGitRemotes =
+  [ Repo.GitRemote "remoteA" "/usr/media/user/mockVault-remoteA/repo",
+    Repo.GitRemote "remoteB" "/usr/media/user/mockVault-remoteB/repo"
+  ]
+
+dummyGitSafeDirs :: [FilePath]
+dummyGitSafeDirs =
+  (map ((++ "/.git") . Repo.remoteURL) dummyGitRemotes)
 
 successfulExecResult :: Sub.ExecResult
 successfulExecResult =

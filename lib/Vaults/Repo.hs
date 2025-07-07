@@ -61,7 +61,7 @@ checkRemotes ::
 checkRemotes vi = do
   existingRemotes <- getRemotes
   user <- (withExceptT UnknownIssue) Base.getUsername
-  let expectedRemotes = makeExpectedRemotes vi user
+  let expectedRemotes = makeExpectedRemotes (Base.name vi) user (Base.remotes vi)
   if existingRemotes == expectedRemotes
     then return ()
     else throwError (IncorrectGitRemotes expectedRemotes)
@@ -72,20 +72,21 @@ checkSafeDirs ::
   ExceptT RepoIssue m ()
 checkSafeDirs vi = do
   user <- (withExceptT UnknownIssue) Base.getUsername
-  let expectedSafeDirs = makeExpectedSafeDirs vi user
+  let expectedSafeDirs = makeExpectedSafeDirs (Base.name vi) user (Base.remotes vi)
   existingSafeDirs <- getExistingSafeDirs
   if existingSafeDirs == expectedSafeDirs
     then return ()
     else throwError (IncorrectGitSafeDirs expectedSafeDirs)
 
 makeExpectedSafeDirs ::
-  Base.VaultInfo ->
   String ->
+  String ->
+  [String] ->
   [FilePath]
-makeExpectedSafeDirs vi user =
+makeExpectedSafeDirs vaultName user remotes =
   map (++ "/.git") expectedRemoteURLs
   where
-    expectedRemotes = makeExpectedRemotes vi user
+    expectedRemotes = makeExpectedRemotes vaultName user remotes
     expectedRemoteURLs = map remoteURL expectedRemotes
 
 -- TODO refactor duplicate code of calling git commands with output handling
@@ -101,25 +102,25 @@ getExistingSafeDirs = do
     (throwError (UnknownIssue (Substrate.errorOutput result)))
   return $ lines (Substrate.output result)
 
-makeExpectedRemotes :: Base.VaultInfo -> String -> [GitRemote]
-makeExpectedRemotes vi user =
-  map (makeRemoteByName vi user) (Base.remotes vi)
+makeExpectedRemotes :: String -> String -> [String] -> [GitRemote]
+makeExpectedRemotes vaultName user remotes =
+  map (makeRemoteByName vaultName user) remotes
 
-makeRemoteByName :: Base.VaultInfo -> String -> String -> GitRemote
-makeRemoteByName vi user remoteName =
+makeRemoteByName :: String -> String -> String -> GitRemote
+makeRemoteByName vaultName user remoteName =
   GitRemote remoteName url
   where
-    url = makeRemoteURL vi user remoteName
+    url = makeRemoteURL vaultName user remoteName
 
 makeRemoteURL ::
-  Base.VaultInfo ->
+  String ->
   String ->
   String ->
   FilePath
-makeRemoteURL vi user remoteName =
+makeRemoteURL vaultName user remoteName =
   "/usr/media/" ++ user ++ "/" ++ fsLabel ++ "/repo"
   where
-    fsLabel = (Base.name vi) ++ "-" ++ remoteName
+    fsLabel = vaultName ++ "-" ++ remoteName
 
 getCurrentBranch ::
   (Substrate.Substrate m) =>

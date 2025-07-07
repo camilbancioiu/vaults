@@ -154,11 +154,10 @@ test_mount_ok_no_inner_repo =
   TestCase $ do
     let mock = addMockExecResults results mockWithVaultDir
           where
-            results =
-              [ D.loopSetupExec True,
-                D.unlockExec True,
-                D.mountExec True
-              ]
+            results = udisksExecResults
+            udisksExecResults =
+              [D.loopSetupExec, D.unlockExec, D.mountExec]
+                <*> (pure True)
                 <*> (pure D.localOp)
     let result = runState (runExceptT $ openVault "local.vault") mock
     let mockAfterExec = snd result
@@ -182,11 +181,10 @@ test_mount_ok_has_inner_repo =
   TestCase $ do
     let mock = addMockExecResults results mockWithVaultAndRepoDir
           where
-            results =
-              [ D.loopSetupExec True,
-                D.unlockExec True,
-                D.mountExec True
-              ]
+            results = udisksExecResults
+            udisksExecResults =
+              [D.loopSetupExec, D.unlockExec, D.mountExec]
+                <*> (pure True)
                 <*> (pure D.localOp)
     let result = runState (runExceptT $ openVault "local.vault") mock
     let mockAfterExec = snd result
