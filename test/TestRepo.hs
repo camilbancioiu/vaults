@@ -18,10 +18,15 @@ allTests =
     [ test_MissingRepoDir,
       test_UninitializedGit,
       test_IncorrectGitRemotes,
+      test_IncorrectSafeDirs,
       test_getCurrentBranch,
       test_parseGitRemotes,
-      test_getRemotes
+      test_getRemotes,
+      test_makeExpectedRemotes,
+      test_makeExpectedSafeDirs
     ]
+
+-- TODO refactor everything
 
 failedGitExecResult =
   D.failedExecResult
@@ -82,7 +87,7 @@ test_IncorrectGitRemotes =
           where
             ers =
               [ D.successfulExecResult,
-                dummyGitRemoteExecResult,
+                D.successfulExecResultWithOutput dummyGitRemoteVOut,
                 D.successfulExecResultWithOutput "user"
               ]
     let vi =
@@ -109,9 +114,65 @@ test_IncorrectGitRemotes =
             GitRemote "remoteC" "/usr/media/user/mockVault-remoteC/repo"
           ]
     assertEqual
-      "verify missing git remotes"
+      "verify git remotes"
       (Left $ IncorrectGitRemotes expectedRemotes)
       (fst result)
+
+test_IncorrectSafeDirs :: Test
+test_IncorrectSafeDirs =
+  TestCase $ do
+    let mock = addMockExecResults ers mockWithVaultAndRepoDir
+          where
+            ers =
+              [ D.successfulExecResult,
+                D.successfulExecResultWithOutput dummyGitRemoteVOut,
+                D.successfulExecResultWithOutput "user",
+                D.successfulExecResultWithOutput "user",
+                D.successfulExecResultWithOutput existingSafeDirs
+              ]
+            existingSafeDirs =
+              unlines
+                [ "/usr/media/user/mockVault-remoteA/repo/.git"
+                ]
+    let vi =
+          mockVaultInfo
+            { Base.remotes = ["remoteA", "remoteB"]
+            }
+
+    let result = runState (runExceptT $ verifyRepo vi) mock
+    let mockAfterExec = snd result
+
+    let expectedSafeDirs =
+          [ "/usr/media/user/mockVault-remoteA/repo/.git",
+            "/usr/media/user/mockVault-remoteB/repo/.git"
+          ]
+    assertEqual
+      "verify git safe dirs"
+      (Left $ IncorrectGitSafeDirs expectedSafeDirs)
+      (fst result)
+
+test_makeExpectedSafeDirs :: Test
+test_makeExpectedSafeDirs =
+  TestCase $ do
+    let user = "user"
+
+    let vi =
+          mockVaultInfo
+            { Base.remotes = []
+            }
+    assertEqual
+      "verify generated expectations of no safe dirs"
+      []
+      (makeExpectedSafeDirs vi user)
+
+    let vi =
+          mockVaultInfo
+            { Base.remotes = ["remoteA", "remoteB"]
+            }
+    assertEqual
+      "verify generated expectations of remotes"
+      (map ((++ "/.git") . remoteURL) dummyGitRemotes2)
+      (makeExpectedSafeDirs vi user)
 
 test_makeExpectedRemotes :: Test
 test_makeExpectedRemotes =
@@ -193,21 +254,16 @@ test_parseGitRemotes =
       dummyGitRemotes
       parsedRemotes
 
-dummyGitRemoteExecResult =
-  D.successfulExecResult
-    { Sub.output = dummyGitRemoteVOut
-    }
-
 dummyGitRemoteVOut :: String
 dummyGitRemoteVOut =
   unlines
-    [ "remoteA\tssh://remoteA/some/directory",
+    [ "remoteA\t/usr/media/user/mockVault-remoteA/repo",
       "remoteB\t/usr/media/user/mockVault-remoteB/repo"
     ]
 
 dummyGitRemotes :: [GitRemote]
 dummyGitRemotes =
-  [ GitRemote "remoteA" "ssh://remoteA/some/directory",
+  [ GitRemote "remoteA" "/usr/media/user/mockVault-remoteA/repo",
     GitRemote "remoteB" "/usr/media/user/mockVault-remoteB/repo"
   ]
 

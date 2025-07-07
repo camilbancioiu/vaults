@@ -11,7 +11,7 @@ data RepoIssue
   = MissingRepoDir
   | UninitializedGit
   | IncorrectGitRemotes [GitRemote]
-  | IncorrectGitSafeDirs [GitRemote]
+  | IncorrectGitSafeDirs [FilePath]
   | UnknownIssue String
   deriving (Eq, Show)
 
@@ -29,6 +29,7 @@ verifyRepo vi = do
   checkRepoDir
   checkGitInitialized
   checkRemotes vi
+  checkSafeDirs vi
 
 checkRepoDir ::
   (Substrate.Substrate m) =>
@@ -52,6 +53,7 @@ checkGitInitialized = do
         then throwError UninitializedGit
         else throwError (UnknownIssue (Substrate.errorOutput result))
 
+-- TODO get the username via Base.VaultInfo
 checkRemotes ::
   (Substrate.Substrate m) =>
   Base.VaultInfo ->
@@ -69,15 +71,24 @@ checkSafeDirs ::
   Base.VaultInfo ->
   ExceptT RepoIssue m ()
 checkSafeDirs vi = do
-  throwError (UnknownIssue "unimplemented")
+  user <- (withExceptT UnknownIssue) Base.getUsername
+  let expectedSafeDirs = makeExpectedSafeDirs vi user
+  existingSafeDirs <- getExistingSafeDirs
+  if existingSafeDirs == expectedSafeDirs
+    then return ()
+    else throwError (IncorrectGitSafeDirs expectedSafeDirs)
 
 makeExpectedSafeDirs ::
-  (Substrate.Substrate m) =>
   Base.VaultInfo ->
-  ExceptT RepoIssue m ()
-makeExpectedSafeDirs vi = do
-  return ()
+  String ->
+  [FilePath]
+makeExpectedSafeDirs vi user =
+  map (++ "/.git") expectedRemoteURLs
+  where
+    expectedRemotes = makeExpectedRemotes vi user
+    expectedRemoteURLs = map remoteURL expectedRemotes
 
+-- TODO refactor duplicate code of calling git commands with output handling
 getExistingSafeDirs ::
   (Substrate.Substrate m) =>
   ExceptT RepoIssue m [FilePath]

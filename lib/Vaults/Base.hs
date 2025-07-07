@@ -14,6 +14,7 @@ data PartitionLocation
   | UnknownPartition
   deriving (Eq, Show, Read)
 
+-- TODO add username and hostname fields
 data VaultInfo = VaultInfo
   { name :: String,
     localname :: String,
