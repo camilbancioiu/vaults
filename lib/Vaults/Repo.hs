@@ -44,6 +44,7 @@ checkGitInitialized ::
   (Substrate.Substrate m) =>
   ExceptT RepoIssue m ()
 checkGitInitialized = do
+  lift $ Substrate.changeDir "repo"
   result <- lift $ Substrate.exec "git" ["status"] ""
   let code = Substrate.exitCode result
   if code == ExitSuccess

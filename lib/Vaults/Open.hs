@@ -7,6 +7,7 @@ import Data.Maybe
 import System.Directory
 import System.FilePath.Posix
 import qualified Vaults.Base as Base
+import qualified Vaults.Repo as Repo
 import qualified Vaults.Substrate as Substrate
 import qualified Vaults.Udisksctl as U
 
@@ -33,7 +34,28 @@ openVault partition = do
 
   let vriWithPartLoc = vri {Base.partitionLocation = partLoc}
 
+  runVerification vi vriWithPartLoc
+
   return vriWithPartLoc
+
+runVerification ::
+  (Substrate.Substrate m) =>
+  Base.VaultInfo ->
+  Base.VaultRuntimeInfo ->
+  ExceptT String m ()
+runVerification vi vri = do
+  shouldVerify <- lift $ Substrate.lookupEnv "TEST"
+  case shouldVerify of
+    Just "VERIFY" -> do
+      let repoDir = (Base.repositoryDir vri)
+      lift $ Substrate.echo $ "VAULT REPO " ++ repoDir
+      let verification = (withExceptT (show) (Repo.verify vi))
+      catchError verification (\e -> lift $ Substrate.echo e)
+      lift $ Substrate.echo "VAULT REPO VERIFIED"
+      return ()
+    Nothing -> do
+      lift $ Substrate.echo "VAULT REPO VERIFICATION OFF"
+      return ()
 
 openPartition ::
   (Substrate.Substrate m) =>
