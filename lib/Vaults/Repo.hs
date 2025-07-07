@@ -17,7 +17,7 @@ data RepoIssue
 
 data GitRemote = GitRemote
   { remoteName :: String,
-    remoteURL :: String
+    remoteURL :: FilePath
   }
   deriving (Eq, Show)
 
@@ -71,6 +71,25 @@ checkSafeDirs ::
 checkSafeDirs vi = do
   throwError (UnknownIssue "unimplemented")
 
+makeExpectedSafeDirs ::
+  (Substrate.Substrate m) =>
+  Base.VaultInfo ->
+  ExceptT RepoIssue m ()
+makeExpectedSafeDirs vi = do
+  return ()
+
+getExistingSafeDirs ::
+  (Substrate.Substrate m) =>
+  ExceptT RepoIssue m [FilePath]
+getExistingSafeDirs = do
+  -- The relevant safe.directory entries are those recorded in local
+  -- configuration. Vaults don't manage the global git config entries.
+  result <- lift $ Substrate.exec "git" ["config", "get", "--local", "--all"] ""
+  when
+    (Substrate.exitCode result /= ExitSuccess)
+    (throwError (UnknownIssue (Substrate.errorOutput result)))
+  return $ lines (Substrate.output result)
+
 makeExpectedRemotes :: Base.VaultInfo -> String -> [GitRemote]
 makeExpectedRemotes vi user =
   map (makeRemoteByName vi user) (Base.remotes vi)
@@ -79,7 +98,16 @@ makeRemoteByName :: Base.VaultInfo -> String -> String -> GitRemote
 makeRemoteByName vi user remoteName =
   GitRemote remoteName url
   where
-    url = "/usr/media/" ++ user ++ "/" ++ fsLabel ++ "/repo"
+    url = makeRemoteURL vi user remoteName
+
+makeRemoteURL ::
+  Base.VaultInfo ->
+  String ->
+  String ->
+  FilePath
+makeRemoteURL vi user remoteName =
+  "/usr/media/" ++ user ++ "/" ++ fsLabel ++ "/repo"
+  where
     fsLabel = (Base.name vi) ++ "-" ++ remoteName
 
 getCurrentBranch ::
@@ -87,7 +115,9 @@ getCurrentBranch ::
   ExceptT String m String
 getCurrentBranch = do
   result <- lift $ Substrate.exec "git" ["branch", "--show-current"] ""
-  when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get current branch")
+  when
+    (Substrate.exitCode result /= ExitSuccess)
+    (throwError "could not get current branch")
   let currentBranch = Substrate.output result
   return currentBranch
 
