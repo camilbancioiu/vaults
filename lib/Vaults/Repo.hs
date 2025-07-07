@@ -64,6 +64,13 @@ checkRemotes vi = do
     then return ()
     else throwError (IncorrectGitRemotes expectedRemotes)
 
+checkSafeDirs ::
+  (Substrate.Substrate m) =>
+  Base.VaultInfo ->
+  ExceptT RepoIssue m ()
+checkSafeDirs vi = do
+  throwError (UnknownIssue "unimplemented")
+
 makeExpectedRemotes :: Base.VaultInfo -> String -> [GitRemote]
 makeExpectedRemotes vi user =
   map (makeRemoteByName vi user) (Base.remotes vi)
