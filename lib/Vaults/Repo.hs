@@ -10,8 +10,8 @@ import qualified Vaults.Substrate as Substrate
 data RepoIssue
   = MissingRepoDir
   | UninitializedGit
-  | MissingGitRemotes [GitRemote]
-  | MissingGitSafeDirs [GitRemote]
+  | IncorrectGitRemotes [GitRemote]
+  | IncorrectGitSafeDirs [GitRemote]
   | UnknownIssue String
   deriving (Eq, Show)
 
@@ -47,9 +47,10 @@ checkGitInitialized = do
   let code = Substrate.exitCode result
   if code == ExitSuccess
     then return ()
-    else if code == ExitFailure 128
-      then throwError UninitializedGit
-      else throwError (UnknownIssue (Substrate.errorOutput result))
+    else
+      if code == ExitFailure 128
+        then throwError UninitializedGit
+        else throwError (UnknownIssue (Substrate.errorOutput result))
 
 checkRemotes ::
   (Substrate.Substrate m) =>
@@ -59,7 +60,9 @@ checkRemotes vi = do
   existingRemotes <- getRemotes
   let user = "user" -- TODO Base.getUsername
   let expectedRemotes = makeExpectedRemotes vi user
-  return ()
+  if existingRemotes == expectedRemotes
+    then return ()
+    else throwError (IncorrectGitRemotes expectedRemotes)
 
 makeExpectedRemotes :: Base.VaultInfo -> String -> [GitRemote]
 makeExpectedRemotes vi user =
@@ -67,9 +70,10 @@ makeExpectedRemotes vi user =
 
 makeRemoteByName :: Base.VaultInfo -> String -> String -> GitRemote
 makeRemoteByName vi user remoteName =
-  GitRemote name url
-  where url = "/usr/media/" ++ user ++ "/" ++ fsLabel ++ "/repo"
-        fsLabel = (Base.name vi) ++ "-" ++ remoteName
+  GitRemote remoteName url
+  where
+    url = "/usr/media/" ++ user ++ "/" ++ fsLabel ++ "/repo"
+    fsLabel = (Base.name vi) ++ "-" ++ remoteName
 
 getCurrentBranch ::
   (Substrate.Substrate m) =>
@@ -85,8 +89,9 @@ getRemotes ::
   ExceptT RepoIssue m [GitRemote]
 getRemotes = do
   result <- lift $ Substrate.exec "git" ["remote", "--verbose"] ""
-  when (Substrate.exitCode result /= ExitSuccess)
-       (throwError (UnknownIssue (Substrate.errorOutput result)))
+  when
+    (Substrate.exitCode result /= ExitSuccess)
+    (throwError (UnknownIssue (Substrate.errorOutput result)))
   let remotesOutput = Substrate.output result
   let parsedRemotes = parseGitRemotes remotesOutput
   return parsedRemotes
