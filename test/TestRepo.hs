@@ -82,7 +82,8 @@ test_IncorrectGitRemotes =
           where
             ers =
               [ D.successfulExecResult,
-                dummyGitRemoteExecResult
+                dummyGitRemoteExecResult,
+                D.successfulExecResultWithOutput "user"
               ]
     let vi =
           mockVaultInfo
@@ -93,7 +94,8 @@ test_IncorrectGitRemotes =
     let expectedCommands =
           [ ("dirExists", ["repo"]),
             ("git", ["status"]),
-            ("git", ["remote", "--verbose"])
+            ("git", ["remote", "--verbose"]),
+            ("id", ["--user", "--name"])
           ]
 
     assertEqual
@@ -157,12 +159,12 @@ test_getCurrentBranch =
 test_getRemotes :: Test
 test_getRemotes =
   TestCase $ do
-    let mock = addMockExecResult result mockWithVaultAndRepoDir
+    let mock = addMockExecResults ers mockWithVaultAndRepoDir
           where
-            result =
-              D.successfulExecResult
-                { Sub.output = dummyGitRemoteVOut
-                }
+            ers =
+              [ D.successfulExecResultWithOutput dummyGitRemoteVOut,
+                D.successfulExecResultWithOutput "user"
+              ]
     let result = runState (runExceptT getRemotes) mock
     let mockAfterExec = snd result
     let expectedCommands = [("git", ["remote", "--verbose"])]

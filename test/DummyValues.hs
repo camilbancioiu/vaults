@@ -350,6 +350,14 @@ successfulExecResult =
       Sub.errorOutput = ""
     }
 
+successfulExecResultWithOutput :: String -> Sub.ExecResult
+successfulExecResultWithOutput output =
+  Sub.ExecResult
+    { Sub.exitCode = ExitSuccess,
+      Sub.output = output,
+      Sub.errorOutput = ""
+    }
+
 failedExecResult :: Sub.ExecResult
 failedExecResult =
   Sub.ExecResult

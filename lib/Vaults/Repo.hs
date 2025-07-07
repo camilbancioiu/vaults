@@ -58,7 +58,7 @@ checkRemotes ::
   ExceptT RepoIssue m ()
 checkRemotes vi = do
   existingRemotes <- getRemotes
-  let user = "user" -- TODO Base.getUsername
+  user <- (withExceptT UnknownIssue) Base.getUsername
   let expectedRemotes = makeExpectedRemotes vi user
   if existingRemotes == expectedRemotes
     then return ()
