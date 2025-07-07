@@ -32,6 +32,7 @@ openVault partition = do
   setTmuxWindowName (Base.name vi)
 
   let vriWithPartLoc = vri {Base.partitionLocation = partLoc}
+
   return vriWithPartLoc
 
 openPartition ::

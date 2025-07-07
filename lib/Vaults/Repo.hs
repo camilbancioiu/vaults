@@ -21,11 +21,11 @@ data GitRemote = GitRemote
   }
   deriving (Eq, Show)
 
-verifyRepo ::
+verify ::
   (Substrate.Substrate m) =>
   Base.VaultInfo ->
   ExceptT RepoIssue m ()
-verifyRepo vi = do
+verify vi = do
   checkRepoDir
   checkGitInitialized
   checkRemotes vi

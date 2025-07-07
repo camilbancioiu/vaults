@@ -38,7 +38,7 @@ test_MissingRepoDir =
   TestCase $ do
     let mock = emptyMock
     let vi = mockVaultInfo
-    let result = runState (runExceptT $ verifyRepo vi) mock
+    let result = runState (runExceptT $ verify vi) mock
     let mockAfterExec = snd result
 
     let expectedCommands = [("dirExists", ["repo"])]
@@ -62,7 +62,7 @@ test_UninitializedGit =
               [ failedGitExecResult
               ]
     let vi = mockVaultInfo
-    let result = runState (runExceptT $ verifyRepo vi) mock
+    let result = runState (runExceptT $ verify vi) mock
     let mockAfterExec = snd result
 
     let expectedCommands =
@@ -94,7 +94,7 @@ test_IncorrectGitRemotes =
           mockVaultInfo
             { Base.remotes = ["remoteA", "remoteB", "remoteC"]
             }
-    let result = runState (runExceptT $ verifyRepo vi) mock
+    let result = runState (runExceptT $ verify vi) mock
     let mockAfterExec = snd result
     let expectedCommands =
           [ ("dirExists", ["repo"]),
@@ -139,7 +139,7 @@ test_IncorrectSafeDirs =
             { Base.remotes = ["remoteA", "remoteB"]
             }
 
-    let result = runState (runExceptT $ verifyRepo vi) mock
+    let result = runState (runExceptT $ verify vi) mock
     let mockAfterExec = snd result
 
     let expectedSafeDirs =
