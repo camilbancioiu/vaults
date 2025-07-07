@@ -215,6 +215,17 @@ uploadPartitionCmds partition =
         ("rsync", ["-ivz", partitionLogFile, remotePartitionLogFile])
       ]
 
+verifyRepoCmds ::
+  [(FilePath, [String])]
+verifyRepoCmds =
+  [ ("dirExists", ["repo"]),
+    ("git", ["status"]),
+    ("git", ["remote", "--verbose"]),
+    ("id", ["--user", "--name"]),
+    ("id", ["--user", "--name"]),
+    ("git", ["config", "get", "--local", "--all"]) -- TODO safe.directory
+  ]
+
 loopSetupExec ::
   Bool ->
   DummyOp ->

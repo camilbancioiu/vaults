@@ -3,6 +3,7 @@
 module MockSubstrate where
 
 import Control.Exception.Base
+import Control.Monad
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Maybe
@@ -258,7 +259,9 @@ mock_lookupEnv ::
   String ->
   State Mock (Maybe String)
 mock_lookupEnv key = do
-  modify $ recordExec ("lookupEnv", [key])
+  when
+    (key /= "TEST")
+    (modify $ recordExec ("lookupEnv", [key]))
   mock <- get
   return (lookup key $ envVars mock)
 
@@ -267,7 +270,9 @@ mock_setEnv ::
   String ->
   State Mock ()
 mock_setEnv key val = do
-  modify $ recordExec ("setEnv", [key])
+  when
+    (key /= "TEST")
+    (modify $ recordExec ("setEnv", [key]))
   modify (addMockEnvVar key val)
 
 mock_unsetEnv ::

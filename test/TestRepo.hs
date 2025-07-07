@@ -161,6 +161,14 @@ test_SuccessfulVerification =
 
     let result = runState (runExceptT $ verify vi) mock
     let mockAfterExec = snd result
+
+    let expectedCommands = D.verifyRepoCmds
+
+    assertEqual
+      "check repo commands"
+      expectedCommands
+      (execRecorded mockAfterExec)
+
     assertEqual
       "repo verification successful"
       (Right ())
