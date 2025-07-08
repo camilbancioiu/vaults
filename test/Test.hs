@@ -9,6 +9,7 @@ import qualified TestMkPartition (allTests)
 import qualified TestMultiOperations (allTests)
 import qualified TestOpen (allTests)
 import qualified TestOperations_Edit (allTests)
+import qualified TestOperations_Setup (allTests)
 import qualified TestOperations_ShellPartition (allTests)
 import qualified TestOperations_Sync (allTests)
 import qualified TestOperations_SyncEdit (allTests)
@@ -33,6 +34,7 @@ allTests =
       TestMultiOperations.allTests,
       TestOpen.allTests,
       TestRepo.allTests,
+      TestOperations_Setup.allTests,
       TestOperations_Edit.allTests,
       TestOperations_ShellPartition.allTests,
       TestOperations_Sync.allTests,

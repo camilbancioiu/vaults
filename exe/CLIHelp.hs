@@ -5,6 +5,7 @@ import qualified Vaults.Operations as Operations
 
 header "init" = "Initialize a vault"
 header "mkpart" = "Create an encrypted partition"
+header "setup" = "Verify and set up the git repository in the local partition"
 header "edit" = "Unlock local partition and open editor"
 header "shell" = "Unlock local partition and open a shell"
 header "shell-partition" = "Unlock any partition and open a shell inside it"
@@ -30,6 +31,10 @@ progDesc "mkpart" =
        \ recommended to create a vault partition on each machine with PARTITION_NAME \
        \ set to its hostname. It is also recommended to set PARTITION_SIZE equal for all \
        \ vault partitions, but not required."
+progDesc "setup" =
+  "Unlock and mount the local vault partition and perform verifications for the\
+  \ 'repo' subdirectory and the git repository within it, then apply corrective\
+  \ actions, such as defining remotes and safe.directory entries."
 progDesc "edit" =
   "Unlock and mount the local vault partition, change the working directory\
   \ to the 'repo' subdirectory inside it, then open the configured\

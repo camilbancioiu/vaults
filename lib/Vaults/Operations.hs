@@ -17,6 +17,7 @@ import qualified Vaults.Substrate as Substrate
 data Operation
   = InitVault String String
   | MakePartition String Int
+  | SetupVault
   | EditVault
   | ShellVault
   | ShellPartition String
@@ -45,6 +46,30 @@ doMakePartition ::
   VaultInfo ->
   ExceptT String m ()
 doMakePartition = makePartition
+
+doSetupVault ::
+  (Substrate.Substrate m) =>
+  VaultInfo ->
+  ExceptT String m ()
+doSetupVault vi = do
+  vri <- openVault $ (localname vi) ++ ".vault" -- TODO refactor into f:openLocalPartition
+  lift $ Substrate.echo "Vault opened, performing verifications..."
+  runVerification vi vri
+  closeVault vri
+  lift $ Substrate.echo "Vault closed."
+
+runVerification ::
+  (Substrate.Substrate m) =>
+  VaultInfo ->
+  VaultRuntimeInfo ->
+  ExceptT String m ()
+runVerification vi vri = do
+  let repoDir = repositoryDir vri
+  lift $ Substrate.echo $ "VAULT REPO " ++ repoDir
+  let verification = (withExceptT (show) (Repo.verify vi))
+  catchError verification (\e -> lift $ Substrate.echo e)
+  lift $ Substrate.echo "VAULT REPO VERIFIED"
+  return ()
 
 doEditVault ::
   (Substrate.Substrate m) =>

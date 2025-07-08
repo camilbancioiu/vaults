@@ -24,6 +24,7 @@ operations =
   subparser $
     opInitVaultCommand
       <> opMakePartitionCommand
+      <> opSetupVaultCommand
       <> opEditVaultCommand
       <> opShellVaultCommand
       <> opShellPartitionCommand
@@ -39,6 +40,8 @@ operations =
 opInitVaultCommand = command "init" (info (opInitVaultParser <**> helper) (helpMod "init"))
 
 opMakePartitionCommand = command "mkpart" (info (opMakePartitionParser <**> helper) (helpMod "mkpart"))
+
+opSetupVaultCommand = command "setup" (info (opSetupVaultParser <**> helper) (helpMod "setup"))
 
 opEditVaultCommand = command "edit" (info (opEditVaultParser <**> helper) (helpMod "edit"))
 
@@ -71,6 +74,8 @@ opMakePartitionParser =
   MakePartition
     <$> argument str (metavar "PARTITION_NAME")
     <*> argument auto (metavar "PARTITION_SIZE")
+
+opSetupVaultParser = pure SetupVault
 
 opEditVaultParser = pure EditVault
 

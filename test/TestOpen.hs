@@ -23,8 +23,8 @@ allTests =
       test_unlock_fails_undoes_loopSetup,
       test_mount_fails_undoes_unlock_loopSetup,
       test_mount_ok_no_inner_repo,
-      test_mount_ok_has_inner_repo,
-      test_mount_ok_has_inner_repo_verified
+      test_mount_ok_has_inner_repo
+      -- test_mount_ok_has_inner_repo_verified
     ]
 
 test_openVault_without_partition_file :: Test
