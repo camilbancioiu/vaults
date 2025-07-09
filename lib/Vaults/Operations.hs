@@ -64,11 +64,8 @@ runVerification ::
   VaultRuntimeInfo ->
   ExceptT String m ()
 runVerification vi vri = do
-  let repoDir = repositoryDir vri
-  lift $ Substrate.echo $ "VAULT REPO " ++ repoDir
   let verification = (withExceptT (show) (Repo.verify vi))
-  catchError verification (\e -> lift $ Substrate.echo e)
-  lift $ Substrate.echo "VAULT REPO VERIFIED"
+  catchError verification (lift . Substrate.echo)
   return ()
 
 doEditVault ::

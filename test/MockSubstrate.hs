@@ -290,7 +290,11 @@ mock_exec ::
 mock_exec executable params _ = do
   modify $ recordExec (executable, params)
   modify incExecs
-  er <- gets $ head . execResults
+  ers <- gets $ execResults
+  let er =
+        if null ers
+          then error ("empty execResults: " ++ executable ++ (show params))
+          else head ers
   modify dropHeadMockExecResult
   return er
 

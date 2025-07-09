@@ -49,6 +49,7 @@ test-suite vaults-test
                        TestMultiOperations
                        TestOpen,
                        TestRepo,
+                       TestOperations_Setup,
                        TestOperations_Edit,
                        TestOperations_ShellPartition,
                        TestOperations_Sync,
