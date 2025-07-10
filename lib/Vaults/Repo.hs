@@ -30,15 +30,6 @@ verify vi = do
   checkSafeDirs vi
 
 -- TODO rework handling the repo dir
-requireRepoDir ::
-  (Substrate.Substrate m) =>
-  B.VaultRuntimeInfo ->
-  ExceptT String m ()
-requireRepoDir vri = do
-  exists <- lift $ Substrate.dirExists "repo"
-  if (not exists)
-    then throwError "repo dir is required, but missing"
-    else return ()
 
 changeToRepoDir ::
   (Substrate.Substrate m) =>
