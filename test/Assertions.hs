@@ -53,12 +53,19 @@ assertEqualLists ::
   [a] ->
   [a] ->
   IO ()
-assertEqualLists message expected actual =
-  do
-    assertEqual message (length expected) (length actual)
-    traverse_ (assertEqualInTuple message) tuples
+assertEqualLists message expected actual = do
+  let tuples = zip expected actual
+  let tupleLines = map makeTupleLine tuples
+  let diffStr = unlines tupleLines
+  if expected /= actual
+    then assertFailure (message ++ "\n" ++ diffStr)
+    else return ()
+
+  traverse_ (assertEqualInTuple message) tuples
+
+makeTupleLine (expected, actual) = (show expected) ++ equality ++ (show actual)
   where
-    tuples = zip expected actual
+    equality = if expected == actual then "\t==\t" else "\t=/=\t"
 
 assertEqualInTuple ::
   (Eq a, Show a) =>
