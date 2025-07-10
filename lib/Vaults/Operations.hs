@@ -64,7 +64,7 @@ runVerification ::
   VaultRuntimeInfo ->
   ExceptT String m ()
 runVerification vi vri = do
-  let verification = (withExceptT (show) (Repo.verify vi))
+  let verification = withExceptT (show) (Repo.verify vi)
   catchError verification (lift . Substrate.echo)
   return ()
 
