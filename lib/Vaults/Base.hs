@@ -28,7 +28,7 @@ data VaultRuntimeInfo = VaultRuntimeInfo
   { srcDir :: FilePath,
     loopDev :: FilePath,
     mapperDev :: FilePath,
-    repositoryDir :: FilePath,
+    repositoryDir :: Maybe FilePath,
     mountpoint :: FilePath,
     -- TODO rename to partitionFile
     partition :: FilePath,

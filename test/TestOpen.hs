@@ -163,7 +163,7 @@ test_mount_ok_no_inner_repo =
     let result = runState (runExceptT $ openVault "local.vault") mock
     let mockAfterExec = snd result
 
-    let vri = D.makeVRI D.localOp ""
+    let vri = D.makeVRI D.localOp False
     assertEqual "mount succeeds" (Right vri) (fst result)
 
     let expectedCommands =
@@ -190,7 +190,7 @@ test_mount_ok_has_inner_repo =
     let result = runState (runExceptT $ openVault "local.vault") mock
     let mockAfterExec = snd result
 
-    let vri = D.makeVRI D.localOp "/repo"
+    let vri = D.makeVRI D.localOp True
     assertEqual "mount succeeds" (Right vri) (fst result)
 
     let expectedCommands =
@@ -218,7 +218,7 @@ test_mount_ok_has_inner_repo_verified =
     let result = runState (runExceptT $ openVault "local.vault") mock
     let mockAfterExec = snd result
 
-    let vri = D.makeVRI D.localOp "/repo"
+    let vri = D.makeVRI D.localOp True
     assertEqual "mount succeeds" (Right vri) (fst result)
 
     let expectedCommands =

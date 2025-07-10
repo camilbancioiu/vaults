@@ -106,13 +106,13 @@ setTmuxWindowName name =
 resolveRepoDir ::
   (Substrate.Substrate m) =>
   FilePath ->
-  ExceptT String m FilePath
+  ExceptT String m (Maybe FilePath)
 resolveRepoDir mountpoint = do
   -- TODO if ensureIsVaultDir, then the folder repo/.git must exist
   -- TODO ensure correct behavior for the missing repo folder
   hasRepoDir <- lift $ Substrate.dirExists "repo"
   let repoDir =
         if hasRepoDir
-          then mountpoint ++ "/repo"
-          else mountpoint
+          then Just (mountpoint ++ "/repo")
+          else Nothing
   return repoDir

@@ -60,19 +60,24 @@ showFailedCmd (_, cmd@(subcmd : params)) =
 
 makeVRI ::
   DummyOp ->
-  FilePath ->
+  Bool ->
   Base.VaultRuntimeInfo
-makeVRI op repoDir =
+makeVRI op hasRepoDir =
   Base.VaultRuntimeInfo
     { Base.srcDir = Base.srcDir MockSubstrate.mockVaultRuntimeInfo,
       Base.loopDev = loopDev op,
       Base.mapperDev = mapperDev op,
       Base.mountpoint = mountpoint op,
-      Base.repositoryDir = (mountpoint op) ++ repoDir,
+      Base.repositoryDir = repoDir,
       Base.partition = partitionFile op,
       Base.partitionName = "local",
       Base.partitionLocation = Base.LocalPartition
     }
+  where
+    repoDir =
+      if hasRepoDir
+        then Just $ (mountpoint op) ++ "/repo"
+        else Nothing
 
 editCmd ::
   DummyOp ->
@@ -164,6 +169,11 @@ syncCmd = ("sync", [])
 changeToSrcDir :: (FilePath, [String])
 changeToSrcDir = ("changeDir", [Base.srcDir MockSubstrate.mockVaultRuntimeInfo])
 
+changeToMountpoint ::
+  DummyOp ->
+  (FilePath, [String])
+changeToMountpoint op = ("changeDir", [(mountpoint op)])
+
 changeToRepoDir ::
   DummyOp ->
   (FilePath, [String])
@@ -218,8 +228,7 @@ uploadPartitionCmds partition =
 verifyRepoCmds ::
   [(FilePath, [String])]
 verifyRepoCmds =
-  [ ("dirExists", ["repo"]),
-    ("git", ["status"]),
+  [ ("git", ["status"]),
     ("git", ["remote", "--verbose"]),
     ("id", ["--user", "--name"]),
     ("id", ["--user", "--name"]),

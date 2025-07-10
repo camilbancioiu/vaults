@@ -63,7 +63,8 @@ assertEqualLists message expected actual = do
 
   traverse_ (assertEqualInTuple message) tuples
 
-makeTupleLine (expected, actual) = (show expected) ++ equality ++ (show actual)
+makeTupleLine (expected, actual) =
+  equality ++ (show expected) ++ equality ++ (show actual)
   where
     equality = if expected == actual then "\t==\t" else "\t=/=\t"
 

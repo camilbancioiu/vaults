@@ -4,12 +4,11 @@ import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Trans
 import System.Exit
-import qualified Vaults.Base as Base
+import qualified Vaults.Base as B
 import qualified Vaults.Substrate as Substrate
 
 data RepoIssue
-  = MissingRepoDir
-  | UninitializedGit
+  = UninitializedGit
   | IncorrectGitRemotes [GitRemote]
   | IncorrectGitSafeDirs [FilePath]
   | UnknownIssue String
@@ -23,22 +22,48 @@ data GitRemote = GitRemote
 
 verify ::
   (Substrate.Substrate m) =>
-  Base.VaultInfo ->
+  B.VaultInfo ->
   ExceptT RepoIssue m ()
 verify vi = do
-  checkRepoDir
   checkGitInitialized
   checkRemotes vi
   checkSafeDirs vi
 
-checkRepoDir ::
+-- TODO rework handling the repo dir
+requireRepoDir ::
   (Substrate.Substrate m) =>
-  ExceptT RepoIssue m ()
-checkRepoDir = do
+  B.VaultRuntimeInfo ->
+  ExceptT String m ()
+requireRepoDir vri = do
   exists <- lift $ Substrate.dirExists "repo"
   if (not exists)
-    then throwError MissingRepoDir
+    then throwError "repo dir is required, but missing"
     else return ()
+
+changeToRepoDir ::
+  (Substrate.Substrate m) =>
+  B.VaultRuntimeInfo ->
+  ExceptT String m ()
+changeToRepoDir vri = do
+  case (B.repositoryDir vri) of
+    Nothing -> throwError "repo dir is required, but missing"
+    Just repoDir -> lift $ Substrate.changeDir repoDir
+
+ensureRepoDir ::
+  (Substrate.Substrate m) =>
+  B.VaultRuntimeInfo ->
+  ExceptT String m B.VaultRuntimeInfo
+ensureRepoDir vri = do
+  exists <- lift $ Substrate.dirExists "repo"
+  if (not exists)
+    then do
+      lift $ Substrate.createDir "repo"
+      let newVRI =
+            vri
+              { B.repositoryDir = Just $ (B.mountpoint vri) ++ "/repo"
+              }
+      return newVRI
+    else return vri
 
 checkGitInitialized ::
   (Substrate.Substrate m) =>
@@ -55,26 +80,26 @@ checkGitInitialized = do
         then throwError UninitializedGit
         else throwError (UnknownIssue (Substrate.errorOutput result))
 
--- TODO get the username via Base.VaultInfo
+-- TODO get the username via B.VaultInfo
 checkRemotes ::
   (Substrate.Substrate m) =>
-  Base.VaultInfo ->
+  B.VaultInfo ->
   ExceptT RepoIssue m ()
 checkRemotes vi = do
   existingRemotes <- getRemotes
-  user <- (withExceptT UnknownIssue) Base.getUsername
-  let expectedRemotes = makeExpectedRemotes (Base.name vi) user (Base.remotes vi)
+  user <- (withExceptT UnknownIssue) B.getUsername
+  let expectedRemotes = makeExpectedRemotes (B.name vi) user (B.remotes vi)
   if existingRemotes == expectedRemotes
     then return ()
     else throwError (IncorrectGitRemotes expectedRemotes)
 
 checkSafeDirs ::
   (Substrate.Substrate m) =>
-  Base.VaultInfo ->
+  B.VaultInfo ->
   ExceptT RepoIssue m ()
 checkSafeDirs vi = do
-  user <- (withExceptT UnknownIssue) Base.getUsername
-  let expectedSafeDirs = makeExpectedSafeDirs (Base.name vi) user (Base.remotes vi)
+  user <- (withExceptT UnknownIssue) B.getUsername
+  let expectedSafeDirs = makeExpectedSafeDirs (B.name vi) user (B.remotes vi)
   existingSafeDirs <- getExistingSafeDirs
   if existingSafeDirs == expectedSafeDirs
     then return ()

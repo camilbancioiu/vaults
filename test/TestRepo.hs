@@ -15,8 +15,7 @@ import qualified Vaults.Substrate as Sub
 allTests :: Test
 allTests =
   TestList
-    [ test_MissingRepoDir,
-      test_UninitializedGit,
+    [ test_UninitializedGit,
       test_IncorrectGitRemotes,
       test_IncorrectSafeDirs,
       test_getCurrentBranch,
@@ -34,26 +33,6 @@ failedGitExecResult =
     { Sub.exitCode = ExitFailure 128
     }
 
-test_MissingRepoDir :: Test
-test_MissingRepoDir =
-  TestCase $ do
-    let mock = emptyMock
-    let vi = mockVaultInfo
-    let result = runState (runExceptT $ verify vi) mock
-    let mockAfterExec = snd result
-
-    let expectedCommands = [("dirExists", ["repo"])]
-
-    assertEqualLists
-      "check repo commands"
-      expectedCommands
-      (execRecorded mockAfterExec)
-
-    assertEqual
-      "verify missing repo"
-      (Left MissingRepoDir)
-      (fst result)
-
 test_UninitializedGit :: Test
 test_UninitializedGit =
   TestCase $ do
@@ -67,8 +46,7 @@ test_UninitializedGit =
     let mockAfterExec = snd result
 
     let expectedCommands =
-          [ ("dirExists", ["repo"]),
-            ("git", ["status"])
+          [ ("git", ["status"])
           ]
 
     assertEqualLists
@@ -98,8 +76,7 @@ test_IncorrectGitRemotes =
     let result = runState (runExceptT $ verify vi) mock
     let mockAfterExec = snd result
     let expectedCommands =
-          [ ("dirExists", ["repo"]),
-            ("git", ["status"]),
+          [ ("git", ["status"]),
             ("git", ["remote", "--verbose"]),
             ("id", ["--user", "--name"])
           ]
@@ -150,29 +127,30 @@ test_IncorrectSafeDirs =
 
 test_SuccessfulVerification :: Test
 test_SuccessfulVerification =
-  TestCase $ do
-    let mock = addMockExecResults ers mockWithVaultAndRepoDir
-          where
-            ers = D.successfulRepoVerificationExecResults
-    let vi =
-          mockVaultInfo
-            { Base.remotes = ["remoteA", "remoteB"]
-            }
+  TestLabel "successful repo verification" $
+    TestCase $ do
+      let mock = addMockExecResults ers mockWithVaultAndRepoDir
+            where
+              ers = D.successfulRepoVerificationExecResults
+      let vi =
+            mockVaultInfo
+              { Base.remotes = ["remoteA", "remoteB"]
+              }
 
-    let result = runState (runExceptT $ verify vi) mock
-    let mockAfterExec = snd result
+      let result = runState (runExceptT $ verify vi) mock
+      let mockAfterExec = snd result
 
-    let expectedCommands = D.verifyRepoCmds
+      let expectedCommands = D.verifyRepoCmds
 
-    assertEqual
-      "check repo commands"
-      expectedCommands
-      (execRecorded mockAfterExec)
+      assertEqual
+        "check repo commands"
+        expectedCommands
+        (execRecorded mockAfterExec)
 
-    assertEqual
-      "repo verification successful"
-      (Right ())
-      (fst result)
+      assertEqual
+        "repo verification successful"
+        (Right ())
+        (fst result)
 
 test_makeExpectedSafeDirs :: Test
 test_makeExpectedSafeDirs =
