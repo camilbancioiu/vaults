@@ -3,8 +3,11 @@ module Vaults.Repo where
 import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Trans
+import Data.Set ((\\))
+import qualified Data.Set as Set
 import System.Exit
 import qualified Vaults.Base as B
+import Vaults.Substrate (Substrate)
 import qualified Vaults.Substrate as Substrate
 
 data RepoIssue
@@ -21,7 +24,7 @@ data GitRemote = GitRemote
   deriving (Eq, Show)
 
 verify ::
-  (Substrate.Substrate m) =>
+  (Substrate m) =>
   B.VaultInfo ->
   ExceptT RepoIssue m ()
 verify vi = do
@@ -32,7 +35,7 @@ verify vi = do
 -- TODO rework handling the repo dir
 
 changeToRepoDir ::
-  (Substrate.Substrate m) =>
+  (Substrate m) =>
   B.VaultRuntimeInfo ->
   ExceptT String m ()
 changeToRepoDir vri = do
@@ -41,7 +44,7 @@ changeToRepoDir vri = do
     Just repoDir -> lift $ Substrate.changeDir repoDir
 
 ensureRepoDir ::
-  (Substrate.Substrate m) =>
+  (Substrate m) =>
   B.VaultRuntimeInfo ->
   ExceptT String m B.VaultRuntimeInfo
 ensureRepoDir vri = do
@@ -57,7 +60,7 @@ ensureRepoDir vri = do
     else return vri
 
 checkGitInitialized ::
-  (Substrate.Substrate m) =>
+  (Substrate m) =>
   ExceptT RepoIssue m ()
 checkGitInitialized = do
   -- TODO move this call or delete it
@@ -73,7 +76,7 @@ checkGitInitialized = do
 
 -- TODO get the username via B.VaultInfo
 checkRemotes ::
-  (Substrate.Substrate m) =>
+  (Substrate m) =>
   B.VaultInfo ->
   ExceptT RepoIssue m ()
 checkRemotes vi = do
@@ -85,7 +88,7 @@ checkRemotes vi = do
     else throwError (IncorrectGitRemotes expectedRemotes)
 
 checkSafeDirs ::
-  (Substrate.Substrate m) =>
+  (Substrate m) =>
   B.VaultInfo ->
   ExceptT RepoIssue m ()
 checkSafeDirs vi = do
@@ -109,7 +112,7 @@ makeExpectedSafeDirs vaultName user remotes =
 
 -- TODO refactor duplicate code of calling git commands with output handling
 getExistingSafeDirs ::
-  (Substrate.Substrate m) =>
+  (Substrate m) =>
   ExceptT RepoIssue m [FilePath]
 getExistingSafeDirs = do
   -- The relevant safe.directory entries are those recorded in local
@@ -141,7 +144,7 @@ makeRemoteURL vaultName user remoteName =
     fsLabel = vaultName ++ "-" ++ remoteName
 
 getCurrentBranch ::
-  (Substrate.Substrate m) =>
+  (Substrate m) =>
   ExceptT String m String
 getCurrentBranch = do
   result <- lift $ Substrate.exec "git" ["branch", "--show-current"] ""
@@ -152,7 +155,7 @@ getCurrentBranch = do
   return currentBranch
 
 getRemotes ::
-  (Substrate.Substrate m) =>
+  (Substrate m) =>
   ExceptT RepoIssue m [GitRemote]
 getRemotes = do
   result <- lift $ Substrate.exec "git" ["remote", "--verbose"] ""
