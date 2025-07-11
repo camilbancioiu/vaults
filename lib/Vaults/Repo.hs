@@ -21,11 +21,11 @@ data GitRemote = GitRemote
   }
   deriving (Eq, Show)
 
-makeConformal ::
+makeConformant ::
   (Substrate m) =>
   B.VaultInfo ->
   ExceptT RepoIssue m ()
-makeConformal vi = do
+makeConformant vi = do
   checkGitInitialized `catchError` callGitInit
   eraseGitRemotes
   configureGitRemotes vi
