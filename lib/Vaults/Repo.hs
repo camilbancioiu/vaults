@@ -24,10 +24,11 @@ data GitRemote = GitRemote
 makeConformant ::
   (Substrate m) =>
   B.VaultInfo ->
-  ExceptT RepoIssue m ()
+  ExceptT String m ()
 makeConformant vi = do
-  checkGitInitialized `catchError` callGitInit
-  eraseGitRemotes
+  gitInitialized <- checkGitInitialized
+  unless gitInitialized callGitInit
+  removeGitRemotes
   configureGitRemotes vi
   eraseGitSafeDirs
   configureGitSafeDirs vi
@@ -37,21 +38,32 @@ verify ::
   B.VaultInfo ->
   ExceptT RepoIssue m ()
 verify vi = do
-  checkGitInitialized
+  gitInitialized <- withExceptT UnknownIssue checkGitInitialized
+  unless gitInitialized (throwError UninitializedGit)
   checkRemotes vi
   checkSafeDirs vi
 
 callGitInit ::
   (Substrate m) =>
-  RepoIssue ->
-  ExceptT RepoIssue m ()
-callGitInit UninitializedGit =
-  withExceptT (UnknownIssue) $
-    ExceptT $
-      Substrate.call "git" ["init"]
-callGitInit e = throwError e
+  ExceptT String m ()
+callGitInit =
+  ExceptT $
+    Substrate.call "git" ["init"]
 
-eraseGitRemotes = undefined
+removeGitRemotes ::
+  (Substrate m) =>
+  ExceptT String m ()
+removeGitRemotes = do
+  remoteNames <- withExceptT show getRemoteNames
+  mapM_ removeGitRemote remoteNames
+
+removeGitRemote ::
+  (Substrate m) =>
+  String ->
+  ExceptT String m ()
+removeGitRemote remoteName =
+  ExceptT $
+    Substrate.call "git" ["remote", "remove", remoteName]
 
 configureGitRemotes vi = undefined
 
@@ -79,25 +91,24 @@ ensureRepoDir vri = do
   if (not exists)
     then do
       lift $ Substrate.createDir "repo"
-      let newVRI =
-            vri
-              { B.repositoryDir = Just $ (B.mountpoint vri) ++ "/repo"
-              }
-      return newVRI
+      return
+        vri
+          { B.repositoryDir = Just $ (B.mountpoint vri) ++ "/repo"
+          }
     else return vri
 
 checkGitInitialized ::
   (Substrate m) =>
-  ExceptT RepoIssue m ()
+  ExceptT String m Bool
 checkGitInitialized = do
   result <- lift $ Substrate.exec "git" ["status"] ""
   let code = Substrate.exitCode result
   if code == ExitSuccess
-    then return ()
+    then return True
     else
       if code == ExitFailure 128
-        then throwError UninitializedGit
-        else throwError (UnknownIssue (Substrate.errorOutput result))
+        then return False
+        else throwError (Substrate.errorOutput result)
 
 -- TODO get the username via B.VaultInfo
 checkRemotes ::
@@ -190,6 +201,17 @@ getRemotes = do
   let remotesOutput = Substrate.output result
   let parsedRemotes = parseGitRemotes remotesOutput
   return parsedRemotes
+
+getRemoteNames ::
+  (Substrate m) =>
+  ExceptT String m [String]
+getRemoteNames = do
+  result <- lift $ Substrate.exec "git" ["remote"] ""
+  when
+    (Substrate.exitCode result /= ExitSuccess)
+    (throwError (Substrate.errorOutput result))
+  let remotesOutput = Substrate.output result
+  return $ lines remotesOutput
 
 parseGitRemotes :: String -> [GitRemote]
 parseGitRemotes gitOut =

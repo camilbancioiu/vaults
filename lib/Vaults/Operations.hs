@@ -47,8 +47,7 @@ doMakePartition ::
   ExceptT String m ()
 doMakePartition = makePartition
 
--- TODO if CLI option --verify-only is set, then only runVerification
--- otherwise, call makeConformal
+-- TODO catch errors and closeVault
 doSetupVault ::
   (Substrate.Substrate m) =>
   B.VaultInfo ->
@@ -56,7 +55,9 @@ doSetupVault ::
 doSetupVault vi = do
   vri <- openVault $ (B.localname vi) ++ ".vault" -- TODO refactor into f:openLocalPartition
   lift $ Substrate.echo "Vault opened, performing verifications..."
-  runVerification vi vri
+  vri <- Repo.ensureRepoDir vri
+  Repo.changeToRepoDir vri
+  Repo.makeConformant vi
   closeVault vri
   lift $ Substrate.echo "Vault closed."
 
@@ -83,6 +84,7 @@ doEditVault vi = do
   closeVault vri
   lift $ Substrate.echo "Vault closed."
 
+-- TODO refactor using bracket
 editVault ::
   (Substrate.Substrate m) =>
   B.VaultRuntimeInfo ->

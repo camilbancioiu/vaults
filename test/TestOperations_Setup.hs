@@ -18,6 +18,7 @@ test_setup_verification_ok :: Test
 test_setup_verification_ok =
   TestLabel "successful repo verification" $
     TestCase $ do
+      assertFailure "implementation incomplete"
       let operation = Operations.doSetupVault mockVaultInfo
 
       let expectedCommands =

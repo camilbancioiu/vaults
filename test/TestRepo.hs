@@ -156,7 +156,7 @@ test_callGitInit =
   TestLabel "callGitInit successful" $
     TestCase $ do
       let mock = mockWithVaultAndRepoDir
-      let result = runState (runExceptT $ callGitInit UninitializedGit) mock
+      let result = runState (runExceptT callGitInit) mock
       let mockAfterExec = snd result
 
       let expectedCommands = [("git", ["init"])]
@@ -169,20 +169,25 @@ test_eraseGitRemotes :: Test
 test_eraseGitRemotes =
   TestLabel "erase git remotes successful" $
     TestCase $ do
-      let mock = mockWithVaultAndRepoDir
-      let result = runState (runExceptT eraseGitRemotes) mock
-      let mockAfterExec = snd result
+      let mock = addMockExecResults ers mockWithVaultAndRepoDir
+            where
+              ers = [D.successfulExecResultWithOutput existingRemoteNames]
+              existingRemoteNames = unlines ["remoteA", "remoteB", "remoteX"]
 
-    let expectedRemotes =
-          [ GitRemote "remoteA" "/usr/media/user/mockVault-remoteA/repo",
-            GitRemote "remoteB" "/usr/media/user/mockVault-remoteB/repo"
+      let result = runState (runExceptT removeGitRemotes) mock
+      let mockAfterExec = snd result
 
       let expectedCommands =
             [ ("git", ["remote"]),
               ("git", ["remote", "remove", "remoteA"]),
               ("git", ["remote", "remove", "remoteB"]),
-              ("git", ["remote", "add", ""])
+              ("git", ["remote", "remove", "remoteX"])
             ]
+
+      assertEqualLists
+        "commands of removeGitRemotes"
+        expectedCommands
+        (execRecorded mockAfterExec)
 
 test_makeExpectedSafeDirs :: Test
 test_makeExpectedSafeDirs =
