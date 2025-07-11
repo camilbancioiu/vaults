@@ -23,7 +23,9 @@ allTests =
       test_getRemotes,
       test_makeExpectedRemotes,
       test_makeExpectedSafeDirs,
-      test_SuccessfulVerification
+      test_SuccessfulVerification,
+      test_callGitInit,
+      test_eraseGitRemotes
     ]
 
 -- TODO refactor everything
@@ -108,10 +110,8 @@ test_IncorrectSafeDirs =
                 D.successfulExecResultWithOutput "user",
                 D.successfulExecResultWithOutput existingSafeDirs
               ]
-            existingSafeDirs =
-              unlines
-                [ "/usr/media/user/mockVault-remoteA/repo/.git"
-                ]
+            existingSafeDirs = "/usr/media/user/mockVault-remoteA/repo/.git"
+
     let vi =
           mockVaultInfo
             { Base.remotes = ["remoteA", "remoteB"]
@@ -141,7 +141,6 @@ test_SuccessfulVerification =
       let mockAfterExec = snd result
 
       let expectedCommands = D.verifyRepoCmds
-
       assertEqual
         "check repo commands"
         expectedCommands
@@ -151,6 +150,29 @@ test_SuccessfulVerification =
         "repo verification successful"
         (Right ())
         (fst result)
+
+test_callGitInit :: Test
+test_callGitInit =
+  TestLabel "callGitInit successful" $
+    TestCase $ do
+      let mock = mockWithVaultAndRepoDir
+      let result = runState (runExceptT $ callGitInit UninitializedGit) mock
+      let mockAfterExec = snd result
+
+      let expectedCommands = [("git", ["init"])]
+      assertEqual
+        "check git init command"
+        expectedCommands
+        (execRecorded mockAfterExec)
+
+test_eraseGitRemotes :: Test
+test_eraseGitRemotes =
+  TestLabel "erase git remotes successful" $
+    TestCase $ do
+      let mock = mockWithVaultAndRepoDir
+      let result = runState (runExceptT eraseGitRemotes) mock
+      let mockAfterExec = snd result
+      assertFailure "not implemented"
 
 test_makeExpectedSafeDirs :: Test
 test_makeExpectedSafeDirs =

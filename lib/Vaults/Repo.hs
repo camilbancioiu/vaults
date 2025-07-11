@@ -45,7 +45,10 @@ callGitInit ::
   (Substrate m) =>
   RepoIssue ->
   ExceptT RepoIssue m ()
-callGitInit UninitializedGit = undefined
+callGitInit UninitializedGit =
+  withExceptT (UnknownIssue) $
+    ExceptT $
+      Substrate.call "git" ["init"]
 callGitInit e = throwError e
 
 eraseGitRemotes = undefined
