@@ -3,8 +3,6 @@ module Vaults.Repo where
 import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Trans
-import Data.Set ((\\))
-import qualified Data.Set as Set
 import System.Exit
 import qualified Vaults.Base as B
 import Vaults.Substrate (Substrate)
@@ -23,6 +21,17 @@ data GitRemote = GitRemote
   }
   deriving (Eq, Show)
 
+makeConformal ::
+  (Substrate m) =>
+  B.VaultInfo ->
+  ExceptT RepoIssue m ()
+makeConformal vi = do
+  checkGitInitialized `catchError` callGitInit
+  eraseGitRemotes
+  configureGitRemotes vi
+  eraseGitSafeDirs
+  configureGitSafeDirs vi
+
 verify ::
   (Substrate m) =>
   B.VaultInfo ->
@@ -31,6 +40,21 @@ verify vi = do
   checkGitInitialized
   checkRemotes vi
   checkSafeDirs vi
+
+callGitInit ::
+  (Substrate m) =>
+  RepoIssue ->
+  ExceptT RepoIssue m ()
+callGitInit UninitializedGit = undefined
+callGitInit e = throwError e
+
+eraseGitRemotes = undefined
+
+configureGitRemotes vi = undefined
+
+eraseGitSafeDirs = undefined
+
+configureGitSafeDirs vi = undefined
 
 -- TODO rework handling the repo dir
 
@@ -63,8 +87,6 @@ checkGitInitialized ::
   (Substrate m) =>
   ExceptT RepoIssue m ()
 checkGitInitialized = do
-  -- TODO move this call or delete it
-  -- lift $ Substrate.changeDir "repo"
   result <- lift $ Substrate.exec "git" ["status"] ""
   let code = Substrate.exitCode result
   if code == ExitSuccess

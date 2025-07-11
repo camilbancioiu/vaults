@@ -47,6 +47,8 @@ doMakePartition ::
   ExceptT String m ()
 doMakePartition = makePartition
 
+-- TODO if CLI option --verify-only is set, then only runVerification
+-- otherwise, call makeConformal
 doSetupVault ::
   (Substrate.Substrate m) =>
   B.VaultInfo ->
