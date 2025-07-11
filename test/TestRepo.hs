@@ -172,7 +172,17 @@ test_eraseGitRemotes =
       let mock = mockWithVaultAndRepoDir
       let result = runState (runExceptT eraseGitRemotes) mock
       let mockAfterExec = snd result
-      assertFailure "not implemented"
+
+    let expectedRemotes =
+          [ GitRemote "remoteA" "/usr/media/user/mockVault-remoteA/repo",
+            GitRemote "remoteB" "/usr/media/user/mockVault-remoteB/repo"
+
+      let expectedCommands =
+            [ ("git", ["remote"]),
+              ("git", ["remote", "remove", "remoteA"]),
+              ("git", ["remote", "remove", "remoteB"]),
+              ("git", ["remote", "add", ""])
+            ]
 
 test_makeExpectedSafeDirs :: Test
 test_makeExpectedSafeDirs =
