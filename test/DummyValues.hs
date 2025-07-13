@@ -235,12 +235,32 @@ makeConformantRepoCmds =
          ("git", ["remote"])
        ]
     ++ (map gitRemoteRemoveCmd dummyGitRemoteNames)
-    ++ [ ("id", ["--user", "--name"]),
-         ("id", ["--user", "--name"]),
-         ("git", ["config", "get", "--local", "--all"]) -- TODO safe.directory
-       ]
+    ++ [("id", ["--user", "--name"])]
+    ++ (map gitRemoteAddCmd dummyGitRemotes)
+    ++ [("git", ["config", "unset", "--local", "--all", "safe.directory"])] -- TODO safe.directory
+    ++ (map gitConfigAddSafeDirectory dummyGitRemotes)
 
-gitRemoteRemoveCmd remoteName = ("git", ["remote", "remove", remoteName])
+gitRemoteRemoveCmd name = ("git", ["remote", "remove", name])
+
+gitRemoteAddCmd gitRemote =
+  ( "git",
+    [ "remote",
+      "add",
+      (Repo.remoteName gitRemote),
+      (Repo.remoteURL gitRemote)
+    ]
+  )
+
+gitConfigAddSafeDirectory gitRemote =
+  ( "git",
+    [ "config",
+      "set",
+      "--local",
+      "--append",
+      "safe.directory",
+      (Repo.remoteURL gitRemote) ++ "/.git"
+    ]
+  )
 
 verifyRepoCmds ::
   [(FilePath, [String])]
@@ -249,7 +269,7 @@ verifyRepoCmds =
     ("git", ["remote", "--verbose"]),
     ("id", ["--user", "--name"]),
     ("id", ["--user", "--name"]),
-    ("git", ["config", "get", "--local", "--all"]) -- TODO safe.directory
+    ("git", ["config", "get", "--local", "--all", "safe.directory"]) -- TODO safe.directory
   ]
 
 loopSetupExec ::
@@ -378,9 +398,7 @@ successfulRepoMakeConformantExecResults :: [Sub.ExecResult]
 successfulRepoMakeConformantExecResults =
   [ successfulExecResult,
     successfulExecResultWithOutput (unlines dummyGitRemoteNames),
-    successfulExecResultWithOutput "user",
-    successfulExecResultWithOutput "user",
-    successfulExecResultWithOutput (unlines dummyGitSafeDirs)
+    successfulExecResultWithOutput "user"
   ]
 
 gitRemoteExec :: Sub.ExecResult

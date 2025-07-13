@@ -43,7 +43,7 @@ assertAllExecsConsumed ::
   IO ()
 assertAllExecsConsumed mock =
   assertEqual
-    "all execs consumed"
+    ("execs not consumed:\n" ++ (show $ execResults mock))
     0
     (length $ execResults mock)
 

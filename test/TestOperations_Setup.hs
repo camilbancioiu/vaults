@@ -38,7 +38,7 @@ test_setup_verification_ok =
               results =
                 []
                   ++ (D.openPartitionExecOk <*> (pure D.localOp))
-                  ++ D.successfulRepoVerificationExecResults
+                  ++ D.successfulRepoMakeConformantExecResults
                   ++ [D.gitLogExec True D.localOp]
                   ++ (D.closePartitionExecOk <*> (pure D.localOp))
 

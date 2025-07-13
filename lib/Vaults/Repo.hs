@@ -26,12 +26,14 @@ makeConformant ::
   B.VaultInfo ->
   ExceptT String m ()
 makeConformant vi = do
+  -- TODO get the username via B.VaultInfo
   gitInitialized <- checkGitInitialized
   unless gitInitialized callGitInit
   removeGitRemotes
-  configureGitRemotes vi
+  user <- B.getUsername
+  configureGitRemotes vi user
   eraseGitSafeDirs
-  configureGitSafeDirs vi
+  configureGitSafeDirs vi user
 
 verify ::
   (Substrate m) =>
@@ -61,26 +63,74 @@ removeGitRemote ::
   (Substrate m) =>
   String ->
   ExceptT String m ()
-removeGitRemote remoteName =
-  ExceptT $
-    Substrate.call "git" ["remote", "remove", remoteName]
+removeGitRemote name =
+  ExceptT $ Substrate.call "git" ["remote", "remove", name]
 
 configureGitRemotes ::
   (Substrate m) =>
   B.VaultInfo ->
+  String ->
   ExceptT String m ()
-configureGitRemotes vi = return ()
+configureGitRemotes vi user = do
+  let vaultName = B.name vi
+  let names = B.remotes vi
+  let expectedRemotes = makeExpectedRemotes vaultName user names
+  mapM_ addGitRemote expectedRemotes
+
+addGitRemote ::
+  (Substrate m) =>
+  GitRemote ->
+  ExceptT String m ()
+addGitRemote remote =
+  ExceptT $
+    Substrate.call
+      "git"
+      [ "remote",
+        "add",
+        (remoteName remote),
+        (remoteURL remote)
+      ]
 
 eraseGitSafeDirs ::
   (Substrate m) =>
   ExceptT String m ()
-eraseGitSafeDirs = return ()
+eraseGitSafeDirs =
+  ExceptT $
+    Substrate.call
+      "git"
+      [ "config",
+        "unset",
+        "--local",
+        "--all",
+        "safe.directory"
+      ]
 
 configureGitSafeDirs ::
   (Substrate m) =>
   B.VaultInfo ->
+  String ->
   ExceptT String m ()
-configureGitSafeDirs vi = return ()
+configureGitSafeDirs vi user = do
+  let vaultName = B.name vi
+  let names = B.remotes vi
+  let expectedRemotes = makeExpectedRemotes vaultName user names
+  mapM_ configureGitSafeDir expectedRemotes
+
+configureGitSafeDir ::
+  (Substrate m) =>
+  GitRemote ->
+  ExceptT String m ()
+configureGitSafeDir remote =
+  ExceptT $
+    Substrate.call
+      "git"
+      [ "config",
+        "set",
+        "--local",
+        "--append",
+        "safe.directory",
+        (remoteURL remote) ++ "/.git"
+      ]
 
 -- TODO rework handling the repo dir
 
@@ -171,20 +221,20 @@ makeExpectedRemotes vaultName user remotes =
   map (makeRemoteByName vaultName user) remotes
 
 makeRemoteByName :: String -> String -> String -> GitRemote
-makeRemoteByName vaultName user remoteName =
-  GitRemote remoteName url
+makeRemoteByName vaultName user name =
+  GitRemote name url
   where
-    url = makeRemoteURL vaultName user remoteName
+    url = makeRemoteURL vaultName user name
 
 makeRemoteURL ::
   String ->
   String ->
   String ->
   FilePath
-makeRemoteURL vaultName user remoteName =
+makeRemoteURL vaultName user name =
   "/usr/media/" ++ user ++ "/" ++ fsLabel ++ "/repo"
   where
-    fsLabel = vaultName ++ "-" ++ remoteName
+    fsLabel = vaultName ++ "-" ++ name
 
 getCurrentBranch ::
   (Substrate m) =>
