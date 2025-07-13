@@ -63,8 +63,13 @@ removeGitRemote ::
   (Substrate m) =>
   String ->
   ExceptT String m ()
-removeGitRemote name =
-  ExceptT $ Substrate.call "git" ["remote", "remove", name]
+removeGitRemote name = do
+  ExceptT $
+    Substrate.call
+      "git"
+      ["remote", "remove", name]
+  lift $
+    Substrate.echo ("removed remote: " ++ name)
 
 configureGitRemotes ::
   (Substrate m) =>
@@ -81,7 +86,7 @@ addGitRemote ::
   (Substrate m) =>
   GitRemote ->
   ExceptT String m ()
-addGitRemote remote =
+addGitRemote remote = do
   ExceptT $
     Substrate.call
       "git"
@@ -90,6 +95,8 @@ addGitRemote remote =
         (remoteName remote),
         (remoteURL remote)
       ]
+  lift $
+    Substrate.echo ("added remote: " ++ (show remote))
 
 eraseGitSafeDirs ::
   (Substrate m) =>
@@ -97,11 +104,12 @@ eraseGitSafeDirs ::
 eraseGitSafeDirs =
   catchError eraseCmd skipIfError
   where
-    eraseCmd =
+    eraseCmd = do
       ExceptT $
         Substrate.call
           "git"
           ["config", "unset", "--local", "--all", "safe.directory"]
+      lift $ Substrate.echo "removed local safe.dir entries"
 
     skipIfError =
       ( \_ -> do
@@ -124,7 +132,7 @@ configureGitSafeDir ::
   (Substrate m) =>
   GitRemote ->
   ExceptT String m ()
-configureGitSafeDir remote =
+configureGitSafeDir remote = do
   ExceptT $
     Substrate.call
       "git"
@@ -135,6 +143,7 @@ configureGitSafeDir remote =
         "safe.directory",
         (remoteURL remote) ++ "/.git"
       ]
+  lift $ Substrate.echo $ "added safe.directory: " ++ (remoteURL remote) ++ "/.git"
 
 -- TODO rework handling the repo dir
 
