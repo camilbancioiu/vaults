@@ -6,7 +6,7 @@ import Data.List
 import MockSubstrate
 import qualified MockSubstrate
 import System.Exit
-import qualified Vaults.Base as Base
+import qualified Vaults.Base as B
 import qualified Vaults.CustomCfg as Cfg
 import qualified Vaults.Repo as Repo
 import qualified Vaults.Substrate as Sub
@@ -61,23 +61,17 @@ showFailedCmd (_, cmd@(subcmd : params)) =
 makeVRI ::
   DummyOp ->
   Bool ->
-  Base.VaultRuntimeInfo
+  B.VaultRuntimeInfo
 makeVRI op hasRepoDir =
-  Base.VaultRuntimeInfo
-    { Base.srcDir = Base.srcDir MockSubstrate.mockVaultRuntimeInfo,
-      Base.loopDev = loopDev op,
-      Base.mapperDev = mapperDev op,
-      Base.mountpoint = mountpoint op,
-      Base.repositoryDir = repoDir,
-      Base.partition = partitionFile op,
-      Base.partitionName = "local",
-      Base.partitionLocation = Base.LocalPartition
+  B.VaultRuntimeInfo
+    { B.srcDir = B.srcDir MockSubstrate.mockVaultRuntimeInfo,
+      B.loopDev = loopDev op,
+      B.mapperDev = mapperDev op,
+      B.mountpoint = mountpoint op,
+      B.partition = partitionFile op,
+      B.partitionName = "local",
+      B.partitionLocation = B.LocalPartition
     }
-  where
-    repoDir =
-      if hasRepoDir
-        then Just $ (mountpoint op) ++ "/repo"
-        else Nothing
 
 editCmd ::
   DummyOp ->
@@ -166,18 +160,27 @@ delayCmd = ("delay", [])
 syncCmd :: (FilePath, [String])
 syncCmd = ("sync", [])
 
-changeToSrcDir :: (FilePath, [String])
-changeToSrcDir = ("changeDir", [Base.srcDir MockSubstrate.mockVaultRuntimeInfo])
+changeToSrcDirCmd :: (FilePath, [String])
+changeToSrcDirCmd = ("changeDir", [B.srcDir MockSubstrate.mockVaultRuntimeInfo])
 
-changeToMountpoint ::
+changeToMountpointCmd ::
   DummyOp ->
   (FilePath, [String])
-changeToMountpoint op = ("changeDir", [(mountpoint op)])
+changeToMountpointCmd op = ("changeDir", [(mountpoint op)])
 
-changeToRepoDir ::
+dirExistsRepoCmd = ("dirExists", [B.repoDirName])
+
+createRepoDirCmd = ("createDir", [B.repoDirName])
+
+changeToRepoDirCmd ::
   DummyOp ->
   (FilePath, [String])
-changeToRepoDir op = ("changeDir", [(mountpoint op) ++ "/repo"])
+changeToRepoDirCmd op = ("changeDir", [B.repoDirName])
+
+ensureRepoDirExistsCmds repoAlreadyExists =
+  if repoAlreadyExists
+    then [dirExistsRepoCmd]
+    else [dirExistsRepoCmd, createRepoDirCmd]
 
 setEnvCmd ::
   String ->
@@ -200,14 +203,13 @@ postOpenPartitionCmds ::
   DummyOp ->
   [(FilePath, [String])]
 postOpenPartitionCmds op =
-  [ ("changeDir", [mountpoint op]),
-    ("dirExists", ["repo"]),
+  [ changeToMountpointCmd op,
     ("tmux", ["rename-window", "mockVault"])
   ]
 
 preClosePartitionCmds :: [(FilePath, [String])]
 preClosePartitionCmds =
-  [ changeToSrcDir,
+  [ changeToSrcDirCmd,
     syncCmd,
     delayCmd
   ]
@@ -219,11 +221,26 @@ uploadPartitionCmds partition =
   let vi = MockSubstrate.mockVaultInfo
       partitionFile = partition ++ ".vault"
       partitionLogFile = partition ++ ".log"
-      remotePartitionFile = mkpath [(Base.remoteStore vi), (Base.name vi), partitionFile]
-      remotePartitionLogFile = mkpath [(Base.remoteStore vi), (Base.name vi), partitionLogFile]
+      remotePartitionFile = mkpath [(B.remoteStore vi), (B.name vi), partitionFile]
+      remotePartitionLogFile = mkpath [(B.remoteStore vi), (B.name vi), partitionLogFile]
    in [ ("rsync", ["-ivz", partitionFile, remotePartitionFile]),
         ("rsync", ["-ivz", partitionLogFile, remotePartitionLogFile])
       ]
+
+makeConformantRepoCmds ::
+  [(FilePath, [String])]
+makeConformantRepoCmds =
+  []
+    ++ [ ("git", ["status"]),
+         ("git", ["remote"])
+       ]
+    ++ (map gitRemoteRemoveCmd dummyGitRemoteNames)
+    ++ [ ("id", ["--user", "--name"]),
+         ("id", ["--user", "--name"]),
+         ("git", ["config", "get", "--local", "--all"]) -- TODO safe.directory
+       ]
+
+gitRemoteRemoveCmd remoteName = ("git", ["remote", "remove", remoteName])
 
 verifyRepoCmds ::
   [(FilePath, [String])]
@@ -357,6 +374,15 @@ successfulRepoVerificationExecResults =
     successfulExecResultWithOutput (unlines dummyGitSafeDirs)
   ]
 
+successfulRepoMakeConformantExecResults :: [Sub.ExecResult]
+successfulRepoMakeConformantExecResults =
+  [ successfulExecResult,
+    successfulExecResultWithOutput (unlines dummyGitRemoteNames),
+    successfulExecResultWithOutput "user",
+    successfulExecResultWithOutput "user",
+    successfulExecResultWithOutput (unlines dummyGitSafeDirs)
+  ]
+
 gitRemoteExec :: Sub.ExecResult
 gitRemoteExec = successfulExecResultWithOutput dummyGitRemoteVOut
 
@@ -410,8 +436,8 @@ mkpath ::
 mkpath = concat . (intersperse "/")
 
 dummyOperation ::
-  Base.VaultInfo ->
+  B.VaultInfo ->
   ExceptT String (State Mock) ()
 dummyOperation vi = do
-  let mockOp = mock_call "dummy" [Base.name vi]
+  let mockOp = mock_call "dummy" [B.name vi]
   lift mockOp >> return ()

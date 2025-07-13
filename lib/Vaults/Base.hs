@@ -14,6 +14,8 @@ data PartitionLocation
   | UnknownPartition
   deriving (Eq, Show, Read)
 
+repoDirName = "repo"
+
 -- TODO add username and hostname fields
 data VaultInfo = VaultInfo
   { name :: String,
@@ -28,7 +30,6 @@ data VaultRuntimeInfo = VaultRuntimeInfo
   { srcDir :: FilePath,
     loopDev :: FilePath,
     mapperDev :: FilePath,
-    repositoryDir :: Maybe FilePath,
     mountpoint :: FilePath,
     -- TODO rename to partitionFile
     partition :: FilePath,

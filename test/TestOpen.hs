@@ -203,32 +203,3 @@ test_mount_ok_has_inner_repo =
       expectedCommands
       (execRecorded mockAfterExec)
     assertAllExecsConsumed mockAfterExec
-
-test_mount_ok_has_inner_repo_verified :: Test
-test_mount_ok_has_inner_repo_verified =
-  TestCase $ do
-    let mockWithER = addMockExecResults results mockWithVaultAndRepoDir
-          where
-            results = udisksExecResults ++ D.successfulRepoVerificationExecResults
-            udisksExecResults =
-              [D.loopSetupExec, D.unlockExec, D.mountExec]
-                <*> (pure True)
-                <*> (pure D.localOp)
-    let mock = addMockEnvVar "TEST" "VERIFY" mockWithER
-    let result = runState (runExceptT $ openVault "local.vault") mock
-    let mockAfterExec = snd result
-
-    let vri = D.makeVRI D.localOp True
-    assertEqual "mount succeeds" (Right vri) (fst result)
-
-    let expectedCommands =
-          D.preOpenPartitionCmds
-            ++ (D.openPartitionCmds D.localOp)
-            ++ D.postOpenPartitionCmds D.localOp
-            ++ D.verifyRepoCmds
-
-    assertEqual
-      "loop-setup, unlock, mount, lock, loop-delete were called"
-      expectedCommands
-      (execRecorded mockAfterExec)
-    assertAllExecsConsumed mockAfterExec

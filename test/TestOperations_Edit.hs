@@ -36,8 +36,8 @@ test_editSuccessful =
             D.preOpenPartitionCmds
               ++ (D.openPartitionCmds D.localOp)
               ++ D.postOpenPartitionCmds D.localOp
-              ++ [D.changeToMountpoint D.localOp]
-              ++ [D.changeToRepoDir D.localOp]
+              ++ [D.changeToMountpointCmd D.localOp]
+              ++ [D.changeToRepoDirCmd D.localOp]
               ++ [ D.setEnvCmd "VIMRUNTIME",
                    D.setEnvCmd "VIMPRIVATE",
                    D.editCmd D.localOp,
@@ -79,8 +79,8 @@ test_editorCrashes =
             D.preOpenPartitionCmds
               ++ (D.openPartitionCmds D.localOp)
               ++ D.postOpenPartitionCmds D.localOp
-              ++ [D.changeToMountpoint D.localOp]
-              ++ [D.changeToRepoDir D.localOp]
+              ++ [D.changeToMountpointCmd D.localOp]
+              ++ [D.changeToRepoDirCmd D.localOp]
               ++ [ D.setEnvCmd "VIMRUNTIME",
                    D.setEnvCmd "VIMPRIVATE",
                    D.editCmd D.localOp,

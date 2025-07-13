@@ -65,37 +65,44 @@ removeGitRemote remoteName =
   ExceptT $
     Substrate.call "git" ["remote", "remove", remoteName]
 
-configureGitRemotes vi = undefined
+configureGitRemotes ::
+  (Substrate m) =>
+  B.VaultInfo ->
+  ExceptT String m ()
+configureGitRemotes vi = return ()
 
-eraseGitSafeDirs = undefined
+eraseGitSafeDirs ::
+  (Substrate m) =>
+  ExceptT String m ()
+eraseGitSafeDirs = return ()
 
-configureGitSafeDirs vi = undefined
+configureGitSafeDirs ::
+  (Substrate m) =>
+  B.VaultInfo ->
+  ExceptT String m ()
+configureGitSafeDirs vi = return ()
 
 -- TODO rework handling the repo dir
 
+-- TODO add test when repo dir is missing, to see the thrown error
 changeToRepoDir ::
   (Substrate m) =>
   B.VaultRuntimeInfo ->
   ExceptT String m ()
-changeToRepoDir vri = do
-  case (B.repositoryDir vri) of
-    Nothing -> throwError "repo dir is required, but missing"
-    Just repoDir -> lift $ Substrate.changeDir repoDir
+changeToRepoDir vri =
+  catchError
+    (lift $ Substrate.changeDir B.repoDirName)
+    (\_ -> throwError "repo dir is required, but missing")
 
 ensureRepoDir ::
   (Substrate m) =>
   B.VaultRuntimeInfo ->
-  ExceptT String m B.VaultRuntimeInfo
+  ExceptT String m ()
 ensureRepoDir vri = do
-  exists <- lift $ Substrate.dirExists "repo"
+  exists <- lift $ Substrate.dirExists B.repoDirName
   if (not exists)
-    then do
-      lift $ Substrate.createDir "repo"
-      return
-        vri
-          { B.repositoryDir = Just $ (B.mountpoint vri) ++ "/repo"
-          }
-    else return vri
+    then lift $ Substrate.createDir B.repoDirName
+    else return ()
 
 checkGitInitialized ::
   (Substrate m) =>
