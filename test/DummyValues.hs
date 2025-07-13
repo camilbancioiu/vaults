@@ -407,8 +407,8 @@ gitRemoteExec = successfulExecResultWithOutput dummyGitRemoteVOut
 dummyGitRemoteVOut :: String
 dummyGitRemoteVOut =
   unlines
-    [ "remoteA\t/usr/media/user/mockVault-remoteA/repo",
-      "remoteB\t/usr/media/user/mockVault-remoteB/repo"
+    [ "remoteA\t/run/media/user/mockVault-remoteA/repo",
+      "remoteB\t/run/media/user/mockVault-remoteB/repo"
     ]
 
 dummyGitRemoteNames :: [String]
@@ -416,8 +416,8 @@ dummyGitRemoteNames = ["remoteA", "remoteB"]
 
 dummyGitRemotes :: [Repo.GitRemote]
 dummyGitRemotes =
-  [ Repo.GitRemote "remoteA" "/usr/media/user/mockVault-remoteA/repo",
-    Repo.GitRemote "remoteB" "/usr/media/user/mockVault-remoteB/repo"
+  [ Repo.GitRemote "remoteA" "/run/media/user/mockVault-remoteA/repo",
+    Repo.GitRemote "remoteB" "/run/media/user/mockVault-remoteB/repo"
   ]
 
 dummyGitSafeDirs :: [FilePath]

@@ -214,7 +214,7 @@ getExistingSafeDirs ::
 getExistingSafeDirs = do
   -- The relevant safe.directory entries are those recorded in local
   -- configuration. Vaults don't manage the global git config entries.
-  result <- lift $ Substrate.exec "git" ["config", "get", "--local", "--all"] ""
+  result <- lift $ Substrate.exec "git" ["config", "get", "--local", "--all", "safe.directory"] ""
   when
     (Substrate.exitCode result /= ExitSuccess)
     (throwError (UnknownIssue (Substrate.errorOutput result)))
@@ -236,7 +236,7 @@ makeRemoteURL ::
   String ->
   FilePath
 makeRemoteURL vaultName user name =
-  "/usr/media/" ++ user ++ "/" ++ fsLabel ++ "/repo"
+  "/run/media/" ++ user ++ "/" ++ fsLabel ++ "/repo"
   where
     fsLabel = vaultName ++ "-" ++ name
 

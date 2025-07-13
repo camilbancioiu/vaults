@@ -89,9 +89,9 @@ test_IncorrectGitRemotes =
       (execRecorded mockAfterExec)
 
     let expectedRemotes =
-          [ GitRemote "remoteA" "/usr/media/user/mockVault-remoteA/repo",
-            GitRemote "remoteB" "/usr/media/user/mockVault-remoteB/repo",
-            GitRemote "remoteC" "/usr/media/user/mockVault-remoteC/repo"
+          [ GitRemote "remoteA" "/run/media/user/mockVault-remoteA/repo",
+            GitRemote "remoteB" "/run/media/user/mockVault-remoteB/repo",
+            GitRemote "remoteC" "/run/media/user/mockVault-remoteC/repo"
           ]
     assertEqual
       "verify git remotes"
@@ -110,7 +110,7 @@ test_IncorrectSafeDirs =
                 D.successfulExecResultWithOutput "user",
                 D.successfulExecResultWithOutput existingSafeDirs
               ]
-            existingSafeDirs = "/usr/media/user/mockVault-remoteA/repo/.git"
+            existingSafeDirs = "/run/media/user/mockVault-remoteA/repo/.git"
 
     let vi =
           mockVaultInfo
