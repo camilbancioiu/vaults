@@ -57,7 +57,7 @@ doSetupVault vi = do
   lift $ Substrate.echo "Vault opened, performing verifications..."
   Repo.ensureRepoDir vri
   Repo.changeToRepoDir vri
-  Repo.makeConformant vi
+  (Repo.makeConformant vi) `catchError` (\e -> closeVault vri >> throwError e)
   closeVault vri
   lift $ Substrate.echo "Vault closed."
 

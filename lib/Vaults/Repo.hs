@@ -95,15 +95,19 @@ eraseGitSafeDirs ::
   (Substrate m) =>
   ExceptT String m ()
 eraseGitSafeDirs =
-  ExceptT $
-    Substrate.call
-      "git"
-      [ "config",
-        "unset",
-        "--local",
-        "--all",
-        "safe.directory"
-      ]
+  catchError eraseCmd skipIfError
+  where
+    eraseCmd =
+      ExceptT $
+        Substrate.call
+          "git"
+          ["config", "unset", "--local", "--all", "safe.directory"]
+
+    skipIfError =
+      ( \_ -> do
+          lift $ Substrate.echo "no existing safe.dirs, skipping..."
+          return ()
+      )
 
 configureGitSafeDirs ::
   (Substrate m) =>
