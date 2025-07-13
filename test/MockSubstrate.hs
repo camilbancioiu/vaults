@@ -245,7 +245,7 @@ mock_createDir ::
   FilePath ->
   State Mock ()
 mock_createDir dir = do
-  modify $ recordExec ("createDir", [])
+  modify $ recordExec ("createDir", [dir])
   modify $ addCreatedDir dir
 
 mock_changeDir ::
@@ -342,7 +342,6 @@ mockVaultRuntimeInfo =
       Base.loopDev = "/dev/loop9",
       Base.mapperDev = "/dev/dm-2",
       Base.mountpoint = "/run/media/user/localhostname/mockVault",
-      Base.repositoryDir = Just "/run/media/user/localhostname/mockVault/repo",
       Base.partition = "local.vault",
       Base.partitionName = "local",
       Base.partitionLocation = Base.LocalPartition

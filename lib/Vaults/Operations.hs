@@ -55,7 +55,7 @@ doSetupVault ::
 doSetupVault vi = do
   vri <- openVault $ (B.localname vi) ++ ".vault" -- TODO refactor into f:openLocalPartition
   lift $ Substrate.echo "Vault opened, performing verifications..."
-  vri <- Repo.ensureRepoDir vri
+  Repo.ensureRepoDir vri
   Repo.changeToRepoDir vri
   Repo.makeConformant vi
   closeVault vri
@@ -67,7 +67,7 @@ runVerification ::
   B.VaultRuntimeInfo ->
   ExceptT String m ()
 runVerification vi vri = do
-  vri <- Repo.ensureRepoDir vri
+  Repo.ensureRepoDir vri
   Repo.changeToRepoDir vri
   let verification = withExceptT (show) (Repo.verify vi)
   catchError verification (lift . Substrate.echo)

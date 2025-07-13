@@ -18,7 +18,6 @@ test_setup_verification_ok :: Test
 test_setup_verification_ok =
   TestLabel "successful repo verification" $
     TestCase $ do
-      assertFailure "implementation incomplete"
       let operation = Operations.doSetupVault mockVaultInfo
 
       let expectedCommands =
@@ -26,10 +25,9 @@ test_setup_verification_ok =
               ++ D.preOpenPartitionCmds
               ++ D.openPartitionCmds D.localOp
               ++ D.postOpenPartitionCmds D.localOp
-              ++ [ ("dirExists", ["repo"]),
-                   D.changeToRepoDir D.localOp
-                 ]
-              ++ D.verifyRepoCmds
+              ++ D.ensureRepoDirExistsCmds True
+              ++ [D.changeToRepoDirCmd D.localOp]
+              ++ D.makeConformantRepoCmds
               ++ [D.gitLogCmd]
               ++ D.preClosePartitionCmds
               ++ D.closePartitionCmds D.localOp

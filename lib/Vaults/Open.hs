@@ -6,7 +6,7 @@ import Control.Monad.Trans
 import Data.Maybe
 import System.Directory
 import System.FilePath.Posix
-import qualified Vaults.Base as Base
+import qualified Vaults.Base as B
 import qualified Vaults.Repo as Repo
 import qualified Vaults.Substrate as Substrate
 import qualified Vaults.Udisksctl as U
@@ -19,27 +19,27 @@ import qualified Vaults.Udisksctl as U
 openVault ::
   (Substrate.Substrate m) =>
   FilePath ->
-  ExceptT String m Base.VaultRuntimeInfo
+  ExceptT String m B.VaultRuntimeInfo
 openVault partition = do
-  Base.ensureIsVaultDir
+  B.ensureIsVaultDir
 
   when (length partition == 0) (throwError "partition filename is required")
 
-  vi <- lift $ Base.loadVaultInfo
-  let partLoc = Base.getPartitionLocation vi partition
-  when (partLoc == Base.UnknownPartition) (throwError $ "unknown vault partition " ++ partition)
+  vi <- lift $ B.loadVaultInfo
+  let partLoc = B.getPartitionLocation vi partition
+  when (partLoc == B.UnknownPartition) (throwError $ "unknown vault partition " ++ partition)
 
   vri <- openPartition partition
-  setTmuxWindowName (Base.name vi)
+  setTmuxWindowName (B.name vi)
 
-  let vriWithPartLoc = vri {Base.partitionLocation = partLoc}
+  let vriWithPartLoc = vri {B.partitionLocation = partLoc}
 
   return vriWithPartLoc
 
 openPartition ::
   (Substrate.Substrate m) =>
   String ->
-  ExceptT String m Base.VaultRuntimeInfo
+  ExceptT String m B.VaultRuntimeInfo
 openPartition partition = do
   when (length partition == 0) (throwError "partition filename is required")
 
@@ -49,18 +49,15 @@ openPartition partition = do
   mountpoint <- guardedMountDevice loopDev mapperDev
   lift $ Substrate.changeDir mountpoint
 
-  repoDir <- resolveRepoDir mountpoint
-
   let vri =
-        Base.VaultRuntimeInfo
-          { Base.srcDir = srcDir,
-            Base.loopDev = loopDev,
-            Base.mountpoint = mountpoint,
-            Base.repositoryDir = repoDir,
-            Base.mapperDev = mapperDev,
-            Base.partition = partition,
-            Base.partitionName = takeBaseName partition,
-            Base.partitionLocation = Base.UnknownPartition
+        B.VaultRuntimeInfo
+          { B.srcDir = srcDir,
+            B.loopDev = loopDev,
+            B.mountpoint = mountpoint,
+            B.mapperDev = mapperDev,
+            B.partition = partition,
+            B.partitionName = takeBaseName partition,
+            B.partitionLocation = B.UnknownPartition
           }
 
   return vri
@@ -102,17 +99,3 @@ setTmuxWindowName name =
                      lift $ Substrate.echo "could not rename tmux window"
                      return ()
                  )
-
-resolveRepoDir ::
-  (Substrate.Substrate m) =>
-  FilePath ->
-  ExceptT String m (Maybe FilePath)
-resolveRepoDir mountpoint = do
-  -- TODO if ensureIsVaultDir, then the folder repo/.git must exist
-  -- TODO ensure correct behavior for the missing repo folder
-  hasRepoDir <- lift $ Substrate.dirExists "repo"
-  let repoDir =
-        if hasRepoDir
-          then Just (mountpoint ++ "/repo")
-          else Nothing
-  return repoDir
