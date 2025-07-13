@@ -54,6 +54,7 @@ handleVaultOperation operation = do
       ++ (name vi)
   let doOperation = case operation of
         Operations.MakePartition part sz -> Operations.doMakePartition part sz vi
+        Operations.SetupVault -> Operations.doSetupVault vi
         Operations.EditVault -> Operations.doEditVault vi
         Operations.ShellVault -> Operations.doShellVault vi
         Operations.ShellPartition partition -> Operations.doShellPartition partition

@@ -4,3 +4,4 @@ dummyvault/**/*.vault
 dummyvault/**/*.log
 dummyvault/**/*.backup
 dummyvault2/
+partition

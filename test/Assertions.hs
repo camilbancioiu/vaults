@@ -43,7 +43,7 @@ assertAllExecsConsumed ::
   IO ()
 assertAllExecsConsumed mock =
   assertEqual
-    "all execs consumed"
+    ("execs not consumed:\n" ++ (show $ execResults mock))
     0
     (length $ execResults mock)
 
@@ -53,9 +53,20 @@ assertEqualLists ::
   [a] ->
   [a] ->
   IO ()
-assertEqualLists message expected actual =
+assertEqualLists message expected actual = do
   let tuples = zip expected actual
-   in traverse_ (assertEqualInTuple message) tuples
+  let tupleLines = map makeTupleLine tuples
+  let diffStr = unlines tupleLines
+  if expected /= actual
+    then assertFailure (message ++ "\n" ++ diffStr)
+    else return ()
+
+  traverse_ (assertEqualInTuple message) tuples
+
+makeTupleLine (expected, actual) =
+  equality ++ (show expected) ++ equality ++ (show actual)
+  where
+    equality = if expected == actual then "\t==\t" else "\t=/=\t"
 
 assertEqualInTuple ::
   (Eq a, Show a) =>

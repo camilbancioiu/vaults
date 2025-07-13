@@ -3,6 +3,7 @@
 module MockSubstrate where
 
 import Control.Exception.Base
+import Control.Monad
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Maybe
@@ -244,7 +245,7 @@ mock_createDir ::
   FilePath ->
   State Mock ()
 mock_createDir dir = do
-  modify $ recordExec ("createDir", [])
+  modify $ recordExec ("createDir", [dir])
   modify $ addCreatedDir dir
 
 mock_changeDir ::
@@ -258,7 +259,9 @@ mock_lookupEnv ::
   String ->
   State Mock (Maybe String)
 mock_lookupEnv key = do
-  modify $ recordExec ("lookupEnv", [key])
+  when
+    (key /= "TEST")
+    (modify $ recordExec ("lookupEnv", [key]))
   mock <- get
   return (lookup key $ envVars mock)
 
@@ -267,7 +270,9 @@ mock_setEnv ::
   String ->
   State Mock ()
 mock_setEnv key val = do
-  modify $ recordExec ("setEnv", [key])
+  when
+    (key /= "TEST")
+    (modify $ recordExec ("setEnv", [key]))
   modify (addMockEnvVar key val)
 
 mock_unsetEnv ::
@@ -285,7 +290,11 @@ mock_exec ::
 mock_exec executable params _ = do
   modify $ recordExec (executable, params)
   modify incExecs
-  er <- gets $ head . execResults
+  ers <- gets $ execResults
+  let er =
+        if null ers
+          then error ("empty execResults: " ++ executable ++ (show params))
+          else head ers
   modify dropHeadMockExecResult
   return er
 
@@ -326,13 +335,13 @@ mockVaultInfo =
       Base.remoteStore = "ssh://remoteStore"
     }
 
+-- TODO update mountpoint format
 mockVaultRuntimeInfo =
   Base.VaultRuntimeInfo
     { Base.srcDir = "/home/user/vaults/mockVault",
       Base.loopDev = "/dev/loop9",
       Base.mapperDev = "/dev/dm-2",
       Base.mountpoint = "/run/media/user/localhostname/mockVault",
-      Base.repositoryDir = "/run/media/user/localhostname/mockVault/repo",
       Base.partition = "local.vault",
       Base.partitionName = "local",
       Base.partitionLocation = Base.LocalPartition

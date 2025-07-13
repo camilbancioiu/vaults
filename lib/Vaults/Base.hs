@@ -14,6 +14,9 @@ data PartitionLocation
   | UnknownPartition
   deriving (Eq, Show, Read)
 
+repoDirName = "repo"
+
+-- TODO add username and hostname fields
 data VaultInfo = VaultInfo
   { name :: String,
     localname :: String,
@@ -27,7 +30,6 @@ data VaultRuntimeInfo = VaultRuntimeInfo
   { srcDir :: FilePath,
     loopDev :: FilePath,
     mapperDev :: FilePath,
-    repositoryDir :: FilePath,
     mountpoint :: FilePath,
     -- TODO rename to partitionFile
     partition :: FilePath,
@@ -106,15 +108,6 @@ getGroupname = do
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get groupname")
   let groupname = Substrate.output result
   return groupname
-
-getCurrentBranch ::
-  (Substrate.Substrate m) =>
-  ExceptT String m String
-getCurrentBranch = do
-  result <- lift $ Substrate.exec "git" ["branch", "--show-current"] ""
-  when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get current branch")
-  let currentBranch = Substrate.output result
-  return currentBranch
 
 stripTrailingNewline ::
   String ->

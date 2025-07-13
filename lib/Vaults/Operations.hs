@@ -5,17 +5,19 @@ import Control.Monad.Except
 import Control.Monad.Trans
 import Data.List
 import System.Exit
-import Vaults.Base
+import qualified Vaults.Base as B
 import Vaults.Close
 import qualified Vaults.CustomCfg as Cfg
 import Vaults.Init
 import Vaults.MkPartition
 import Vaults.Open
+import qualified Vaults.Repo as Repo
 import qualified Vaults.Substrate as Substrate
 
 data Operation
   = InitVault String String
   | MakePartition String Int
+  | SetupVault
   | EditVault
   | ShellVault
   | ShellPartition String
@@ -41,28 +43,56 @@ doMakePartition ::
   (Substrate.Substrate m) =>
   String ->
   Int ->
-  VaultInfo ->
+  B.VaultInfo ->
   ExceptT String m ()
 doMakePartition = makePartition
 
+-- TODO catch errors and closeVault
+doSetupVault ::
+  (Substrate.Substrate m) =>
+  B.VaultInfo ->
+  ExceptT String m ()
+doSetupVault vi = do
+  vri <- openVault $ (B.localname vi) ++ ".vault" -- TODO refactor into f:openLocalPartition
+  lift $ Substrate.echo "Vault opened, performing verifications..."
+  Repo.ensureRepoDir vri
+  Repo.changeToRepoDir vri
+  (Repo.makeConformant vi) `catchError` (\e -> closeVault vri >> throwError e)
+  closeVault vri
+  lift $ Substrate.echo "Vault closed."
+
+runVerification ::
+  (Substrate.Substrate m) =>
+  B.VaultInfo ->
+  B.VaultRuntimeInfo ->
+  ExceptT String m ()
+runVerification vi vri = do
+  Repo.ensureRepoDir vri
+  Repo.changeToRepoDir vri
+  let verification = withExceptT (show) (Repo.verify vi)
+  catchError verification (lift . Substrate.echo)
+  return ()
+
 doEditVault ::
   (Substrate.Substrate m) =>
-  VaultInfo ->
+  B.VaultInfo ->
   ExceptT String m ()
 doEditVault vi = do
-  vri <- openVault $ (localname vi) ++ ".vault"
+  vri <- openVault $ (B.localname vi) ++ ".vault"
   lift $ Substrate.echo "Vault opened, starting editor..."
   editVault vri
   closeVault vri
   lift $ Substrate.echo "Vault closed."
 
+-- TODO refactor using bracket
 editVault ::
   (Substrate.Substrate m) =>
-  VaultRuntimeInfo ->
+  B.VaultRuntimeInfo ->
   ExceptT String m ()
 editVault vri = do
   ( do
-      lift $ Substrate.changeDir (repositoryDir vri)
+      lift $ Substrate.changeDir (B.mountpoint vri)
+      Repo.changeToRepoDir vri
       callEditor
     )
     `catchError` (\e -> closeVault vri >> throwError e)
@@ -93,13 +123,13 @@ setEditingEnvVars (var : vars) = do
 -- TODO write extra tests (see test/TestOperations_Shell.hs)
 doShellVault ::
   (Substrate.Substrate m) =>
-  VaultInfo ->
+  B.VaultInfo ->
   ExceptT String m ()
 doShellVault vi = do
-  vri <- openVault $ (localname vi) ++ ".vault"
+  vri <- openVault $ (B.localname vi) ++ ".vault"
   lift $ Substrate.echo "Vault opened, starting shell session..."
   ( do
-      lift $ Substrate.changeDir (repositoryDir vri)
+      lift $ Substrate.changeDir (B.mountpoint vri)
       callShell
     )
     `catchError` (\e -> closeVault vri >> throwError e)
@@ -121,7 +151,7 @@ doShellPartition partition = do
   vri <- openPartition partition
   lift $ Substrate.echo "Partition opened, starting shell session..."
   ( do
-      lift $ Substrate.changeDir (repositoryDir vri)
+      lift $ Substrate.changeDir (B.mountpoint vri)
       callShell
     )
     `catchError` (\e -> closeVault vri >> throwError e)
@@ -132,11 +162,11 @@ doShellPartition partition = do
 -- TODO write tests
 doDiffLog ::
   (Substrate.Substrate m) =>
-  VaultInfo ->
+  B.VaultInfo ->
   ExceptT String m ()
 doDiffLog vi = do
-  let localLog = (localname vi) ++ ".log"
-  let remoteLogs = map (++ ".log") (remotes vi)
+  let localLog = (B.localname vi) ++ ".log"
+  let remoteLogs = map (++ ".log") (B.remotes vi)
   mapM_ (runDiffLog localLog) remoteLogs
 
 runDiffLog ::
@@ -167,14 +197,14 @@ echoDiffResult result = do
 -- TODO write extra tests? (see test/TestOperations_Up.hs)
 doUploadVault ::
   (Substrate.Substrate m) =>
-  VaultInfo ->
+  B.VaultInfo ->
   ExceptT String m ()
-doUploadVault vi = uploadVaultPartition vi (localname vi)
+doUploadVault vi = uploadVaultPartition vi (B.localname vi)
 
 -- TODO write extra tests? (see test/TestOperations_Up.hs)
 uploadVaultPartition ::
   (Substrate.Substrate m) =>
-  VaultInfo ->
+  B.VaultInfo ->
   FilePath ->
   ExceptT String m ()
 uploadVaultPartition vi partition = do
@@ -185,34 +215,34 @@ uploadVaultPartition vi partition = do
 -- TODO write extra tests? (see test/TestOperations_Up.hs)
 upload ::
   (Substrate.Substrate m) =>
-  VaultInfo ->
+  B.VaultInfo ->
   FilePath ->
   ExceptT String m ()
 upload vi filename = do
-  let remoteFilename = mkpath [(remoteStore vi), (name vi), filename]
+  let remoteFilename = mkpath [(B.remoteStore vi), (B.name vi), filename]
   ExceptT $ Substrate.call "rsync" ["-ivz", filename, remoteFilename]
 
 echoUploadPartition ::
   (Substrate.Substrate m) =>
-  VaultInfo ->
+  B.VaultInfo ->
   FilePath ->
   ExceptT String m ()
 echoUploadPartition vi partition = do
-  let vaultname = name vi
+  let vaultname = B.name vi
   let strings = ["Uploading vault partition ", vaultname, "-", partition, "..."]
   lift $ Substrate.echo $ concat strings
 
 -- TODO write tests
 doDownloadVault ::
   (Substrate.Substrate m) =>
-  VaultInfo ->
+  B.VaultInfo ->
   ExceptT String m ()
-doDownloadVault vi = mapM_ (downloadVaultPartition vi) (remotes vi)
+doDownloadVault vi = mapM_ (downloadVaultPartition vi) (B.remotes vi)
 
 -- TODO write tests
 downloadVaultPartition ::
   (Substrate.Substrate m) =>
-  VaultInfo ->
+  B.VaultInfo ->
   FilePath ->
   ExceptT String m ()
 downloadVaultPartition vi partition = do
@@ -222,11 +252,11 @@ downloadVaultPartition vi partition = do
 
 echoDownloadPartition ::
   (Substrate.Substrate m) =>
-  VaultInfo ->
+  B.VaultInfo ->
   FilePath ->
   ExceptT String m ()
 echoDownloadPartition vi partition = do
-  let vaultname = name vi
+  let vaultname = B.name vi
   let strings = ["Downloading vault partition ", vaultname, "-", partition, "..."]
   lift $ Substrate.echo $ concat strings
 
@@ -238,11 +268,11 @@ echoDone = lift $ Substrate.echo "Done."
 -- TODO write tests
 download ::
   (Substrate.Substrate m) =>
-  VaultInfo ->
+  B.VaultInfo ->
   FilePath ->
   ExceptT String m ()
 download vi filename = do
-  let remoteFilename = mkpath [(remoteStore vi), (name vi), filename]
+  let remoteFilename = mkpath [(B.remoteStore vi), (B.name vi), filename]
   ExceptT $ Substrate.call "rsync" ["-ivz", remoteFilename, filename]
 
 -- TODO consider alternate procedure (safer?)
@@ -250,7 +280,7 @@ download vi filename = do
 doSyncVault ::
   (Substrate.Substrate m) =>
   FilePath ->
-  VaultInfo ->
+  B.VaultInfo ->
   ExceptT String m ()
 doSyncVault remote vi = do
   remoteVRI <- openVault $ remote ++ ".vault"
@@ -260,13 +290,13 @@ doSyncVault remote vi = do
 
 syncLocalPartition ::
   (Substrate.Substrate m) =>
-  VaultInfo ->
-  VaultRuntimeInfo ->
+  B.VaultInfo ->
+  B.VaultRuntimeInfo ->
   FilePath ->
   ExceptT String m ()
 syncLocalPartition vi remoteVRI remote = do
-  lift $ Substrate.changeDir (srcDir remoteVRI)
-  localVRI <- openVault $ (localname vi) ++ ".vault"
+  lift $ Substrate.changeDir (B.srcDir remoteVRI)
+  localVRI <- openVault $ (B.localname vi) ++ ".vault"
   (performSync localVRI remote)
     `catchError` (\e -> closeVault localVRI >> throwError e)
   closeVault localVRI
@@ -274,7 +304,7 @@ syncLocalPartition vi remoteVRI remote = do
 doSyncEditVault ::
   (Substrate.Substrate m) =>
   FilePath ->
-  VaultInfo ->
+  B.VaultInfo ->
   ExceptT String m ()
 doSyncEditVault remote vi = do
   remoteVRI <- openVault $ remote ++ ".vault"
@@ -283,13 +313,13 @@ doSyncEditVault remote vi = do
 
 syncEditLocalPartition ::
   (Substrate.Substrate m) =>
-  VaultInfo ->
-  VaultRuntimeInfo ->
+  B.VaultInfo ->
+  B.VaultRuntimeInfo ->
   FilePath ->
   ExceptT String m ()
 syncEditLocalPartition vi remoteVRI remote = do
-  lift $ Substrate.changeDir (srcDir remoteVRI)
-  localVRI <- openVault $ (localname vi) ++ ".vault"
+  lift $ Substrate.changeDir (B.srcDir remoteVRI)
+  localVRI <- openVault $ (B.localname vi) ++ ".vault"
   (performSync localVRI remote)
     `catchError` (\e -> closeVault localVRI >> throwError e)
   closeVault remoteVRI
@@ -304,14 +334,14 @@ syncEditLocalPartition vi remoteVRI remote = do
 -- merge conflicts can be resolved via operations Edit or Shell
 performSync ::
   (Substrate.Substrate m) =>
-  VaultRuntimeInfo ->
+  B.VaultRuntimeInfo ->
   FilePath ->
   ExceptT String m ()
 performSync localVRI remote = do
-  lift $ Substrate.changeDir (repositoryDir localVRI)
+  Repo.changeToRepoDir localVRI
   ExceptT $ Substrate.call "git" ["fetch", remote]
 
-  localBranch <- getCurrentBranch
+  localBranch <- Repo.getCurrentBranch
   let remoteBranch = remote ++ "/" ++ localBranch
   ExceptT $ Substrate.call "git" ["merge", remoteBranch]
 

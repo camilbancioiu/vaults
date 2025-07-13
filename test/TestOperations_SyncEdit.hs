@@ -49,18 +49,19 @@ test_syncEditSuccessful =
             D.preOpenPartitionCmds
               ++ (D.openPartitionCmds D.remoteOp)
               ++ D.postOpenPartitionCmds D.remoteOp
-              ++ [D.changeToSrcDir]
+              ++ [D.changeToSrcDirCmd]
               ++ D.preOpenPartitionCmds
               ++ (D.openPartitionCmds D.localOp)
               ++ D.postOpenPartitionCmds D.localOp
-              ++ [ D.changeToRepoDir D.localOp,
+              ++ [ D.changeToRepoDirCmd D.localOp,
                    D.gitFetchCmd "remoteA" D.localOp,
                    D.gitBranchShowCurrentCmd D.localOp,
                    D.gitMergeCmd "remoteA" D.localOp
                  ]
               ++ D.preClosePartitionCmds
               ++ D.closePartitionCmds D.remoteOp
-              ++ [ D.changeToRepoDir D.localOp,
+              ++ [ D.changeToMountpointCmd D.localOp,
+                   D.changeToRepoDirCmd D.localOp,
                    D.setEnvCmd "VIMRUNTIME",
                    D.setEnvCmd "VIMPRIVATE",
                    D.editCmd D.localOp,
