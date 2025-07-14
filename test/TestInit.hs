@@ -14,10 +14,11 @@ allTests =
 
 test_init :: Test
 test_init = TestCase $ do
-  let vaultDir = "/home/user/vaults/mockVault"
+  let operation = Init.initVault "dummy" "localhost"
+  let vaultDir = mockVaultSourceDir
   let mock = emptyMock {currentDir = vaultDir}
-  let result = runState (runExceptT $ Init.initVault "dummy" "localhost") mock
-  let mockAfterExec = snd result
+  let operationResult = runState (runExceptT operation) mock
+  let mockAfterExec = snd operationResult
 
   assertEqual
     "dirs created by init"

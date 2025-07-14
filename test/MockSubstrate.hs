@@ -335,10 +335,12 @@ mockVaultInfo =
       Base.remoteStore = "ssh://remoteStore"
     }
 
+mockVaultSourceDir = "/home/user/vaults/mockVault"
+
 -- TODO update mountpoint format
 mockVaultRuntimeInfo =
   Base.VaultRuntimeInfo
-    { Base.srcDir = "/home/user/vaults/mockVault",
+    { Base.srcDir = mockVaultSourceDir,
       Base.loopDev = "/dev/loop9",
       Base.mapperDev = "/dev/dm-2",
       Base.mountpoint = "/run/media/user/localhostname/mockVault",
@@ -349,7 +351,7 @@ mockVaultRuntimeInfo =
 
 emptyMock =
   Mock
-    { currentDir = "/home/user/vaults/mockVault",
+    { currentDir = mockVaultSourceDir,
       prevDir = "/",
       hasVaultDir = False,
       hasRepoDir = False,

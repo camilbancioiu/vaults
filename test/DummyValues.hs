@@ -73,6 +73,11 @@ makeVRI op hasRepoDir =
       B.partitionLocation = B.LocalPartition
     }
 
+mockRemoteVRI =
+  mockVaultRuntimeInfo
+    { B.partitionLocation = B.RemotePartition
+    }
+
 editCmd ::
   DummyOp ->
   (FilePath, [String])

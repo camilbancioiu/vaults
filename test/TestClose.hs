@@ -23,17 +23,20 @@ test_commitLogFails :: Test
 test_commitLogFails =
   TestLabel "exporting commit log fails; closing vault succeeds" $
     TestCase $ do
-      let mock = addMockExecResults execResults mockWithVaultAndRepoDir
-            where
-              execResults =
-                [ D.gitLogExec False,
-                  D.unmountExec True,
-                  D.lockExec True,
-                  D.loopDeleteExec True
-                ]
-                  <*> (pure D.localOp2)
-      let opResult = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
-      let mockAfterExec = snd result
+      let operation = closeVault mockVaultRuntimeInfo
+
+      let mockExecResults =
+            [ D.gitLogExec False,
+              D.unmountExec True,
+              D.lockExec True,
+              D.loopDeleteExec True
+            ]
+              <*> (pure D.localOp2)
+
+      let mock = addMockExecResults mockExecResults mockWithVaultAndRepoDir
+      let operationResult = runState (runExceptT operation) mock
+      let mockAfterExec = snd operationResult
+
       let expectedCommands =
             [D.gitLogCmd]
               ++ D.preClosePartitionCmds
@@ -42,6 +45,7 @@ test_commitLogFails =
         "unmounted, locked, deleted loop"
         expectedCommands
         (execRecorded mockAfterExec)
+
       assertEqual
         "dir returned to srcDir"
         "/home/user/vaults/mockVault"
@@ -56,17 +60,20 @@ test_success :: Test
 test_success =
   TestLabel "closing vault succeeds" $
     TestCase $ do
-      let mock = addMockExecResults execResults mockWithVaultAndRepoDir
-            where
-              execResults =
-                [ D.gitLogExec True,
-                  D.unmountExec True,
-                  D.lockExec True,
-                  D.loopDeleteExec True
-                ]
-                  <*> (pure D.localOp2)
-      let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
-      let mockAfterExec = snd result
+      let operation = closeVault mockVaultRuntimeInfo
+
+      let mockExecResults =
+            [ D.gitLogExec True,
+              D.unmountExec True,
+              D.lockExec True,
+              D.loopDeleteExec True
+            ]
+              <*> (pure D.localOp2)
+
+      let mock = addMockExecResults mockExecResults mockWithVaultAndRepoDir
+      let operationResult = runState (runExceptT operation) mock
+      let mockAfterExec = snd operationResult
+
       let expectedCommands =
             [D.gitLogCmd]
               ++ D.preClosePartitionCmds
@@ -76,6 +83,7 @@ test_success =
         "unmounted, locked, deleted loop"
         expectedCommands
         (execRecorded mockAfterExec)
+
       assertEqual
         "dir changed to srcDir"
         "/home/user/vaults/mockVault"
@@ -90,27 +98,26 @@ test_success_remote :: Test
 test_success_remote =
   TestLabel "closing remote vault succeeds" $
     TestCase $ do
-      let mock = addMockExecResults execResults mockWithVaultAndRepoDir
-            where
-              execResults =
-                [ D.unmountExec True,
-                  D.lockExec True,
-                  D.loopDeleteExec True
-                ]
-                  <*> (pure D.localOp2)
-      let mockRemoteVRI =
-            mockVaultRuntimeInfo
-              { partitionLocation = RemotePartition
-              }
-      let result = runState (runExceptT $ closeVault mockRemoteVRI) mock
-      let mockAfterExec = snd result
+      let operation = closeVault D.mockRemoteVRI
+
+      let mockExecResults =
+            [ D.unmountExec True,
+              D.lockExec True,
+              D.loopDeleteExec True
+            ]
+              <*> (pure D.localOp2)
+
+      let mock = addMockExecResults mockExecResults mockWithVaultAndRepoDir
+      let operationResult = runState (runExceptT operation) mock
+      let mockAfterExec = snd operationResult
+
       let expectedCommands =
-            D.preClosePartitionCmds
-              ++ D.closePartitionCmds D.localOp2
+            D.preClosePartitionCmds ++ (D.closePartitionCmds D.localOp2)
       assertEqual
         "unmounted, locked, deleted loop"
         expectedCommands
         (execRecorded mockAfterExec)
+
       assertEqual
         "dir changed to srcDir"
         "/home/user/vaults/mockVault"
