@@ -23,16 +23,16 @@ test_commitLogFails :: Test
 test_commitLogFails =
   TestLabel "exporting commit log fails; closing vault succeeds" $
     TestCase $ do
-      let mock = addMockExecResults results mockWithVaultAndRepoDir
+      let mock = addMockExecResults execResults mockWithVaultAndRepoDir
             where
-              results =
+              execResults =
                 [ D.gitLogExec False,
                   D.unmountExec True,
                   D.lockExec True,
                   D.loopDeleteExec True
                 ]
                   <*> (pure D.localOp2)
-      let result = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
+      let opResult = runState (runExceptT $ closeVault mockVaultRuntimeInfo) mock
       let mockAfterExec = snd result
       let expectedCommands =
             [D.gitLogCmd]
@@ -56,9 +56,9 @@ test_success :: Test
 test_success =
   TestLabel "closing vault succeeds" $
     TestCase $ do
-      let mock = addMockExecResults results mockWithVaultAndRepoDir
+      let mock = addMockExecResults execResults mockWithVaultAndRepoDir
             where
-              results =
+              execResults =
                 [ D.gitLogExec True,
                   D.unmountExec True,
                   D.lockExec True,
@@ -90,9 +90,9 @@ test_success_remote :: Test
 test_success_remote =
   TestLabel "closing remote vault succeeds" $
     TestCase $ do
-      let mock = addMockExecResults results mockWithVaultAndRepoDir
+      let mock = addMockExecResults execResults mockWithVaultAndRepoDir
             where
-              results =
+              execResults =
                 [ D.unmountExec True,
                   D.lockExec True,
                   D.loopDeleteExec True
