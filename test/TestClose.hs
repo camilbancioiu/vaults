@@ -48,7 +48,7 @@ test_commitLogFails =
 
       assertEqual
         "dir returned to srcDir"
-        "/home/user/vaults/mockVault"
+        mockVaultSourceDir
         (currentDir mockAfterExec)
       assertEqual
         "git log not saved"
@@ -86,11 +86,11 @@ test_success =
 
       assertEqual
         "dir changed to srcDir"
-        "/home/user/vaults/mockVault"
+        mockVaultSourceDir
         (currentDir mockAfterExec)
       assertEqual
         "git log saved"
-        ("/home/user/vaults/mockVault", "local.log", D.commitLog D.localOp2)
+        (mockVaultSourceDir, "local.log", D.commitLog D.localOp2)
         (lastWrittenFile mockAfterExec)
       assertAllExecsConsumed mockAfterExec
 
@@ -120,7 +120,7 @@ test_success_remote =
 
       assertEqual
         "dir changed to srcDir"
-        "/home/user/vaults/mockVault"
+        mockVaultSourceDir
         (currentDir mockAfterExec)
       assertEqual
         "git log not saved"
