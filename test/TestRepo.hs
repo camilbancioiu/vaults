@@ -10,7 +10,7 @@ import System.Exit
 import Test.HUnit
 import qualified Vaults.Base as Base
 import Vaults.Repo
-import qualified Vaults.Substrate as Sub
+import qualified Vaults.Substrate2 as Sub
 
 allTests :: Test
 allTests =

@@ -308,8 +308,9 @@ mock_call executable params = do
   mexcepts <- gets callExceptions
   if null mexcepts
     then return ()
-    else do
-      ExceptT $ head mexcepts
+    else case head mexcepts of
+      Right () -> return ()
+      Left msg -> throwError msg
 
 mock_delay ::
   Int ->

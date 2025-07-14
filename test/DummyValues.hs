@@ -9,7 +9,7 @@ import System.Exit
 import qualified Vaults.Base as B
 import qualified Vaults.CustomCfg as Cfg
 import qualified Vaults.Repo as Repo
-import qualified Vaults.Substrate as Sub
+import qualified Vaults.Substrate2 as Sub
 
 data DummyOp = DummyOp
   { partitionFile :: FilePath,
@@ -463,4 +463,4 @@ dummyOperation ::
   ExceptT String (State Mock) ()
 dummyOperation vi = do
   let mockOp = mock_call "dummyOp" [B.name vi]
-  lift mockOp >> return ()
+  mockOp >> return ()

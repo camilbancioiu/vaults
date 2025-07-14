@@ -1,5 +1,6 @@
 module TestBase where
 
+import Control.Monad.Except
 import Control.Monad.State
 import Data.Maybe
 import MockSubstrate
@@ -18,20 +19,20 @@ allTests =
 test_isVaultDir :: Test
 test_isVaultDir = TestCase $ do
   let mock = emptyMock
-  let isV = evalState Base.isVaultDir mock
-  assertEqual "isVaultDir" False isV
+  let isV = evalState (runExceptT Base.isVaultDir) mock
+  assertEqual "isVaultDir" (Right False) isV
 
   let mock = mockWithVaultDir
-  let isV = evalState Base.isVaultDir mock
-  assertEqual "isVaultDir" True isV
+  let isV = evalState (runExceptT Base.isVaultDir) mock
+  assertEqual "isVaultDir" (Right True) isV
 
 -- TODO test when files contain trailing newlines
 test_loadVaultInfo :: Test
 test_loadVaultInfo = TestCase $ do
   let mock = mockWithVaultDir
   let expected = mockVaultInfo
-  let vi = evalState Base.loadVaultInfo mock
-  assertEqual "loadVaultInfo" expected vi
+  let vi = evalState (runExceptT Base.loadVaultInfo) mock
+  assertEqual "loadVaultInfo" (Right expected) vi
 
 test_getPartitionLocation :: Test
 test_getPartitionLocation = TestCase $ do
