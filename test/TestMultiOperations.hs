@@ -20,7 +20,7 @@ test_iterateDirs =
       let operation = MultiOperations.iterateVaultDirs D.dummyOperation
       let mock = mockMultiVault
 
-      let result = runState (runExceptT $ operation) mock
+      let result = runState (runExceptT operation) mock
       let mockAfterExec = snd result
 
       assertEqual
@@ -51,6 +51,6 @@ perVaultCmds vault =
     ("changeDir", [vault])
   ]
     ++ D.readVaultInfoCmds
-    ++ [ ("dummy", [vault]),
+    ++ [ ("dummyOp", [vault]),
          ("changeDir", ["vaults"])
        ]

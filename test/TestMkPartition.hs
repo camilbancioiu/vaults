@@ -38,12 +38,11 @@ test_MkPartitionSuccess =
 
       let operation = Operations.doMakePartition partitionName 64 mockVaultInfo
       let mock = addMockExecResults mockExecResults mockWithVaultDir
-            where
 
-      let mockExecResults = runState (runExceptT $ operation) mock
-      let mockAfterExec = snd mockExecResults
+      let operationResult = runState (runExceptT operation) mock
+      let mockAfterExec = snd operationResult
 
-      assertEqual "" (Right ()) (fst mockExecResults)
+      assertEqual "" (Right ()) (fst operationResult)
 
       let expectedCommands =
             [ ("id", ["--user", "--name"]),

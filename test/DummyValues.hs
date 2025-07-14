@@ -462,5 +462,5 @@ dummyOperation ::
   B.VaultInfo ->
   ExceptT String (State Mock) ()
 dummyOperation vi = do
-  let mockOp = mock_call "dummy" [B.name vi]
+  let mockOp = mock_call "dummyOp" [B.name vi]
   lift mockOp >> return ()
