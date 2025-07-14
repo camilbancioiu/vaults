@@ -35,8 +35,6 @@ class (Monad m) => Substrate m where
   echo :: String -> ExceptT String m ()
   sync :: ExceptT String m ()
 
--- TODO consider wrapping all methods in ExceptT
--- TODO e.g. readFile = ExceptT . Prelude.readFile
 instance Substrate IO where
   readFile = lift . Prelude.readFile
   writeFile = wrappedWriteFile
@@ -52,7 +50,7 @@ instance Substrate IO where
   exec = execIOProcess
   call = callIOProcess
   delay = lift . Control.Concurrent.threadDelay
-  echo = lift . putStrLn
+  echo = lift . Prelude.putStrLn
   sync = callIOSync
 
 wrappedWriteFile ::
