@@ -25,6 +25,11 @@ test_commitLogFails =
     TestCase $ do
       let operation = closeVault mockVaultRuntimeInfo
 
+      let expectedCommands =
+            [D.gitLogCmd]
+              ++ D.preClosePartitionCmds
+              ++ (D.closePartitionCmds D.localOp2)
+
       let mockExecResults =
             [ D.gitLogExec False,
               D.unmountExec True,
@@ -37,10 +42,6 @@ test_commitLogFails =
       let operationResult = runState (runExceptT operation) mock
       let mockAfterExec = snd operationResult
 
-      let expectedCommands =
-            [D.gitLogCmd]
-              ++ D.preClosePartitionCmds
-              ++ (D.closePartitionCmds D.localOp2)
       assertEqual
         "unmounted, locked, deleted loop"
         expectedCommands
@@ -50,10 +51,12 @@ test_commitLogFails =
         "dir returned to srcDir"
         mockVaultSourceDir
         (currentDir mockAfterExec)
+
       assertEqual
         "git log not saved"
         ("", "", "")
         (lastWrittenFile mockAfterExec)
+
       assertAllExecsConsumed mockAfterExec
 
 test_success :: Test
@@ -61,6 +64,12 @@ test_success =
   TestLabel "closing vault succeeds" $
     TestCase $ do
       let operation = closeVault mockVaultRuntimeInfo
+
+      let expectedCommands =
+            [D.gitLogCmd]
+              ++ D.preClosePartitionCmds
+              ++ (D.closePartitionCmds D.localOp2)
+              ++ [("writeFile", ["local.log"])]
 
       let mockExecResults =
             [ D.gitLogExec True,
@@ -74,11 +83,6 @@ test_success =
       let operationResult = runState (runExceptT operation) mock
       let mockAfterExec = snd operationResult
 
-      let expectedCommands =
-            [D.gitLogCmd]
-              ++ D.preClosePartitionCmds
-              ++ (D.closePartitionCmds D.localOp2)
-              ++ [("writeFile", ["local.log"])]
       assertEqual
         "unmounted, locked, deleted loop"
         expectedCommands
@@ -88,10 +92,12 @@ test_success =
         "dir changed to srcDir"
         mockVaultSourceDir
         (currentDir mockAfterExec)
+
       assertEqual
         "git log saved"
         (mockVaultSourceDir, "local.log", D.commitLog D.localOp2)
         (lastWrittenFile mockAfterExec)
+
       assertAllExecsConsumed mockAfterExec
 
 test_success_remote :: Test
@@ -99,6 +105,10 @@ test_success_remote =
   TestLabel "closing remote vault succeeds" $
     TestCase $ do
       let operation = closeVault D.mockRemoteVRI
+
+      let expectedCommands =
+            D.preClosePartitionCmds
+              ++ (D.closePartitionCmds D.localOp2)
 
       let mockExecResults =
             [ D.unmountExec True,
@@ -111,8 +121,6 @@ test_success_remote =
       let operationResult = runState (runExceptT operation) mock
       let mockAfterExec = snd operationResult
 
-      let expectedCommands =
-            D.preClosePartitionCmds ++ (D.closePartitionCmds D.localOp2)
       assertEqual
         "unmounted, locked, deleted loop"
         expectedCommands
@@ -122,8 +130,10 @@ test_success_remote =
         "dir changed to srcDir"
         mockVaultSourceDir
         (currentDir mockAfterExec)
+
       assertEqual
         "git log not saved"
         (lastWrittenFile emptyMock)
         (lastWrittenFile mockAfterExec)
+
       assertAllExecsConsumed mockAfterExec

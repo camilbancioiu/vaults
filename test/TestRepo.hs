@@ -38,18 +38,17 @@ failedGitExecResult =
 test_UninitializedGit :: Test
 test_UninitializedGit =
   TestCase $ do
-    let mock = addMockExecResults results mockWithVaultAndRepoDir
-          where
-            results =
-              [ failedGitExecResult
-              ]
-    let vi = mockVaultInfo
-    let result = runState (runExceptT $ verify vi) mock
-    let mockAfterExec = snd result
+    let operation = verify mockVaultInfo
 
     let expectedCommands =
           [ ("git", ["status"])
           ]
+
+    let mockExecResults = [failedGitExecResult]
+
+    let mock = addMockExecResults mockExecResults mockWithVaultAndRepoDir
+    let operationResult = runState (runExceptT operation) mock
+    let mockAfterExec = snd operationResult
 
     assertEqualLists
       "check repo commands"
@@ -59,29 +58,34 @@ test_UninitializedGit =
     assertEqual
       "verify uninitialized git repo"
       (Left UninitializedGit)
-      (fst result)
+      (fst operationResult)
+
+    assertAllExecsConsumed mockAfterExec
 
 test_IncorrectGitRemotes :: Test
 test_IncorrectGitRemotes =
   TestCase $ do
-    let mock = addMockExecResults ers mockWithVaultAndRepoDir
-          where
-            ers =
-              [ D.successfulExecResult,
-                D.successfulExecResultWithOutput D.dummyGitRemoteVOut,
-                D.successfulExecResultWithOutput "user"
-              ]
     let vi =
           mockVaultInfo
             { Base.remotes = ["remoteA", "remoteB", "remoteC"]
             }
-    let result = runState (runExceptT $ verify vi) mock
-    let mockAfterExec = snd result
+    let operation = verify vi
+
     let expectedCommands =
           [ ("git", ["status"]),
             ("git", ["remote", "--verbose"]),
             ("id", ["--user", "--name"])
           ]
+
+    let mockExecResults =
+          [ D.successfulExecResult,
+            D.successfulExecResultWithOutput D.dummyGitRemoteVOut,
+            D.successfulExecResultWithOutput "user"
+          ]
+
+    let mock = addMockExecResults mockExecResults mockWithVaultAndRepoDir
+    let operationResult = runState (runExceptT operation) mock
+    let mockAfterExec = snd operationResult
 
     assertEqual
       "check repo commands"
@@ -93,54 +97,57 @@ test_IncorrectGitRemotes =
             GitRemote "remoteB" "/run/media/user/mockVault-remoteB/repo",
             GitRemote "remoteC" "/run/media/user/mockVault-remoteC/repo"
           ]
+
     assertEqual
       "verify git remotes"
       (Left $ IncorrectGitRemotes expectedRemotes)
-      (fst result)
+      (fst operationResult)
 
 test_IncorrectSafeDirs :: Test
 test_IncorrectSafeDirs =
   TestCase $ do
-    let mock = addMockExecResults ers mockWithVaultAndRepoDir
-          where
-            ers =
-              [ D.successfulExecResult,
-                D.successfulExecResultWithOutput D.dummyGitRemoteVOut,
-                D.successfulExecResultWithOutput "user",
-                D.successfulExecResultWithOutput "user",
-                D.successfulExecResultWithOutput existingSafeDirs
-              ]
-            existingSafeDirs = "/run/media/user/mockVault-remoteA/repo/.git"
-
     let vi =
           mockVaultInfo
             { Base.remotes = ["remoteA", "remoteB"]
             }
 
-    let result = runState (runExceptT $ verify vi) mock
-    let mockAfterExec = snd result
+    let operation = verify vi
+
+    let existingSafeDirs = "/run/media/user/mockVault-remoteA/repo/.git"
+    let mockExecResults =
+          [ D.successfulExecResult,
+            D.successfulExecResultWithOutput D.dummyGitRemoteVOut,
+            D.successfulExecResultWithOutput "user",
+            D.successfulExecResultWithOutput "user",
+            D.successfulExecResultWithOutput existingSafeDirs
+          ]
+
+    let mock = addMockExecResults mockExecResults mockWithVaultAndRepoDir
+
+    let operationResult = runState (runExceptT operation) mock
+    let mockAfterExec = snd operationResult
 
     assertEqual
       "verify git safe dirs"
       (Left $ IncorrectGitSafeDirs D.dummyGitSafeDirs)
-      (fst result)
+      (fst operationResult)
 
 test_SuccessfulVerification :: Test
 test_SuccessfulVerification =
   TestLabel "successful repo verification" $
     TestCase $ do
-      let mock = addMockExecResults ers mockWithVaultAndRepoDir
+      let operation = verify vi
             where
-              ers = D.successfulRepoVerificationExecResults
-      let vi =
-            mockVaultInfo
-              { Base.remotes = ["remoteA", "remoteB"]
-              }
-
-      let result = runState (runExceptT $ verify vi) mock
-      let mockAfterExec = snd result
+              vi = mockVaultInfo {Base.remotes = ["remoteA", "remoteB"]}
 
       let expectedCommands = D.verifyRepoCmds
+
+      let mockExecResults = D.successfulRepoVerificationExecResults
+
+      let mock = addMockExecResults mockExecResults mockWithVaultAndRepoDir
+      let operationResult = runState (runExceptT operation) mock
+      let mockAfterExec = snd operationResult
+
       assertEqual
         "check repo commands"
         expectedCommands
@@ -149,17 +156,20 @@ test_SuccessfulVerification =
       assertEqual
         "repo verification successful"
         (Right ())
-        (fst result)
+        (fst operationResult)
 
 test_callGitInit :: Test
 test_callGitInit =
   TestLabel "callGitInit successful" $
     TestCase $ do
-      let mock = mockWithVaultAndRepoDir
-      let result = runState (runExceptT callGitInit) mock
-      let mockAfterExec = snd result
+      let operation = callGitInit
 
       let expectedCommands = [("git", ["init"])]
+
+      let mock = mockWithVaultAndRepoDir
+      let operationResult = runState (runExceptT operation) mock
+      let mockAfterExec = snd operationResult
+
       assertEqual
         "check git init command"
         expectedCommands
@@ -169,13 +179,7 @@ test_eraseGitRemotes :: Test
 test_eraseGitRemotes =
   TestLabel "erase git remotes successful" $
     TestCase $ do
-      let mock = addMockExecResults ers mockWithVaultAndRepoDir
-            where
-              ers = [D.successfulExecResultWithOutput existingRemoteNames]
-              existingRemoteNames = unlines ["remoteA", "remoteB", "remoteX"]
-
-      let result = runState (runExceptT removeGitRemotes) mock
-      let mockAfterExec = snd result
+      let operation = removeGitRemotes
 
       let expectedCommands =
             [ ("git", ["remote"]),
@@ -183,6 +187,13 @@ test_eraseGitRemotes =
               ("git", ["remote", "remove", "remoteB"]),
               ("git", ["remote", "remove", "remoteX"])
             ]
+
+      let existingRemoteNames = unlines ["remoteA", "remoteB", "remoteX"]
+      let mockExecResults = [D.successfulExecResultWithOutput existingRemoteNames]
+
+      let mock = addMockExecResults mockExecResults mockWithVaultAndRepoDir
+      let operationResult = runState (runExceptT operation) mock
+      let mockAfterExec = snd operationResult
 
       assertEqualLists
         "commands of removeGitRemotes"
@@ -213,6 +224,7 @@ test_makeExpectedRemotes =
       "verify generated expectations of no remotes"
       []
       (makeExpectedRemotes [] user [])
+
     assertEqual
       "verify generated expectations of remotes"
       D.dummyGitRemotes
@@ -221,12 +233,15 @@ test_makeExpectedRemotes =
 test_getCurrentBranch :: Test
 test_getCurrentBranch =
   TestCase $ do
-    let mock = addMockExecResults results mockWithVaultAndRepoDir
-          where
-            results = [D.gitBranchShowCurrentExec True D.localOp]
-    let result = runState (runExceptT getCurrentBranch) mock
-    let mockAfterExec = snd result
+    let operation = getCurrentBranch
+
     let expectedCommands = [("git", ["branch", "--show-current"])]
+
+    let mockExecResults = [D.gitBranchShowCurrentExec True D.localOp]
+
+    let mock = addMockExecResults mockExecResults mockWithVaultAndRepoDir
+    let operationResult = runState (runExceptT operation) mock
+    let mockAfterExec = snd operationResult
 
     assertEqualLists
       "verify call to git branch"
@@ -236,20 +251,23 @@ test_getCurrentBranch =
     assertEqual
       "verify current branch value"
       (Right (D.currentBranch D.localOp))
-      (fst result)
+      (fst operationResult)
 
 test_getRemotes :: Test
 test_getRemotes =
   TestCase $ do
-    let mock = addMockExecResults ers mockWithVaultAndRepoDir
-          where
-            ers =
-              [ D.gitRemoteExec,
-                D.successfulExecResultWithOutput "user"
-              ]
-    let result = runState (runExceptT getRemotes) mock
-    let mockAfterExec = snd result
+    let operation = getRemotes
+
+    let mockExecResults =
+          [ D.gitRemoteExec,
+            D.successfulExecResultWithOutput "user"
+          ]
+
     let expectedCommands = [("git", ["remote", "--verbose"])]
+
+    let mock = addMockExecResults mockExecResults mockWithVaultAndRepoDir
+    let operationResult = runState (runExceptT operation) mock
+    let mockAfterExec = snd operationResult
 
     assertEqualLists
       "verify call to git remote"
@@ -259,7 +277,7 @@ test_getRemotes =
     assertEqual
       "parsed git remotes"
       (Right D.dummyGitRemotes)
-      (fst result)
+      (fst operationResult)
 
 test_parseGitRemotes :: Test
 test_parseGitRemotes =
@@ -270,6 +288,7 @@ test_parseGitRemotes =
       (parseGitRemotes "")
 
     let parsedRemotes = parseGitRemotes D.dummyGitRemoteVOut
+
     assertEqualLists
       "parsed git remotes"
       D.dummyGitRemotes

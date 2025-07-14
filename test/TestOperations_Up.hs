@@ -18,11 +18,19 @@ testSingleUpload_success =
   TestLabel "upload single vault successfuly" $
     TestCase $ do
       let operation = Operations.doUploadVault mockVaultInfo
-      let mock = addMockExecResults [] mockWithVaultAndRepoDir
-
-      let (result, mockAfterExec) = runState (runExceptT $ operation) mock
-
-      assertEqual "uploaded single vault successfuly" (Right ()) result
 
       let expectedCommands = D.uploadPartitionCmds "local"
-      assertEqual "commands" expectedCommands (execRecorded mockAfterExec)
+
+      let mock = mockWithVaultAndRepoDir
+      let operationResult = runState (runExceptT operation) mock
+      let mockAfterExec = snd operationResult
+
+      assertEqual
+        "uploaded single vault successfuly"
+        (Right ())
+        (fst operationResult)
+
+      assertEqual
+        "commands"
+        expectedCommands
+        (execRecorded mockAfterExec)

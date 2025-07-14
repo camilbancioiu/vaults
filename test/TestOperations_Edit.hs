@@ -20,17 +20,21 @@ test_editSuccessful =
   TestLabel "edit successful" $
     TestCase $ do
       let operation = Operations.doEditVault mockVaultInfo
-      let mock = addMockExecResults results mockWithVaultAndRepoDir
-            where
-              results =
-                ( D.openPartitionExecOk
-                    ++ [D.gitLogExec True]
-                    ++ D.closePartitionExecOk
-                )
-                  <*> (pure D.localOp)
-      let result = runState (runExceptT $ operation) mock
-      let mockAfterExec = snd result
-      assertEqual "vault opened, edited, closed" (Right ()) (fst result)
+
+      let mockExecResults =
+            ( D.openPartitionExecOk
+                ++ [D.gitLogExec True]
+                ++ D.closePartitionExecOk
+            )
+              <*> (pure D.localOp)
+
+      let mock = addMockExecResults mockExecResults mockWithVaultAndRepoDir
+      let operationResult = runState (runExceptT $ operation) mock
+      let mockAfterExec = snd operationResult
+      assertEqual
+        "vault opened, edited, closed"
+        (Right ())
+        (fst operationResult)
 
       let expectedCommands =
             D.preOpenPartitionCmds
@@ -51,6 +55,7 @@ test_editSuccessful =
         "all commands executed"
         expectedCommands
         (execRecorded mockAfterExec)
+
       assertAllExecsConsumed mockAfterExec
 
 test_editorCrashes :: Test
@@ -58,22 +63,26 @@ test_editorCrashes =
   TestLabel "editor crashes" $
     TestCase $ do
       let operation = Operations.doEditVault mockVaultInfo
-      let mock = addMockExecResults results mockWithVaultAndRepoDir
-            where
-              results =
-                ( D.openPartitionExecOk
-                    ++ [D.gitLogExec True]
-                    ++ D.closePartitionExecOk
-                )
-                  <*> (pure D.localOp)
+
+      let mockExecResults =
+            ( D.openPartitionExecOk
+                ++ [D.gitLogExec True]
+                ++ D.closePartitionExecOk
+            )
+              <*> (pure D.localOp)
+
+      let mock = addMockExecResults mockExecResults mockWithVaultAndRepoDir
       let mockWithCrash =
             addMockExceptions
               [ Left "editor crashed"
               ]
               mock
-      let result = runState (runExceptT $ operation) mockWithCrash
-      let mockAfterExec = snd result
-      assertEqual "vault opened, editor crashed, closed" (Left "editor crashed") (fst result)
+      let operationResult = runState (runExceptT operation) mockWithCrash
+      let mockAfterExec = snd operationResult
+      assertEqual
+        "vault opened, editor crashed, closed"
+        (Left "editor crashed")
+        (fst operationResult)
 
       let expectedCommands =
             D.preOpenPartitionCmds
@@ -94,4 +103,5 @@ test_editorCrashes =
         "all commands executed"
         expectedCommands
         (execRecorded mockAfterExec)
+
       assertAllExecsConsumed mockAfterExec

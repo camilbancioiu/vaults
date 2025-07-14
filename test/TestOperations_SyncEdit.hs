@@ -20,30 +20,6 @@ test_syncEditSuccessful =
   TestLabel "sync-edit successful" $
     TestCase $ do
       let operation = Operations.doSyncEditVault "remoteA" mockVaultInfo
-      -- TODO There is no `git fetch` in the execResults below because `git
-      -- fetch` is called with Substrate.call, not Substrate.exec. A
-      -- different test is requried to assert on errors with `git fetch`.
-      let mock = addMockExecResults results mockWithVaultAndRepoDir
-            where
-              results =
-                [ D.loopSetupExec True D.remoteOp,
-                  D.unlockExec True D.remoteOp,
-                  D.mountExec True D.remoteOp,
-                  D.loopSetupExec True D.localOp,
-                  D.unlockExec True D.localOp,
-                  D.mountExec True D.localOp,
-                  D.gitBranchShowCurrentExec True D.localOp,
-                  D.gitLogExec True D.localOp,
-                  D.unmountExec True D.localOp,
-                  D.lockExec True D.localOp,
-                  D.loopDeleteExec True D.localOp,
-                  D.unmountExec True D.remoteOp,
-                  D.lockExec True D.remoteOp,
-                  D.loopDeleteExec True D.remoteOp
-                ]
-      let result = runState (runExceptT $ operation) mock
-      let mockAfterExec = snd result
-      assertEqual "sync-edit successful" (Right ()) (fst result)
 
       let expectedCommands =
             D.preOpenPartitionCmds
@@ -71,8 +47,38 @@ test_syncEditSuccessful =
               ++ (D.closePartitionCmds D.localOp)
               ++ [("writeFile", ["local.log"])]
 
+      -- TODO There is no `git fetch` in the execResults below because `git
+      -- fetch` is called with Substrate.call, not Substrate.exec. A
+      -- different test is requried to assert on errors with `git fetch`.
+      let mockExecResults =
+            [ D.loopSetupExec True D.remoteOp,
+              D.unlockExec True D.remoteOp,
+              D.mountExec True D.remoteOp,
+              D.loopSetupExec True D.localOp,
+              D.unlockExec True D.localOp,
+              D.mountExec True D.localOp,
+              D.gitBranchShowCurrentExec True D.localOp,
+              D.gitLogExec True D.localOp,
+              D.unmountExec True D.localOp,
+              D.lockExec True D.localOp,
+              D.loopDeleteExec True D.localOp,
+              D.unmountExec True D.remoteOp,
+              D.lockExec True D.remoteOp,
+              D.loopDeleteExec True D.remoteOp
+            ]
+
+      let mock = addMockExecResults mockExecResults mockWithVaultAndRepoDir
+      let result = runState (runExceptT $ operation) mock
+      let mockAfterExec = snd result
+
+      assertEqual
+        "sync-edit successful"
+        (Right ())
+        (fst result)
+
       assertEqualLists
         "all commands executed"
         expectedCommands
         (execRecorded mockAfterExec)
+
       assertAllExecsConsumed mockAfterExec

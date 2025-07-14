@@ -21,10 +21,15 @@ allTests =
 test_shellPartition_without_partition_file :: Test
 test_shellPartition_without_partition_file =
   TestCase $ do
+    let operation = openPartition ""
     let mock = emptyMock
-    let result = runState (runExceptT $ openPartition "") mock
-    let mockAfterExec = snd result
-    assertOpError "partition filename is required" result
+    let operationResult = runState (runExceptT operation) mock
+    let mockAfterExec = snd operationResult
+
+    assertOpError
+      "partition filename is required"
+      operationResult
+
     assertNoExecCalls mockAfterExec
 
 test_shellPartition_ok :: Test
@@ -32,13 +37,18 @@ test_shellPartition_ok =
   TestLabel "open shell in mounted partition, then close shell" $
     TestCase $ do
       let operation = Operations.doShellPartition "local.vault"
-      let mock = addMockExecResults results emptyMock
-            where
-              results =
-                ( D.openPartitionExecOk
-                    ++ D.closePartitionExecOk
-                )
-                  <*> (pure D.localOp)
-      let result = runState (runExceptT $ operation) mock
-      let mockAfterExec = snd result
-      assertEqual "vault opened, shell started and exited, closed" (Right ()) (fst result)
+
+      let mockExecResults =
+            ( D.openPartitionExecOk
+                ++ D.closePartitionExecOk
+            )
+              <*> (pure D.localOp)
+
+      let mock = addMockExecResults mockExecResults emptyMock
+      let operationResult = runState (runExceptT $ operation) mock
+      let mockAfterExec = snd operationResult
+
+      assertEqual
+        "vault opened, shell started and exited, closed"
+        (Right ())
+        (fst operationResult)

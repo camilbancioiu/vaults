@@ -33,22 +33,25 @@ test_setup_verification_ok =
               ++ D.closePartitionCmds D.localOp
               ++ [("writeFile", ["local.log"])]
 
-      let mock = addMockExecResults results mockWithVaultAndRepoDir
-            where
-              results =
-                []
-                  ++ (D.openPartitionExecOk <*> (pure D.localOp))
-                  ++ D.successfulRepoMakeConformantExecResults
-                  ++ [D.gitLogExec True D.localOp]
-                  ++ (D.closePartitionExecOk <*> (pure D.localOp))
+      let mockExecResults =
+            []
+              ++ (D.openPartitionExecOk <*> (pure D.localOp))
+              ++ D.successfulRepoMakeConformantExecResults
+              ++ [D.gitLogExec True D.localOp]
+              ++ (D.closePartitionExecOk <*> (pure D.localOp))
 
-      let result = runState (runExceptT $ operation) mock
-      let mockAfterExec = snd result
+      let mock = addMockExecResults mockExecResults mockWithVaultAndRepoDir
+      let operationResult = runState (runExceptT $ operation) mock
+      let mockAfterExec = snd operationResult
 
-      assertEqual "vault opened, set up, closed" (Right ()) (fst result)
+      assertEqual
+        "vault opened, set up, closed"
+        (Right ())
+        (fst operationResult)
 
       assertEqualLists
         "all commands executed"
         expectedCommands
         (execRecorded mockAfterExec)
+
       assertAllExecsConsumed mockAfterExec
