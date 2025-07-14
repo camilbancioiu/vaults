@@ -6,7 +6,7 @@ import Control.Monad.Trans
 import Data.List.Extra
 import Data.Maybe
 import System.Exit
-import qualified Vaults.Substrate as Substrate
+import qualified Vaults.Substrate2 as Substrate
 
 data PartitionLocation
   = LocalPartition
@@ -40,7 +40,7 @@ data VaultRuntimeInfo = VaultRuntimeInfo
 
 loadVaultInfo ::
   (Substrate.Substrate m) =>
-  m VaultInfo
+  ExceptT String m VaultInfo
 loadVaultInfo = do
   vname <- Substrate.readFile ".vault/name"
   vlocalname <- Substrate.readFile ".vault/local"
@@ -56,14 +56,14 @@ loadVaultInfo = do
 
 isVaultDir ::
   (Substrate.Substrate m) =>
-  m Bool
+  ExceptT String m Bool
 isVaultDir = Substrate.dirExists ".vault"
 
 ensureIsVaultDir ::
   (Substrate.Substrate m) =>
   ExceptT String m ()
 ensureIsVaultDir = do
-  isV <- lift $ isVaultDir
+  isV <- isVaultDir
   unless isV (throwError "non-vault folder")
 
 getPartitionLocation ::
@@ -86,7 +86,7 @@ getHostname ::
   (Substrate.Substrate m) =>
   ExceptT String m String
 getHostname = do
-  result <- lift $ Substrate.exec "hostname" [] ""
+  result <- Substrate.exec "hostname" [] ""
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get hostname")
   let hostname = Substrate.output result
   return hostname
@@ -95,7 +95,7 @@ getUsername ::
   (Substrate.Substrate m) =>
   ExceptT String m String
 getUsername = do
-  result <- lift $ Substrate.exec "id" ["--user", "--name"] ""
+  result <- Substrate.exec "id" ["--user", "--name"] ""
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get username")
   let username = Substrate.output result
   return username
@@ -104,7 +104,7 @@ getGroupname ::
   (Substrate.Substrate m) =>
   ExceptT String m String
 getGroupname = do
-  result <- lift $ Substrate.exec "id" ["--group", "--name"] ""
+  result <- Substrate.exec "id" ["--group", "--name"] ""
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get groupname")
   let groupname = Substrate.output result
   return groupname

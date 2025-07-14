@@ -8,7 +8,7 @@ import System.Directory
 import System.FilePath.Posix
 import qualified Vaults.Base as B
 import qualified Vaults.Repo as Repo
-import qualified Vaults.Substrate as Substrate
+import qualified Vaults.Substrate2 as Substrate
 import qualified Vaults.Udisksctl as U
 
 -- TODO validate loaded VaultInfo
@@ -25,7 +25,7 @@ openVault partition = do
 
   when (length partition == 0) (throwError "partition filename is required")
 
-  vi <- lift $ B.loadVaultInfo
+  vi <- B.loadVaultInfo
   let partLoc = B.getPartitionLocation vi partition
   when (partLoc == B.UnknownPartition) (throwError $ "unknown vault partition " ++ partition)
 
@@ -43,11 +43,11 @@ openPartition ::
 openPartition partition = do
   when (length partition == 0) (throwError "partition filename is required")
 
-  srcDir <- lift $ Substrate.getDir
+  srcDir <- Substrate.getDir
   loopDev <- U.createLoopDevice partition
   mapperDev <- guardedUnlockDevice loopDev
   mountpoint <- guardedMountDevice loopDev mapperDev
-  lift $ Substrate.changeDir mountpoint
+  Substrate.changeDir mountpoint
 
   let vri =
         B.VaultRuntimeInfo
@@ -94,8 +94,8 @@ setTmuxWindowName ::
   ExceptT String m ()
 setTmuxWindowName name =
   do
-    (ExceptT $ Substrate.call "tmux" ["rename-window", name])
+    (Substrate.call "tmux" ["rename-window", name])
     `catchError` ( \e -> do
-                     lift $ Substrate.echo "could not rename tmux window"
+                     Substrate.echo "could not rename tmux window"
                      return ()
                  )

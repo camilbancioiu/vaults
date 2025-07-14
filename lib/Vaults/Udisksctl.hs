@@ -4,7 +4,7 @@ import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Trans
 import System.Exit
-import qualified Vaults.Substrate as Substrate
+import qualified Vaults.Substrate2 as Substrate
 
 -- TODO validate parameter fname
 createLoopDevice ::
@@ -75,7 +75,7 @@ runUdisksctlCommand ::
   ExceptT String m Substrate.ExecResult
 runUdisksctlCommand params =
   do
-    result <- lift $ Substrate.exec "udisksctl" params ""
+    result <- Substrate.exec "udisksctl" params ""
     when
       (Substrate.exitCode result /= ExitSuccess)
       (throwError (makeErrorMsg params result))
