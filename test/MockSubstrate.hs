@@ -9,7 +9,7 @@ import Control.Monad.State
 import Data.Maybe
 import System.Exit
 import qualified Vaults.Base as Base
-import qualified Vaults.Substrate as Substrate
+import qualified Vaults.Substrate2 as Substrate
 
 data Mock = Mock
   { currentDir :: FilePath,
@@ -175,7 +175,7 @@ instance Substrate.Substrate (State Mock) where
 -- TODO needs to read from writtenFiles as well?
 mock_readFile ::
   FilePath ->
-  State Mock String
+  ExceptT String (State Mock) String
 mock_readFile fpath = do
   modify $ recordExec ("readFile", [fpath])
   vi <- getCurrentVaultInfo
@@ -187,7 +187,7 @@ mock_readFile fpath = do
     _ -> return "not found"
 
 getCurrentVaultInfo ::
-  State Mock Base.VaultInfo
+  ExceptT String (State Mock) Base.VaultInfo
 getCurrentVaultInfo = do
   cdir <- gets currentDir
   mvi <- gets multiVaultInfo
@@ -198,14 +198,14 @@ getCurrentVaultInfo = do
 mock_writeFile ::
   FilePath ->
   String ->
-  State Mock ()
+  ExceptT String (State Mock) ()
 mock_writeFile fpath contents = do
   modify $ recordExec ("writeFile", [fpath])
   modify (addWrittenFile fpath contents)
 
 mock_dirExists ::
   FilePath ->
-  State Mock Bool
+  ExceptT String (State Mock) Bool
 mock_dirExists dir = do
   modify $ recordExec ("dirExists", [dir])
   case dir of
@@ -218,7 +218,7 @@ mock_dirExists dir = do
 
 mock_fileExists ::
   FilePath ->
-  State Mock Bool
+  ExceptT String (State Mock) Bool
 mock_fileExists fpath = do
   modify $ recordExec ("fileExists", [fpath])
   case fpath of
@@ -230,34 +230,34 @@ mock_fileExists fpath = do
       return (elem fpath fpaths)
 
 mock_getDir ::
-  State Mock FilePath
+  ExceptT String (State Mock) FilePath
 mock_getDir = do
   modify $ recordExec ("getDir", [])
   gets currentDir
 
 mock_listDirs ::
-  State Mock [FilePath]
+  ExceptT String (State Mock) [FilePath]
 mock_listDirs = do
   modify $ recordExec ("listDirs", [])
   gets listingDirs
 
 mock_createDir ::
   FilePath ->
-  State Mock ()
+  ExceptT String (State Mock) ()
 mock_createDir dir = do
   modify $ recordExec ("createDir", [dir])
   modify $ addCreatedDir dir
 
 mock_changeDir ::
   String ->
-  State Mock ()
+  ExceptT String (State Mock) ()
 mock_changeDir dir = do
   modify $ recordExec ("changeDir", [dir])
   modify $ setCurrentDir dir
 
 mock_lookupEnv ::
   String ->
-  State Mock (Maybe String)
+  ExceptT String (State Mock) (Maybe String)
 mock_lookupEnv key = do
   when
     (key /= "TEST")
@@ -268,7 +268,7 @@ mock_lookupEnv key = do
 mock_setEnv ::
   String ->
   String ->
-  State Mock ()
+  ExceptT String (State Mock) ()
 mock_setEnv key val = do
   when
     (key /= "TEST")
@@ -277,7 +277,7 @@ mock_setEnv key val = do
 
 mock_unsetEnv ::
   String ->
-  State Mock ()
+  ExceptT String (State Mock) ()
 mock_unsetEnv key = do
   modify $ recordExec ("unsetEnv", [key])
   modify (removeMockEnvVar key)
@@ -286,7 +286,7 @@ mock_exec ::
   String ->
   [String] ->
   String ->
-  State Mock Substrate.ExecResult
+  ExceptT String (State Mock) Substrate.ExecResult
 mock_exec executable params _ = do
   modify $ recordExec (executable, params)
   modify incExecs
@@ -301,31 +301,32 @@ mock_exec executable params _ = do
 mock_call ::
   FilePath ->
   [String] ->
-  State Mock (Either String ())
+  ExceptT String (State Mock) ()
 mock_call executable params = do
   modify $ recordExec (executable, params)
   modify incExecs
   mexcepts <- gets callExceptions
   if null mexcepts
-    then return $ Right ()
-    else do
-      return $ head mexcepts
+    then return ()
+    else case head mexcepts of
+      Right () -> return ()
+      Left msg -> throwError msg
 
 mock_delay ::
   Int ->
-  State Mock ()
+  ExceptT String (State Mock) ()
 mock_delay _ = modify $ recordExec ("delay", [])
 
 mock_echo ::
   String ->
-  State Mock ()
+  ExceptT String (State Mock) ()
 mock_echo _ = return ()
 
 mock_sync ::
-  State Mock (Either String ())
+  ExceptT String (State Mock) ()
 mock_sync = do
   modify $ recordExec ("sync", [])
-  return $ Right ()
+  return ()
 
 mockVaultInfo =
   Base.VaultInfo

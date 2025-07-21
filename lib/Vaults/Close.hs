@@ -5,7 +5,7 @@ import Control.Monad.Except
 import Control.Monad.Trans
 import System.Exit
 import qualified Vaults.Base as Base
-import qualified Vaults.Substrate as Substrate
+import qualified Vaults.Substrate2 as Substrate
 import qualified Vaults.Udisksctl as U
 
 closeVault ::
@@ -36,11 +36,11 @@ closePartition ::
   Base.VaultRuntimeInfo ->
   ExceptT String m ()
 closePartition vri = do
-  lift $ Substrate.changeDir (Base.srcDir vri)
-  lift $ Substrate.sync
-  lift $ Substrate.delay 1000000
+  Substrate.changeDir (Base.srcDir vri)
+  Substrate.sync
+  Substrate.delay 1000000
   U.unmountDevice (Base.mapperDev vri)
-  lift $ Substrate.delay 500000
+  Substrate.delay 500000
   U.lockDevice (Base.loopDev vri)
   U.deleteLoopDevice (Base.loopDev vri)
 
@@ -48,7 +48,7 @@ extractCommitLog ::
   (Substrate.Substrate m) =>
   ExceptT String m String
 extractCommitLog = do
-  result <- lift $ Substrate.exec "git" ["log", "--format=%H"] ""
+  result <- Substrate.exec "git" ["log", "--format=%H"] ""
   when
     (Substrate.exitCode result /= ExitSuccess)
     (throwError $ "git log failed: " ++ (Substrate.errorOutput result))
@@ -62,4 +62,4 @@ saveCommitLog ::
   ExceptT String m ()
 saveCommitLog vri commitLog = do
   let logFilename = (Base.partitionName vri) ++ ".log"
-  lift $ Substrate.writeFile logFilename commitLog
+  Substrate.writeFile logFilename commitLog

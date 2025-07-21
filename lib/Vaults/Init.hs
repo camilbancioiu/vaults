@@ -2,7 +2,7 @@ module Vaults.Init where
 
 import Control.Monad.Except
 import Control.Monad.Trans
-import qualified Vaults.Substrate as Substrate
+import qualified Vaults.Substrate2 as Substrate
 
 initVault ::
   (Substrate.Substrate m) =>
@@ -10,8 +10,8 @@ initVault ::
   String ->
   ExceptT String m ()
 initVault vaultName localName = do
-  lift $ Substrate.createDir ".vault"
-  lift $ Substrate.writeFile ".vault/name" vaultName
-  lift $ Substrate.writeFile ".vault/local" localName
-  lift $ Substrate.writeFile ".vault/remotes" ""
-  lift $ Substrate.writeFile ".vault/remoteStore" ""
+  Substrate.createDir ".vault"
+  Substrate.writeFile ".vault/name" vaultName
+  Substrate.writeFile ".vault/local" localName
+  Substrate.writeFile ".vault/remotes" ""
+  Substrate.writeFile ".vault/remoteStore" ""

@@ -21,7 +21,8 @@ library
                        Vaults.Init, Vaults.MkPartition,
                        Vaults.Open, Vaults.Close,
                        Vaults.Operations, Vaults.MultiOperations,
-                       Vaults.CustomCfg, Vaults.Repo
+                       Vaults.CustomCfg, Vaults.Repo,
+                       Vaults.Substrate2
   -- other-modules:
   -- other-extensions:
   default-language:    Haskell2010
