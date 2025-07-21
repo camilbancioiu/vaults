@@ -5,7 +5,7 @@ import Control.Monad.Except
 import Control.Monad.Trans
 import System.Exit
 import qualified Vaults.Base as Base
-import qualified Vaults.Substrate as Substrate
+import qualified Vaults.Substrate2 as Substrate
 import qualified Vaults.Udisksctl as Udisksctl
 
 minPartitionSize = 64
@@ -36,81 +36,88 @@ makePartition partition partitionSize vi = do
   let filesystemLabel = vaultName ++ "-" ++ partition
   let mapperDev = "/dev/mapper/" ++ filesystemLabel
 
-  lift $
-    Substrate.call
-      "dd"
-      [ "bs=1M",
-        "count=" ++ (show partitionSize),
-        "if=/dev/urandom",
-        "of=" ++ partitionFilename
-      ]
-  lift $ Substrate.echo "Created randomness-filled partition file."
+  Substrate.call
+    "dd"
+    [ "bs=1M",
+      "count=" ++ (show partitionSize),
+      "if=/dev/urandom",
+      "of=" ++ partitionFilename
+    ]
+  Substrate.echo "Created randomness-filled partition file."
 
-  lift $ Substrate.echo "Creating encrypted partition..."
-  lift $
-    Substrate.call
-      "sudo"
-      [ "cryptsetup",
-        "--verify-passphrase",
-        "luksFormat",
-        partitionFilename
-      ]
+  Substrate.echo
+    "Creating encrypted partition..."
 
-  lift $ Substrate.echo "Opening encrypted partition..."
-  lift $
-    Substrate.call
-      "sudo"
-      [ "cryptsetup",
-        "open",
-        "--type",
-        "luks",
-        partitionFilename,
-        filesystemLabel
-      ]
+  Substrate.call
+    "sudo"
+    [ "cryptsetup",
+      "--verify-passphrase",
+      "luksFormat",
+      partitionFilename
+    ]
 
-  lift $ Substrate.echo "Creating EXT4 filesystem inside encrypted partition..."
-  lift $
-    Substrate.call
-      "sudo"
-      [ "mkfs.ext4",
-        "-L",
-        filesystemLabel,
-        mapperDev
-      ]
+  Substrate.echo
+    "Opening encrypted partition..."
+
+  Substrate.call
+    "sudo"
+    [ "cryptsetup",
+      "open",
+      "--type",
+      "luks",
+      partitionFilename,
+      filesystemLabel
+    ]
+
+  Substrate.echo
+    "Creating EXT4 filesystem inside encrypted partition..."
+
+  Substrate.call
+    "sudo"
+    [ "mkfs.ext4",
+      "-L",
+      filesystemLabel,
+      mapperDev
+    ]
 
   mountpoint <- Udisksctl.mountDevice mapperDev
-  lift $ Substrate.echo "EXT4 filesystem mounted."
+  Substrate.echo
+    "EXT4 filesystem mounted."
 
-  lift $
-    Substrate.call
-      "sudo"
-      [ "chown",
-        "-R",
-        owningUser,
-        mountpoint
-      ]
-  lift $ Substrate.echo $ "Set owner " ++ owningUser ++ "."
-  lift $
-    Substrate.call
-      "sudo"
-      [ "chgrp",
-        "-R",
-        owningGroup,
-        mountpoint
-      ]
-  lift $ Substrate.echo $ "Set group " ++ owningGroup ++ "."
+  Substrate.call
+    "sudo"
+    [ "chown",
+      "-R",
+      owningUser,
+      mountpoint
+    ]
+
+  Substrate.echo $
+    "Set owner "
+      ++ owningUser
+      ++ "."
+
+  Substrate.call
+    "sudo"
+    [ "chgrp",
+      "-R",
+      owningGroup,
+      mountpoint
+    ]
+
+  Substrate.echo $ "Set group " ++ owningGroup ++ "."
 
   Udisksctl.unmountDevice mapperDev
-  lift $ Substrate.echo "Unmounted."
+  Substrate.echo "Unmounted."
 
-  lift $ Substrate.delay 2000000
+  Substrate.delay
+    2000000
 
-  lift $
-    Substrate.call
-      "sudo"
-      [ "cryptsetup",
-        "close",
-        filesystemLabel
-      ]
+  Substrate.call
+    "sudo"
+    [ "cryptsetup",
+      "close",
+      filesystemLabel
+    ]
 
-  lift $ Substrate.echo "Partition locked. Complete."
+  Substrate.echo "Partition locked. Complete."

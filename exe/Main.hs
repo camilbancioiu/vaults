@@ -3,6 +3,7 @@ module Main where
 import CLI
 import Control.Exception
 import Control.Monad.Except
+import Control.Monad.Trans
 import Debug.Trace
 import Options.Applicative
 import SubstrateIO
@@ -17,22 +18,27 @@ import qualified Vaults.Substrate as Substrate
 main :: IO ()
 main = do
   operation <- execParser operationsParser
+  result <- runExceptT $ handleOperation operation
+  case result of
+    Left errMsg -> putStrLn errMsg
+    Right _ -> return ()
 
+handleOperation ::
+  Operations.Operation ->
+  ExceptT String IO ()
+handleOperation operation = do
   isVault <- isVaultDir
   result <-
     if not isVault
       then handleNonVaultOperation operation
       else handleVaultOperation operation
-
-  case result of
-    Left errMsg -> putStrLn errMsg
-    Right _ -> return ()
+  return result
 
 handleNonVaultOperation ::
   Operations.Operation ->
-  IO (Either String ())
+  ExceptT String IO ()
 handleNonVaultOperation operation = do
-  putStrLn $ "Performing non-vault operation " ++ (show operation)
+  lift $ putStrLn $ "Performing non-vault operation " ++ (show operation)
   let doOperation = case operation of
         Operations.InitVault vname local -> Operations.doInitVault vname local
         Operations.ShellPartition partition -> Operations.doShellPartition partition
@@ -40,18 +46,20 @@ handleNonVaultOperation operation = do
         Operations.DownloadMultiVault -> MultiOperations.doDownloadMultiVault
         Operations.DiffLogMultiVault -> MultiOperations.doDiffLogMultiVault
         _ -> doError "Operation needs .vault: " operation
-  runExceptT $ doOperation
+
+  doOperation
 
 handleVaultOperation ::
   Operations.Operation ->
-  IO (Either String ())
+  ExceptT String IO ()
 handleVaultOperation operation = do
   vi <- loadVaultInfo
-  putStrLn $
-    "Performing operation "
-      ++ (show operation)
-      ++ " on vault "
-      ++ (name vi)
+  lift $
+    putStrLn $
+      "Performing operation "
+        ++ (show operation)
+        ++ " on vault "
+        ++ (name vi)
   let doOperation = case operation of
         Operations.MakePartition part sz -> Operations.doMakePartition part sz vi
         Operations.SetupVault -> Operations.doSetupVault vi
@@ -64,7 +72,8 @@ handleVaultOperation operation = do
         Operations.SyncEditVault remote -> Operations.doSyncEditVault remote vi
         Operations.DiffLog -> Operations.doDiffLog vi
         _ -> doError "Operation unsupported: " operation
-  runExceptT $ doOperation
+
+  doOperation
 
 doError ::
   (Substrate.Substrate m) =>

@@ -5,8 +5,8 @@ import Control.Monad.Except
 import Control.Monad.Trans
 import System.Exit
 import qualified Vaults.Base as B
-import Vaults.Substrate (Substrate)
-import qualified Vaults.Substrate as Substrate
+import Vaults.Substrate2 (Substrate)
+import qualified Vaults.Substrate2 as Substrate
 
 data RepoIssue
   = UninitializedGit
@@ -48,9 +48,7 @@ verify vi = do
 callGitInit ::
   (Substrate m) =>
   ExceptT String m ()
-callGitInit =
-  ExceptT $
-    Substrate.call "git" ["init"]
+callGitInit = Substrate.call "git" ["init"]
 
 removeGitRemotes ::
   (Substrate m) =>
@@ -64,12 +62,10 @@ removeGitRemote ::
   String ->
   ExceptT String m ()
 removeGitRemote name = do
-  ExceptT $
-    Substrate.call
-      "git"
-      ["remote", "remove", name]
-  lift $
-    Substrate.echo ("removed remote: " ++ name)
+  Substrate.call
+    "git"
+    ["remote", "remove", name]
+  Substrate.echo ("removed remote: " ++ name)
 
 configureGitRemotes ::
   (Substrate m) =>
@@ -87,16 +83,14 @@ addGitRemote ::
   GitRemote ->
   ExceptT String m ()
 addGitRemote remote = do
-  ExceptT $
-    Substrate.call
-      "git"
-      [ "remote",
-        "add",
-        (remoteName remote),
-        (remoteURL remote)
-      ]
-  lift $
-    Substrate.echo ("added remote: " ++ (show remote))
+  Substrate.call
+    "git"
+    [ "remote",
+      "add",
+      (remoteName remote),
+      (remoteURL remote)
+    ]
+  Substrate.echo ("added remote: " ++ (show remote))
 
 eraseGitSafeDirs ::
   (Substrate m) =>
@@ -104,16 +98,17 @@ eraseGitSafeDirs ::
 eraseGitSafeDirs =
   catchError eraseCmd skipIfError
   where
-    eraseCmd = do
-      ExceptT $
+    eraseCmd =
+      do
         Substrate.call
           "git"
           ["config", "unset", "--local", "--all", "safe.directory"]
-      lift $ Substrate.echo "removed local safe.dir entries"
+        Substrate.echo
+          "removed local safe.dir entries"
 
     skipIfError =
       ( \_ -> do
-          lift $ Substrate.echo "no existing safe.dirs, skipping..."
+          Substrate.echo "no existing safe.dirs, skipping..."
           return ()
       )
 
@@ -132,8 +127,8 @@ configureGitSafeDir ::
   (Substrate m) =>
   GitRemote ->
   ExceptT String m ()
-configureGitSafeDir remote = do
-  ExceptT $
+configureGitSafeDir remote =
+  do
     Substrate.call
       "git"
       [ "config",
@@ -143,7 +138,10 @@ configureGitSafeDir remote = do
         "safe.directory",
         (remoteURL remote) ++ "/.git"
       ]
-  lift $ Substrate.echo $ "added safe.directory: " ++ (remoteURL remote) ++ "/.git"
+    Substrate.echo $
+      "added safe.directory: "
+        ++ (remoteURL remote)
+        ++ "/.git"
 
 -- TODO rework handling the repo dir
 
@@ -154,7 +152,7 @@ changeToRepoDir ::
   ExceptT String m ()
 changeToRepoDir vri =
   catchError
-    (lift $ Substrate.changeDir B.repoDirName)
+    (Substrate.changeDir B.repoDirName)
     (\_ -> throwError "repo dir is required, but missing")
 
 ensureRepoDir ::
@@ -162,16 +160,16 @@ ensureRepoDir ::
   B.VaultRuntimeInfo ->
   ExceptT String m ()
 ensureRepoDir vri = do
-  exists <- lift $ Substrate.dirExists B.repoDirName
+  exists <- Substrate.dirExists B.repoDirName
   if (not exists)
-    then lift $ Substrate.createDir B.repoDirName
+    then Substrate.createDir B.repoDirName
     else return ()
 
 checkGitInitialized ::
   (Substrate m) =>
   ExceptT String m Bool
 checkGitInitialized = do
-  result <- lift $ Substrate.exec "git" ["status"] ""
+  result <- Substrate.exec "git" ["status"] ""
   let code = Substrate.exitCode result
   if code == ExitSuccess
     then return True
@@ -223,7 +221,8 @@ getExistingSafeDirs ::
 getExistingSafeDirs = do
   -- The relevant safe.directory entries are those recorded in local
   -- configuration. Vaults don't manage the global git config entries.
-  result <- lift $ Substrate.exec "git" ["config", "get", "--local", "--all", "safe.directory"] ""
+  let execOperation = Substrate.exec "git" ["config", "get", "--local", "--all", "safe.directory"] ""
+  result <- withExceptT UnknownIssue execOperation
   when
     (Substrate.exitCode result /= ExitSuccess)
     (throwError (UnknownIssue (Substrate.errorOutput result)))
@@ -253,7 +252,7 @@ getCurrentBranch ::
   (Substrate m) =>
   ExceptT String m String
 getCurrentBranch = do
-  result <- lift $ Substrate.exec "git" ["branch", "--show-current"] ""
+  result <- Substrate.exec "git" ["branch", "--show-current"] ""
   when
     (Substrate.exitCode result /= ExitSuccess)
     (throwError "could not get current branch")
@@ -264,7 +263,8 @@ getRemotes ::
   (Substrate m) =>
   ExceptT RepoIssue m [GitRemote]
 getRemotes = do
-  result <- lift $ Substrate.exec "git" ["remote", "--verbose"] ""
+  let execOperation = Substrate.exec "git" ["remote", "--verbose"] ""
+  result <- withExceptT UnknownIssue execOperation
   when
     (Substrate.exitCode result /= ExitSuccess)
     (throwError (UnknownIssue (Substrate.errorOutput result)))
@@ -276,7 +276,7 @@ getRemoteNames ::
   (Substrate m) =>
   ExceptT String m [String]
 getRemoteNames = do
-  result <- lift $ Substrate.exec "git" ["remote"] ""
+  result <- Substrate.exec "git" ["remote"] ""
   when
     (Substrate.exitCode result /= ExitSuccess)
     (throwError (Substrate.errorOutput result))

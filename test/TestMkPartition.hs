@@ -29,27 +29,20 @@ test_MkPartitionSuccess =
       let owningUser = "theUser"
       let owningGroup = "groupOfTheUser"
 
-      let operation = Operations.doMakePartition partitionName 64 mockVaultInfo
-      let mock = addMockExecResults results mockWithVaultDir
-            where
-              results =
-                [ Substrate.ExecResult
-                    { Substrate.exitCode = ExitSuccess,
-                      Substrate.output = owningUser,
-                      Substrate.errorOutput = ""
-                    },
-                  Substrate.ExecResult
-                    { Substrate.exitCode = ExitSuccess,
-                      Substrate.output = owningGroup,
-                      Substrate.errorOutput = ""
-                    },
-                  D.mountExec True D.localOp,
-                  D.unmountExec True D.localOp
-                ]
+      let mockExecResults =
+            [ D.successfulExecResultWithOutput owningUser,
+              D.successfulExecResultWithOutput owningGroup,
+              D.mountExec True D.localOp,
+              D.unmountExec True D.localOp
+            ]
 
-      let result = runState (runExceptT $ operation) mock
-      let mockAfterExec = snd result
-      assertEqual "" (Right ()) (fst result)
+      let operation = Operations.doMakePartition partitionName 64 mockVaultInfo
+      let mock = addMockExecResults mockExecResults mockWithVaultDir
+
+      let operationResult = runState (runExceptT operation) mock
+      let mockAfterExec = snd operationResult
+
+      assertEqual "" (Right ()) (fst operationResult)
 
       let expectedCommands =
             [ ("id", ["--user", "--name"]),

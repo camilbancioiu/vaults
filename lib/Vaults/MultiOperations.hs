@@ -5,7 +5,7 @@ import Control.Monad.Except
 import Control.Monad.Trans
 import qualified Vaults.Base as Base
 import qualified Vaults.Operations as Operations
-import qualified Vaults.Substrate as Substrate
+import qualified Vaults.Substrate2 as Substrate
 
 doUploadMultiVault ::
   (Substrate.Substrate m) =>
@@ -35,16 +35,16 @@ visitVaultDir ::
   FilePath ->
   ExceptT String m ()
 visitVaultDir doOperation dir = do
-  parentDir <- lift $ Substrate.getDir
-  vi <- lift $ prepareOperation dir
+  parentDir <- Substrate.getDir
+  vi <- prepareOperation dir
   doOperation vi
-  lift $ Substrate.changeDir parentDir
+  Substrate.changeDir parentDir
   return ()
 
 prepareOperation ::
   (Substrate.Substrate m) =>
   FilePath ->
-  m Base.VaultInfo
+  ExceptT String m Base.VaultInfo
 prepareOperation dir = do
   Substrate.changeDir dir
   vi <- Base.loadVaultInfo
@@ -55,13 +55,13 @@ prepareOperation dir = do
 getVaultDirs ::
   (Substrate.Substrate m) =>
   ExceptT String m [FilePath]
-getVaultDirs = (lift $ Substrate.listDirs) >>= filterM isVaultDir
+getVaultDirs = (Substrate.listDirs) >>= filterM isVaultDir
 
 isVaultDir ::
   (Substrate.Substrate m) =>
   FilePath ->
   ExceptT String m Bool
 isVaultDir dir =
-  (lift $ Substrate.dirExists vpath) >>= return
+  (Substrate.dirExists vpath) >>= return
   where
     vpath = dir ++ "/.vault"
