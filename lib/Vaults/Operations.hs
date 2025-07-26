@@ -174,9 +174,23 @@ runDiffLog ::
   FilePath ->
   ExceptT String m ()
 runDiffLog localLog remoteLog = do
+  echoDiffHeader localLog remoteLog
   let diffArgs = ["-u", localLog, remoteLog]
   result <- Substrate.exec "diff" diffArgs ""
   echoDiffResult result
+
+echoDiffHeader ::
+  (Substrate.Substrate m) =>
+  String ->
+  String ->
+  ExceptT String m ()
+echoDiffHeader localLog remoteLog = do
+  Substrate.echo $
+    "\n● Diff between "
+      ++ localLog
+      ++ " (local) and "
+      ++ remoteLog
+      ++ " (remote): "
 
 -- `diff` returns code 0 when files are identical and 1 when they differ;
 -- for error it returns 2.
