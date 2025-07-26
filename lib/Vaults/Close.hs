@@ -53,7 +53,11 @@ extractCommitLog = do
     (Substrate.exitCode result /= ExitSuccess)
     (throwError $ "git log failed: " ++ (Substrate.errorOutput result))
   let commitLog = Substrate.output result
-  return commitLog
+  let commitLogWithNL =
+        if last commitLog /= '\n'
+          then commitLog ++ ['\n']
+          else commitLog
+  return commitLogWithNL
 
 saveCommitLog ::
   (Substrate.Substrate m) =>

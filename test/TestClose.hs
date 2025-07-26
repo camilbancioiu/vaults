@@ -93,9 +93,11 @@ test_success =
         mockVaultSourceDir
         (currentDir mockAfterExec)
 
+      let commitLogWithNL = (D.commitLog D.localOp2) ++ ['\n']
+      let expectedFile = (mockVaultSourceDir, "local.log", commitLogWithNL)
       assertEqual
         "git log saved"
-        (mockVaultSourceDir, "local.log", D.commitLog D.localOp2)
+        expectedFile
         (lastWrittenFile mockAfterExec)
 
       assertAllExecsConsumed mockAfterExec

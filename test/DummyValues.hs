@@ -36,7 +36,7 @@ localOp2 =
       loopDev = "/dev/loop9",
       mapperDev = "/dev/dm-2",
       mountpoint = "/run/media/user/localhostname/mockVault", -- TODO update URL format
-      commitLog = "38a3\nab22\n8f2a\n03ac\n",
+      commitLog = "38a3\nab22\n8f2a\n03ac",
       currentBranch = "themain"
     }
 
