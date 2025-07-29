@@ -32,7 +32,7 @@ makeConformant vi = do
   removeGitRemotes
   user <- B.getUsername
   configureGitRemotes vi user
-  eraseGitSafeDirs
+  -- eraseGitSafeDirs
   configureGitSafeDirs vi user
 
 verify ::
