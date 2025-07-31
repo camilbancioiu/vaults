@@ -74,7 +74,7 @@ test_IncorrectGitRemotes =
     let expectedCommands =
           [ ("git", ["status"]),
             ("git", ["remote", "--verbose"]),
-            ("id", ["--user", "--name"])
+            ("id", ["-u", "-n"])
           ]
 
     let mockExecResults =

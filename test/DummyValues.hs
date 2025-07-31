@@ -240,7 +240,7 @@ makeConformantRepoCmds =
          ("git", ["remote"])
        ]
     ++ (map gitRemoteRemoveCmd dummyGitRemoteNames)
-    ++ [("id", ["--user", "--name"])]
+    ++ [("id", ["-u", "-n"])]
     ++ (map gitRemoteAddCmd dummyGitRemotes)
     ++ [("git", ["config", "unset", "--local", "--all", "safe.directory"])] -- TODO safe.directory
     ++ (map gitConfigAddSafeDirectory dummyGitRemotes)
@@ -272,8 +272,8 @@ verifyRepoCmds ::
 verifyRepoCmds =
   [ ("git", ["status"]),
     ("git", ["remote", "--verbose"]),
-    ("id", ["--user", "--name"]),
-    ("id", ["--user", "--name"]),
+    ("id", ["-u", "-n"]),
+    ("id", ["-u", "-n"]),
     ("git", ["config", "get", "--local", "--all", "safe.directory"]) -- TODO safe.directory
   ]
 
