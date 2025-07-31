@@ -6,7 +6,7 @@ import Control.Monad.Trans
 import Data.List.Extra
 import Data.Maybe
 import System.Exit
-import qualified Vaults.Substrate2 as Substrate
+import qualified Vaults.Substrate as Substrate
 
 data PartitionLocation
   = LocalPartition

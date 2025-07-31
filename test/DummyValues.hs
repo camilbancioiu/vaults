@@ -9,7 +9,7 @@ import System.Exit
 import qualified Vaults.Base as B
 import qualified Vaults.CustomCfg as Cfg
 import qualified Vaults.Repo as Repo
-import qualified Vaults.Substrate2 as Sub
+import qualified Vaults.Substrate as Sub
 
 data DummyOp = DummyOp
   { partitionFile :: FilePath,

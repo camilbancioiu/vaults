@@ -5,7 +5,7 @@ import Control.Monad.Except
 import Control.Monad.Trans
 import System.Exit
 import qualified Vaults.Base as Base
-import qualified Vaults.Substrate2 as Substrate
+import qualified Vaults.Substrate as Substrate
 import qualified Vaults.Udisksctl as U
 
 closeVault ::

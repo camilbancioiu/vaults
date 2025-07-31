@@ -9,7 +9,7 @@ import Control.Monad.State
 import Data.Maybe
 import System.Exit
 import qualified Vaults.Base as Base
-import qualified Vaults.Substrate2 as Substrate
+import qualified Vaults.Substrate as Substrate
 
 data Mock = Mock
   { currentDir :: FilePath,

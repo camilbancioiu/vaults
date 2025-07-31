@@ -2,7 +2,7 @@ module Vaults.Init where
 
 import Control.Monad.Except
 import Control.Monad.Trans
-import qualified Vaults.Substrate2 as Substrate
+import qualified Vaults.Substrate as Substrate
 
 initVault ::
   (Substrate.Substrate m) =>

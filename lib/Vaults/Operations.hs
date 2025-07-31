@@ -12,7 +12,7 @@ import Vaults.Init
 import Vaults.MkPartition
 import Vaults.Open
 import qualified Vaults.Repo as Repo
-import qualified Vaults.Substrate2 as Substrate
+import qualified Vaults.Substrate as Substrate
 
 data Operation
   = InitVault String String

@@ -13,7 +13,7 @@ import Vaults.Close
 import qualified Vaults.MultiOperations as MultiOperations
 import Vaults.Open
 import qualified Vaults.Operations as Operations
-import qualified Vaults.Substrate2 as Substrate
+import qualified Vaults.Substrate as Substrate
 
 main :: IO ()
 main = do

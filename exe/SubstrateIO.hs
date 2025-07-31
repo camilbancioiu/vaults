@@ -9,7 +9,7 @@ import qualified System.Environment
 import qualified System.Exit
 import qualified System.Process
 import qualified Vaults.Base as Base
-import qualified Vaults.Substrate2 as Substrate
+import qualified Vaults.Substrate as Substrate
 
 instance Substrate.Substrate IO where
   readFile = lift . Prelude.readFile
