@@ -1,7 +1,6 @@
 module Main where
 
 import CLI
-import Control.Exception
 import Control.Monad.Except
 import Control.Monad.Trans
 import Debug.Trace

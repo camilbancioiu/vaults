@@ -1,6 +1,7 @@
 module SubstrateIO where
 
 import Control.Concurrent
+import Control.Exception
 import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Trans
@@ -43,13 +44,11 @@ callIOProcess ::
   String ->
   [String] ->
   ExceptT String IO ()
-callIOProcess cmd args =
-  catchError
-    ( do
-        lift $ System.Process.callProcess cmd args
-        return ()
-    )
-    (\e -> throwError (show e))
+callIOProcess cmd args = do
+  result <- execIOProcess cmd args ""
+  if Substrate.exitCode result == System.Exit.ExitSuccess
+    then return ()
+    else throwError (Substrate.mkFailMsg result)
 
 execIOProcess ::
   String ->

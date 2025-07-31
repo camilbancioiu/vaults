@@ -34,3 +34,9 @@ class (Monad m) => Substrate m where
   delay :: Int -> ExceptT String m ()
   echo :: String -> ExceptT String m ()
   sync :: ExceptT String m ()
+
+mkFailMsg ::
+  ExecResult ->
+  String
+mkFailMsg er =
+  (show $ exitCode er) ++ ": " ++ (errorOutput er)
