@@ -83,7 +83,6 @@ doEditVault vi = do
   closeVault vri
   Substrate.echo "Vault closed."
 
--- TODO refactor using bracket
 editVault ::
   (Substrate.Substrate m) =>
   B.VaultRuntimeInfo ->
@@ -95,7 +94,6 @@ editVault vri = do
       callEditor
     )
     `catchError` (\e -> closeVault vri >> throwError e)
-  Substrate.echo "Editor closed."
 
 -- TODO replace Cfg.defaultEditCfg with actual cfg read from the opened vault
 callEditor ::
