@@ -3,6 +3,8 @@ module SubstrateIO where
 import Control.Concurrent
 import Control.Exception
 import Control.Monad
+import Control.Monad.Except
+import Control.Monad.Trans
 import qualified System.Directory
 import qualified System.Environment
 import qualified System.Exit
@@ -10,46 +12,52 @@ import qualified System.Process
 import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 
--- TODO consider wrapping all methods in ExceptT
--- TODO e.g. readFile = ExceptT . Prelude.readFile
 instance Substrate.Substrate IO where
-  readFile = Prelude.readFile
-  writeFile = Prelude.writeFile
-  dirExists = System.Directory.doesDirectoryExist
-  fileExists = System.Directory.doesFileExist
-  getDir = System.Directory.getCurrentDirectory
-  changeDir = System.Directory.setCurrentDirectory
-  createDir = System.Directory.createDirectory
-  listDirs = listIODirectories
-  lookupEnv = System.Environment.lookupEnv
-  setEnv = System.Environment.setEnv
-  unsetEnv = System.Environment.unsetEnv
+  readFile = lift . Prelude.readFile
+  writeFile = wrappedWriteFile
+  dirExists = lift . System.Directory.doesDirectoryExist
+  fileExists = lift . System.Directory.doesFileExist
+  getDir = ExceptT $ (fmap Right) System.Directory.getCurrentDirectory
+  changeDir = lift . System.Directory.setCurrentDirectory
+  createDir = lift . System.Directory.createDirectory
+  listDirs = ExceptT $ (fmap Right) listIODirectories
+  lookupEnv = lift . System.Environment.lookupEnv
+  setEnv = wrappedSetEnv
+  unsetEnv = lift . System.Environment.unsetEnv
   exec = execIOProcess
   call = callIOProcess
-  delay = Control.Concurrent.threadDelay
-  echo = putStrLn
+  delay = lift . Control.Concurrent.threadDelay
+  echo = lift . Prelude.putStrLn
   sync = callIOSync
+
+wrappedWriteFile ::
+  FilePath ->
+  String ->
+  ExceptT String IO ()
+wrappedWriteFile filename contents = lift $ Prelude.writeFile filename contents
+
+wrappedSetEnv ::
+  String -> String -> ExceptT String IO ()
+wrappedSetEnv varname value = lift $ System.Environment.setEnv varname value
 
 callIOProcess ::
   String ->
   [String] ->
-  IO (Either String ())
+  ExceptT String IO ()
 callIOProcess cmd args = do
-  catch
-    ( do
-        System.Process.callProcess cmd args
-        return $ Right ()
-    )
-    (\e -> return $ Left (show $ (e :: SomeException)))
+  result <- execIOProcess cmd args ""
+  if Substrate.exitCode result == System.Exit.ExitSuccess
+    then return ()
+    else throwError (Substrate.mkFailMsg result)
 
 execIOProcess ::
   String ->
   [String] ->
   String ->
-  IO Substrate.ExecResult
+  ExceptT String IO Substrate.ExecResult
 execIOProcess cmd args sin = do
   let pcmd = (System.Process.proc cmd args)
-  result <- System.Process.readCreateProcessWithExitCode pcmd sin
+  result <- lift $ System.Process.readCreateProcessWithExitCode pcmd sin
   let (exc, sout, serr) = result
   return
     Substrate.ExecResult
@@ -58,8 +66,7 @@ execIOProcess cmd args sin = do
         Substrate.errorOutput = serr
       }
 
-callIOSync ::
-  IO (Either String ())
+callIOSync :: ExceptT String IO ()
 callIOSync = callIOProcess "sync" []
 
 listIODirectories ::

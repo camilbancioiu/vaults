@@ -5,8 +5,8 @@ import Control.Monad.Except
 import Control.Monad.Trans
 import System.Exit
 import qualified Vaults.Base as B
-import Vaults.Substrate2 (Substrate)
-import qualified Vaults.Substrate2 as Substrate
+import Vaults.Substrate (Substrate)
+import qualified Vaults.Substrate as Substrate
 
 data RepoIssue
   = UninitializedGit

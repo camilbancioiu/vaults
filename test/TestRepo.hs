@@ -10,7 +10,7 @@ import System.Exit
 import Test.HUnit
 import qualified Vaults.Base as Base
 import Vaults.Repo
-import qualified Vaults.Substrate2 as Sub
+import qualified Vaults.Substrate as Sub
 
 allTests :: Test
 allTests =
@@ -74,7 +74,7 @@ test_IncorrectGitRemotes =
     let expectedCommands =
           [ ("git", ["status"]),
             ("git", ["remote", "--verbose"]),
-            ("id", ["--user", "--name"])
+            ("id", ["-u", "-n"])
           ]
 
     let mockExecResults =

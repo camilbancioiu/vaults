@@ -45,8 +45,8 @@ test_MkPartitionSuccess =
       assertEqual "" (Right ()) (fst operationResult)
 
       let expectedCommands =
-            [ ("id", ["--user", "--name"]),
-              ("id", ["--group", "--name"]),
+            [ ("id", ["-u", "-n"]),
+              ("id", ["-g", "-n"]),
               ( "dd",
                 [ "bs=1M",
                   "count=64",

@@ -8,7 +8,7 @@ import System.Directory
 import System.FilePath.Posix
 import qualified Vaults.Base as B
 import qualified Vaults.Repo as Repo
-import qualified Vaults.Substrate2 as Substrate
+import qualified Vaults.Substrate as Substrate
 import qualified Vaults.Udisksctl as U
 
 -- TODO validate loaded VaultInfo

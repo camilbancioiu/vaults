@@ -4,7 +4,7 @@ import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Trans
 import System.Exit
-import qualified Vaults.Substrate2 as Substrate
+import qualified Vaults.Substrate as Substrate
 
 -- TODO validate parameter fname
 createLoopDevice ::

@@ -6,7 +6,7 @@ import Control.Monad.Trans
 import Data.List.Extra
 import Data.Maybe
 import System.Exit
-import qualified Vaults.Substrate2 as Substrate
+import qualified Vaults.Substrate as Substrate
 
 data PartitionLocation
   = LocalPartition
@@ -95,7 +95,8 @@ getUsername ::
   (Substrate.Substrate m) =>
   ExceptT String m String
 getUsername = do
-  result <- Substrate.exec "id" ["--user", "--name"] ""
+  -- Equivalent to `id --user --name`
+  result <- Substrate.exec "id" ["-u", "-n"] ""
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get username")
   let username = Substrate.output result
   return username
@@ -104,7 +105,8 @@ getGroupname ::
   (Substrate.Substrate m) =>
   ExceptT String m String
 getGroupname = do
-  result <- Substrate.exec "id" ["--group", "--name"] ""
+  -- Equivalent to `id --group --name`
+  result <- Substrate.exec "id" ["-g", "-n"] ""
   when (Substrate.exitCode result /= ExitSuccess) (throwError "could not get groupname")
   let groupname = Substrate.output result
   return groupname

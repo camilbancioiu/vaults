@@ -5,7 +5,7 @@ import Data.Maybe
 import MockSubstrate
 import Test.HUnit
 import qualified Vaults.Base as Base
-import qualified Vaults.Substrate2 as Substrate
+import qualified Vaults.Substrate as Substrate
 
 assertOpError ::
   (Eq a, Show a) =>
