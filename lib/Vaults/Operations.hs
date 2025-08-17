@@ -46,6 +46,8 @@ doMakePartition ::
   ExceptT String m ()
 doMakePartition = makePartition
 
+handleVaultError vri = handleError (\e -> closeVault vri >> throwError e)
+
 -- TODO catch errors and closeVault
 doSetupVault ::
   (Substrate.Substrate m) =>
@@ -54,23 +56,15 @@ doSetupVault ::
 doSetupVault vi = do
   vri <- openVault $ (B.localname vi) ++ ".vault" -- TODO refactor into f:openLocalPartition
   Substrate.echo "Vault opened, performing verifications..."
-  Repo.ensureRepoDir vri
-  Repo.changeToRepoDir vri
-  (Repo.makeConformant vi) `catchError` (\e -> closeVault vri >> throwError e)
+  handleVaultError
+    vri
+    ( do
+        Repo.ensureRepoDir vri
+        Repo.changeToRepoDir vri
+        Repo.makeConformant vi
+    )
   closeVault vri
   Substrate.echo "Vault closed."
-
-runVerification ::
-  (Substrate.Substrate m) =>
-  B.VaultInfo ->
-  B.VaultRuntimeInfo ->
-  ExceptT String m ()
-runVerification vi vri = do
-  Repo.ensureRepoDir vri
-  Repo.changeToRepoDir vri
-  let verification = withExceptT (show) (Repo.verify vi)
-  catchError verification (Substrate.echo)
-  return ()
 
 doEditVault ::
   (Substrate.Substrate m) =>
@@ -88,24 +82,19 @@ editVault ::
   B.VaultRuntimeInfo ->
   ExceptT String m ()
 editVault vri = do
-  ( do
-      Substrate.changeDir (B.mountpoint vri)
-      Repo.changeToRepoDir vri
-      callEditor
+  handleVaultError
+    vri
+    ( do
+        Substrate.changeDir (B.mountpoint vri)
+        Repo.changeToRepoDir vri
+        -- TODO replace Cfg.defaultEditCfg with actual cfg read from the opened vault
+        let cfg = Cfg.defaultEditCfg
+        let envvars = Cfg.envVars cfg
+        let editorExec = Cfg.editor cfg
+        let editorParams = Cfg.editorCLIParams cfg
+        setEditingEnvVars envvars
+        Substrate.call editorExec editorParams
     )
-    `catchError` (\e -> closeVault vri >> throwError e)
-
--- TODO replace Cfg.defaultEditCfg with actual cfg read from the opened vault
-callEditor ::
-  (Substrate.Substrate m) =>
-  ExceptT String m ()
-callEditor = do
-  let cfg = Cfg.defaultEditCfg
-  let envvars = Cfg.envVars cfg
-  let editorExec = Cfg.editor cfg
-  let editorParams = Cfg.editorCLIParams cfg
-  setEditingEnvVars envvars
-  Substrate.call editorExec editorParams
 
 setEditingEnvVars ::
   (Substrate.Substrate m) =>
@@ -125,20 +114,10 @@ doShellVault ::
 doShellVault vi = do
   vri <- openVault $ (B.localname vi) ++ ".vault"
   Substrate.echo "Vault opened, starting shell session..."
-  ( do
-      Substrate.changeDir (B.mountpoint vri)
-      callShell
-    )
-    `catchError` (\e -> closeVault vri >> throwError e)
+  callShell vri
   Substrate.echo "Shell session closed."
   closeVault vri
   Substrate.echo "Vault closed."
-
-callShell ::
-  (Substrate.Substrate m) =>
-  ExceptT String m ()
-callShell = do
-  Substrate.call "/bin/sh" []
 
 doShellPartition ::
   (Substrate.Substrate m) =>
@@ -147,14 +126,22 @@ doShellPartition ::
 doShellPartition partition = do
   vri <- openPartition partition
   Substrate.echo "Partition opened, starting shell session..."
-  ( do
-      Substrate.changeDir (B.mountpoint vri)
-      callShell
-    )
-    `catchError` (\e -> closeVault vri >> throwError e)
+  callShell vri
   Substrate.echo "Shell session closed."
   closePartition vri
   Substrate.echo "Partition closed."
+
+callShell ::
+  (Substrate.Substrate m) =>
+  B.VaultRuntimeInfo ->
+  ExceptT String m ()
+callShell vri = do
+  handleVaultError
+    vri
+    ( do
+        Substrate.changeDir (B.mountpoint vri)
+        Substrate.call "/bin/sh" []
+    )
 
 -- TODO write tests
 doDiffLog ::
@@ -295,8 +282,9 @@ doSyncVault ::
   ExceptT String m ()
 doSyncVault remote vi = do
   remoteVRI <- openVault $ remote ++ ".vault"
-  (syncLocalPartition vi remoteVRI remote)
-    `catchError` (\e -> closeVault remoteVRI >> throwError e)
+  handleVaultError
+    remoteVRI
+    (syncLocalPartition vi remoteVRI remote)
   closeVault remoteVRI
 
 syncLocalPartition ::
@@ -308,8 +296,9 @@ syncLocalPartition ::
 syncLocalPartition vi remoteVRI remote = do
   Substrate.changeDir (B.srcDir remoteVRI)
   localVRI <- openVault $ (B.localname vi) ++ ".vault"
-  (performSync localVRI remote)
-    `catchError` (\e -> closeVault localVRI >> throwError e)
+  handleVaultError
+    localVRI
+    (performSync localVRI remote)
   closeVault localVRI
 
 doSyncEditVault ::
@@ -319,8 +308,9 @@ doSyncEditVault ::
   ExceptT String m ()
 doSyncEditVault remote vi = do
   remoteVRI <- openVault $ remote ++ ".vault"
-  (syncEditLocalPartition vi remoteVRI remote)
-    `catchError` (\e -> closeVault remoteVRI >> throwError e)
+  handleVaultError
+    remoteVRI
+    (syncEditLocalPartition vi remoteVRI remote)
 
 syncEditLocalPartition ::
   (Substrate.Substrate m) =>
@@ -331,8 +321,9 @@ syncEditLocalPartition ::
 syncEditLocalPartition vi remoteVRI remote = do
   Substrate.changeDir (B.srcDir remoteVRI)
   localVRI <- openVault $ (B.localname vi) ++ ".vault"
-  (performSync localVRI remote)
-    `catchError` (\e -> closeVault localVRI >> throwError e)
+  handleVaultError
+    localVRI
+    (performSync localVRI remote)
   closeVault remoteVRI
   editVault localVRI
   closeVault localVRI
@@ -351,7 +342,6 @@ performSync ::
 performSync localVRI remote = do
   Repo.changeToRepoDir localVRI
   Substrate.call "git" ["fetch", remote]
-
   localBranch <- Repo.getCurrentBranch
   let remoteBranch = remote ++ "/" ++ localBranch
   Substrate.call "git" ["merge", remoteBranch]
