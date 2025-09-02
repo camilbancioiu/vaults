@@ -81,7 +81,7 @@ editVault ::
   (Substrate.Substrate m) =>
   B.VaultRuntimeInfo ->
   ExceptT String m ()
-editVault vri = do
+editVault vri =
   handleVaultError
     vri
     ( do
@@ -135,7 +135,7 @@ callShell ::
   (Substrate.Substrate m) =>
   B.VaultRuntimeInfo ->
   ExceptT String m ()
-callShell vri = do
+callShell vri =
   handleVaultError
     vri
     ( do
