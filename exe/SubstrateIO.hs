@@ -44,11 +44,17 @@ callIOProcess ::
   String ->
   [String] ->
   ExceptT String IO ()
-callIOProcess cmd args = do
-  result <- execIOProcess cmd args ""
-  if Substrate.exitCode result == System.Exit.ExitSuccess
-    then return ()
-    else throwError (Substrate.mkFailMsg result)
+callIOProcess cmd args =
+  withExceptT show $ ExceptT $ tryCall cmd args
+
+-- This function exists just to explicitly provide a type of Exception for the
+-- return type of 'try'; otherwise, it would have an unspecified type for e:
+-- try :: Exception e => IO a -> IO (Either e a)
+tryCall ::
+  String ->
+  [String] ->
+  IO (Either SomeException ())
+tryCall cmd args = try (System.Process.callProcess cmd args)
 
 execIOProcess ::
   String ->
