@@ -48,7 +48,6 @@ doMakePartition = makePartition
 
 handleVaultError vri = handleError (\e -> closeVault vri >> throwError e)
 
--- TODO catch errors and closeVault
 doSetupVault ::
   (Substrate.Substrate m) =>
   B.VaultInfo ->
@@ -328,12 +327,6 @@ syncEditLocalPartition vi remoteVRI remote = do
   editVault localVRI
   closeVault localVRI
 
--- TODO test merge conflicts
--- should fail gracefully:
--- -- git fetch remains
--- -- git merge fails
--- -- vault closes automatically
--- merge conflicts can be resolved via operations Edit or Shell
 performSync ::
   (Substrate.Substrate m) =>
   B.VaultRuntimeInfo ->

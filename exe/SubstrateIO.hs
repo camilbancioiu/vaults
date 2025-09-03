@@ -13,48 +13,41 @@ import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 
 instance Substrate.Substrate IO where
-  readFile = lift . Prelude.readFile
-  writeFile = wrappedWriteFile
-  dirExists = lift . System.Directory.doesDirectoryExist
-  fileExists = lift . System.Directory.doesFileExist
-  getDir = ExceptT $ (fmap Right) System.Directory.getCurrentDirectory
-  changeDir = lift . System.Directory.setCurrentDirectory
-  createDir = lift . System.Directory.createDirectory
-  listDirs = ExceptT $ (fmap Right) listIODirectories
-  lookupEnv = lift . System.Environment.lookupEnv
-  setEnv = wrappedSetEnv
-  unsetEnv = lift . System.Environment.unsetEnv
+  readFile = adaptException . Prelude.readFile
+  writeFile = adaptedWriteFile
+  dirExists = adaptException . System.Directory.doesDirectoryExist
+  fileExists = adaptException . System.Directory.doesFileExist
+  getDir = adaptException $ System.Directory.getCurrentDirectory
+  changeDir = adaptException . System.Directory.setCurrentDirectory
+  createDir = adaptException . System.Directory.createDirectory
+  listDirs = adaptException $ listIODirectories
+  lookupEnv = adaptException . System.Environment.lookupEnv
+  setEnv = adaptedSetEnv
+  unsetEnv = adaptException . System.Environment.unsetEnv
   exec = execIOProcess
   call = callIOProcess
-  delay = lift . Control.Concurrent.threadDelay
-  echo = lift . Prelude.putStrLn
+  delay = adaptException . Control.Concurrent.threadDelay
+  echo = adaptException . Prelude.putStrLn
   sync = callIOSync
 
-wrappedWriteFile ::
+adaptedWriteFile ::
   FilePath ->
   String ->
   ExceptT String IO ()
-wrappedWriteFile filename contents = lift $ Prelude.writeFile filename contents
+adaptedWriteFile filename contents =
+  adaptException $ Prelude.writeFile filename contents
 
-wrappedSetEnv ::
+adaptedSetEnv ::
   String -> String -> ExceptT String IO ()
-wrappedSetEnv varname value = lift $ System.Environment.setEnv varname value
+adaptedSetEnv varname value =
+  adaptException $ System.Environment.setEnv varname value
 
 callIOProcess ::
   String ->
   [String] ->
   ExceptT String IO ()
 callIOProcess cmd args =
-  withExceptT show $ ExceptT $ tryCall cmd args
-
--- This function exists just to explicitly provide a type of Exception for the
--- return type of 'try'; otherwise, it would have an unspecified type for e:
--- try :: Exception e => IO a -> IO (Either e a)
-tryCall ::
-  String ->
-  [String] ->
-  IO (Either SomeException ())
-tryCall cmd args = try (System.Process.callProcess cmd args)
+  adaptException $ System.Process.callProcess cmd args
 
 execIOProcess ::
   String ->
@@ -63,7 +56,7 @@ execIOProcess ::
   ExceptT String IO Substrate.ExecResult
 execIOProcess cmd args sin = do
   let pcmd = (System.Process.proc cmd args)
-  result <- lift $ System.Process.readCreateProcessWithExitCode pcmd sin
+  result <- adaptException $ System.Process.readCreateProcessWithExitCode pcmd sin
   let (exc, sout, serr) = result
   return
     Substrate.ExecResult
@@ -80,3 +73,11 @@ listIODirectories ::
 listIODirectories =
   System.Directory.listDirectory "."
     >>= filterM System.Directory.doesDirectoryExist
+
+adaptException ::
+  IO a ->
+  ExceptT String IO a
+adaptException =
+  (withExceptT show)
+    . ExceptT
+    . (try :: IO a -> IO (Either SomeException a))

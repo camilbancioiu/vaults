@@ -15,6 +15,7 @@ import qualified TestOperations_Sync (allTests)
 import qualified TestOperations_SyncEdit (allTests)
 import qualified TestOperations_Up (allTests)
 import qualified TestRepo (allTests)
+import qualified TestSubstrateIO (allTests)
 import qualified TestUdisksctl (allTests)
 
 main :: IO ()
@@ -40,5 +41,6 @@ allTests =
       TestOperations_Sync.allTests,
       TestOperations_SyncEdit.allTests,
       TestOperations_Up.allTests,
+      TestSubstrateIO.allTests,
       TestUdisksctl.allTests
     ]
