@@ -13,7 +13,7 @@ import qualified Vaults.Base as Base
 import qualified Vaults.Substrate as Substrate
 
 instance Substrate.Substrate IO where
-  readFile = lift . Prelude.readFile
+  readFile = adaptException . Prelude.readFile
   writeFile = wrappedWriteFile
   dirExists = lift . System.Directory.doesDirectoryExist
   fileExists = lift . System.Directory.doesFileExist
@@ -34,27 +34,20 @@ wrappedWriteFile ::
   FilePath ->
   String ->
   ExceptT String IO ()
-wrappedWriteFile filename contents = lift $ Prelude.writeFile filename contents
+wrappedWriteFile filename contents =
+  adaptException $ Prelude.writeFile filename contents
 
 wrappedSetEnv ::
   String -> String -> ExceptT String IO ()
-wrappedSetEnv varname value = lift $ System.Environment.setEnv varname value
+wrappedSetEnv varname value =
+  adaptException $ System.Environment.setEnv varname value
 
 callIOProcess ::
   String ->
   [String] ->
   ExceptT String IO ()
 callIOProcess cmd args =
-  withExceptT show $ ExceptT $ tryCall cmd args
-
--- This function exists just to explicitly provide a type of Exception for the
--- return type of 'try'; otherwise, it would have an unspecified type for e:
--- try :: Exception e => IO a -> IO (Either e a)
-tryCall ::
-  String ->
-  [String] ->
-  IO (Either SomeException ())
-tryCall cmd args = try (System.Process.callProcess cmd args)
+  adaptException (System.Process.callProcess cmd args)
 
 execIOProcess ::
   String ->
@@ -80,3 +73,8 @@ listIODirectories ::
 listIODirectories =
   System.Directory.listDirectory "."
     >>= filterM System.Directory.doesDirectoryExist
+
+adaptException ::
+  IO a ->
+  ExceptT String IO a
+adaptException = (withExceptT show) . ExceptT . (try :: IO a -> IO (Either SomeException a))
