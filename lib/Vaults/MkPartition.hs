@@ -11,6 +11,7 @@ import qualified Vaults.Udisksctl as Udisksctl
 minPartitionSize = 64
 
 -- TODO upon failure, delete the created partition
+-- TODO refactor, function far too long
 
 makePartition ::
   (Substrate.Substrate m) =>
